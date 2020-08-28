@@ -12,7 +12,6 @@ import math, pandas
 import datetime
 import time
 
-
 P = numpy.loadtxt('F:/小论文2\代码/results/daily_gldas/Rainf_f_tavg_array_daily.txt')
 # 单位转换  "kg m-2 s-1"，换算系数3600*24
 P = P*3600*24
