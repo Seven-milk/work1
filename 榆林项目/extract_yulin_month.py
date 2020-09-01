@@ -41,6 +41,13 @@ for i in range(len(result)):
     f.close()
 
 
+# 单位处理
+# 单位转换  "kg m-2 s-1"=3600*24*30"mm/month"，换算系数3600*24*30（按每个月30天算）
+# 单位转换 "kg m-2"="mm",换算系数30*24*3600（因为是月平均值，换算成月累计值）
+Rainf_f_tavg_array = Rainf_f_tavg_array*3600*24*30
+Qs_acc_array = Qs_acc_array*3600*24*30
+
+
 # 存储数据
 np.savetxt('Rainf_f_tavg_array_month.txt', Rainf_f_tavg_array, delimiter=' ')
 np.savetxt('Qs_acc.txt', Qs_acc_array, delimiter=' ')
@@ -60,3 +67,16 @@ coord.to_csv("coord.txt")
 # print('****************************')
 # print(rootgrp.variables['lon'][:])
 # rootgrp.close()
+
+
+# 搭建pd来输出excel
+time = pd.date_range(start="19480101", end="20141231", freq='M')
+Rainf_f_tavg_pd = pd.DataFrame(Rainf_f_tavg_array, index=time)
+Qs_acc_array_pd = pd.DataFrame(Qs_acc_array, index=time)
+Rainf_f_tavg_pd = Rainf_f_tavg_pd.loc["1960-01":"2010-12", :]
+Qs_acc_array_pd = Qs_acc_array_pd.loc["1960-01":"2010-12", :]
+
+
+# 输出excel
+Rainf_f_tavg_pd.to_excel("Rainf_f_tavg_pd.xlsx")
+Qs_acc_array_pd.to_excel("Qs_acc_array_pd.xlsx")
