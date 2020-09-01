@@ -6,7 +6,7 @@ import numpy as np
 
 start = int(input("输入开始数字:"))
 str1 = str(input("输入要加的开头字符:"))
-end = start + 720
+end = int(input("输入结束数字:"))
 x1 = list(range(start, end))
 # x2 = list(range(10, 100))
 # x3 = list(range(100,360))
