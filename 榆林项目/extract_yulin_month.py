@@ -80,3 +80,4 @@ Qs_acc_array_pd = Qs_acc_array_pd.loc["1960-01":"2010-12", :]
 # 输出excel
 Rainf_f_tavg_pd.to_excel("Rainf_f_tavg_pd.xlsx")
 Qs_acc_array_pd.to_excel("Qs_acc_array_pd.xlsx")
+coord.to_excel("coord.xlsx")
