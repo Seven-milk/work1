@@ -17,7 +17,7 @@ result = os.listdir(home)
 Rainf_f_tavg_array = np.zeros((len(result), len(coord)))
 Qs_acc_array = np.zeros((len(result), len(coord)))
 
-# 获取榆林经纬的索引
+# <editor-fold desc="获取榆林经纬的索引">
 f1 = Dataset(home + "/" + result[0], 'r')
 Dataset.set_auto_mask(f1, False)
 lat_index_lp = []
@@ -28,6 +28,7 @@ for j in range(len(coord)):
     lat_index_lp.append(np.where(lat == coord["lat"][j])[0][0])
     lon_index_lp.append(np.where(lon == coord["lon"][j])[0][0])
 f1.close()
+# </editor-fold>
 
 # 循环读取对应lp范围的rain变量和runoff变量(基于索引)
 for i in range(len(result)):
