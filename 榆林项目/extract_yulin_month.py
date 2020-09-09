@@ -30,7 +30,7 @@ for j in range(len(coord)):
 f1.close()
 # </editor-fold>
 
-# 循环读取对应lp范围的rain变量和runoff变量(基于索引)
+# <editor-fold desc="循环读取对应lp范围的rain变量和runoff变量(基于索引)">
 for i in range(len(result)):
     f = Dataset(home + "/" + result[i], 'r')
     Dataset.set_auto_mask(f, False)
@@ -40,24 +40,24 @@ for i in range(len(result)):
         # 读取榆林部分
     print(f"第{i}个栅格读取完毕------")
     f.close()
+# </editor-fold>
 
-
-# 单位处理
+# <editor-fold desc="单位处理">
 # 单位转换  "kg m-2 s-1"="mm/s"=3600*24*30"mm/month"，换算系数3600*24*30（按每个月30天算）
 # 单位转换 "kg m-2"="mm",换算系数1
-Rainf_f_tavg_array = Rainf_f_tavg_array*3600*24*30
+Rainf_f_tavg_array = Rainf_f_tavg_array * 3600 * 24 * 30
+# </editor-fold>
 
-
-# 存储数据
+# <editor-fold desc="存储数据">
 np.savetxt('Rainf_f_tavg_array_month.txt', Rainf_f_tavg_array, delimiter=' ')
 np.savetxt('Qs_acc.txt', Qs_acc_array, delimiter=' ')
 np.savetxt('lat_index_lp.txt', lat_index_lp, delimiter=' ')  # 存储经纬索引
 np.savetxt('lon_index_lp.txt', lon_index_lp, delimiter=' ')
 # np.savetxt('coord.txt', coord, delimiter=' ')
 coord.to_csv("coord.txt")
+# </editor-fold>
 
-
-# 概览
+# <editor-fold desc="概览">
 # rootgrp = Dataset(home + "/GLDAS_NOAH025_M.A194801.020.nc4", "r")
 # print(rootgrp.variables.keys())
 # print('****************************')
@@ -67,17 +67,18 @@ coord.to_csv("coord.txt")
 # print('****************************')
 # print(rootgrp.variables['lon'][:])
 # rootgrp.close()
+# </editor-fold>
 
-
-# 搭建pd来输出excel
+# <editor-fold desc="搭建pd来输出excel">
 time = pd.date_range(start="19480101", end="20141231", freq='M')
 Rainf_f_tavg_pd = pd.DataFrame(Rainf_f_tavg_array, index=time)
 Qs_acc_array_pd = pd.DataFrame(Qs_acc_array, index=time)
 Rainf_f_tavg_pd = Rainf_f_tavg_pd.loc["1960-01":"2010-12", :]
 Qs_acc_array_pd = Qs_acc_array_pd.loc["1960-01":"2010-12", :]
+# </editor-fold>
 
-
-# 输出excel
+# <editor-fold desc="输出excel">
 Rainf_f_tavg_pd.to_excel("Rainf_f_tavg_pd.xlsx")
 Qs_acc_array_pd.to_excel("Qs_acc_array_pd.xlsx")
 coord.to_excel("coord.xlsx")
+# </editor-fold>
