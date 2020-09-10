@@ -122,6 +122,7 @@ def plot_data(ax, array_data_lon, array_data_lat, array_data, title, cmap_name='
     plt.savefig('./fig/' + title + '.jpg', dpi=350, bbox_inches='tight')
     plt.close()
 
+
 def main():
     data['lon'] = data['lon'].astype(np.float64)
     data['lat'] = data['lat'].astype(np.float64)
