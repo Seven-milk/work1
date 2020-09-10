@@ -1,29 +1,25 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
-# 处理生成的指数等，使用arcpy进行绘图
+# 常见函数、脚本的总结，以后可以直接import用
 import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeat
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from cartopy.io.shapereader import Reader, natural_earth
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 from PIL import Image
-
-Image.MAX_IMAGE_PIXELS = None
-
-# <editor-fold, desc="读取数据到pd">
-data = pd.read_excel("./出图.xlsx", sheet_name=0)
-print(data.info())
-
-
-# </editor-fold>
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+import numba
+from numba import jit
+import more_itertools as mit
 
 
-# <editor-fold, desc="绘图函数">
+
+# <editor-fold, desc="绘地图">
 def create_map(title):
     # --创建画图空间
     proj = ccrs.PlateCarree()  # 创建坐标系
@@ -66,7 +62,6 @@ def create_map(title):
     gl.ylocator = mticker.FixedLocator(np.arange(36, 40, 1))
     ax.set_title(title, fontsize=10)
     return ax
-# </editor-fold>
 
 
 def index_cal(extend, det, data_lat, data_lon):
@@ -120,21 +115,81 @@ def plot_data(ax, array_data_lon, array_data_lat, array_data, title, cmap_name='
     plt.savefig('./fig/' + title + '.jpg', dpi=350, bbox_inches='tight')
     plt.close()
 
+# </editor-fold>
 
-def main():
-    data['lon'] = data['lon'].astype(np.float64)
-    data['lat'] = data['lat'].astype(np.float64)
-    extend = [107.25, 111.25, 36.75, 39.75]
-    det = 0.25
-    lat_index, lon_index = index_cal(extend=extend, det=det, data_lat=data['lat'],
-                                     data_lon=data['lon'])  # 生成有数据点对于的经纬index
-    # 生成完整绘图数组和对应的经纬坐标
-    for i in data.iloc[:, 2:].columns:
-        array_data, array_data_lon, array_data_lat = array_cal(extend=extend, det=det, lat_index=lat_index,
-                                                               lon_index=lon_index, data=data[i])
-        ax = create_map(title=i)
-        plot_data(ax, array_data_lon, array_data_lat, array_data, title=i, cmap_name='RdBu')
+# <editor-fold, desc="插补数据">
+my_font = font_manager.FontProperties(family="SimHei")
+def chabu(d, c, name, rank, threshold, yes=0):
+    """
+    插补函数：进行数据缺失插补
+    d   为待插补站点，数组
+    c   为插补参考站点，可以是上下游站，数组
+    dc时间一一对应，d中缺少的均为nan格式
+    name 图片存储路径
+    yes 是否存储图片，0,1
+    rank 阶数
+    threshold = |d-c|相差超过阈值则认为是异常值
+    return:
+        d 插补完成的序列
+        index_nand 插补值的序号
+    """
+    # 剔除缺少的，用剩余都有的来做拟合
+    index_nan = []
+    index_nand = np.argwhere(np.isnan(d) == True).flatten().tolist()  # 待插补列的无效值
+    index_nanc = np.argwhere(np.isnan(c) == True).flatten().tolist()  # 参考列的无效值
+    np_abnormal = abs(d - c)
+    np_abnormal[index_nand] = 0
+    np_abnormal[index_nanc] = 0
+    index_abnormal = np.argwhere(np_abnormal > threshold).flatten().tolist()  # 异常值, |d-c|相差超过阈值
+    index_nan.extend(index_nand)
+    index_nan.extend(index_nanc)
+    index_nan.extend(index_abnormal)
+    index_nan = list(set(index_nan))  # 总无效值
+    d_ = np.array([d[i] for i in range(len(d)) if i not in index_nan])
+    c_ = np.array([c[i] for i in range(len(c)) if i not in index_nan])
+    z, residuals, *_ = np.polyfit(c_, d_, rank, full=True)
+    p = np.poly1d(z)
+    r2_ = np.array([x * x for x in (d_ - d_.mean()).tolist()])
+    r2 = 1 - residuals[0] / r2_.sum()
+    plt.figure()
+    plt.plot(c_, d_, "o", label="实测")
+    c_fit = np.linspace(c_.min(), c_.max(), num=100)
+    d_fit = p(c_fit)
+    plt.plot(c_fit, d_fit, "r", label="拟合")
+    plt.xlabel("参考站点", fontproperties=my_font)
+    plt.ylabel("待插补站点", fontproperties=my_font)
+    plt.text(1, 1, p.__str__() + "\nr2=" + str(format(r2, '.2f')), weight="bold", fontsize=12)
+    plt.legend(prop=my_font)
+    plt.show()
+    if yes == 1:
+        plt.savefig(name)
+    for i in index_nand:
+        d[i] = p(c[i])
+    return d, index_nand
 
 
-if __name__ == '__main__':
-    main()
+# 构建绘图函数,绘制径流时序图(插补后的)
+def figure_plot(time, y, name, index_nan, yes=0):
+    '''
+    time    时间
+    y   要绘制的时间序列
+    yes 是否存储图片，0,1
+    name 图片存储路径
+    index_nan 插补序号
+    '''
+    plt.figure()
+    index_nan_ = [list(group) for group in mit.consecutive_groups(index_nan)]  # 把连续数字分组,因为有些插补不是连续的这样
+    # 绘制线图会出问题， 调用了more_itertools来给连续数据分组
+    plt.plot(time, y)
+    # plt.plot(time[index_nan], y[index_nan], linestyle="", marker="+", color="r", label="插补值")
+    for list_ in index_nan_:
+        plt.plot(time[list_], y[list_], color="r")
+    plt.xticks()
+    plt.xlabel("时间", fontproperties=my_font)
+    plt.ylabel("径流量/万m3", fontproperties=my_font)
+    plt.legend([name[46:-5], "插补值"], prop=my_font)
+    plt.show()
+    if yes == 1:
+        plt.savefig(name)
+
+# </editor-fold>
