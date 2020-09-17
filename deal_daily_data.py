@@ -1,6 +1,7 @@
 # code: utf-8
 # author: "Xudong Zheng"
 # email: Z786909151@163.com
+# 计算日尺度的指数（EDI/SPI）并分析
 
 import EDI_sample
 import EDI_refactoring

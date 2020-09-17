@@ -1,6 +1,7 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
+# 计算月尺度的指数（EDI/SPI）并分析
 
 import netCDF4 as nc
 import matplotlib.pyplot as plt
