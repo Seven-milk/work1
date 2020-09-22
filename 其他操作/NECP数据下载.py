@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! G:/Python/python3.7/python
 #################################################################
 # Python Script to retrieve 488 onlineD ata files of 'ds083.2',
 # total 10.04G. This script uses 'requests' to download data.
@@ -16,6 +16,8 @@
 
 import sys, os
 import requests
+import pandas as pd
+
 
 def check_file_status(filepath, filesize):
     sys.stdout.write('\r')
@@ -45,17 +47,23 @@ else:
 url = 'https://rda.ucar.edu/cgi-bin/login'
 values = {'email' : 'z786909151@163.com', 'passwd' : pswd, 'action' : 'login'}
 # Authenticate
-ret = requests.post(url,data=values)
+ret = requests.post(url, data=values)
 if ret.status_code != 200:
     print('Bad Authentication')
     print(ret.text)
     exit(1)
 dspath = 'https://rda.ucar.edu/data/ds083.2/'
 
-with open('necp数据路径.txt', 'r') as f:
-    filelist = f.read()
+# grib1 19990730_18_00-20071206_06_00
+date1 = pd.date_range('19990730', '20071207', freq='6H').strftime("%Y%m%d_%H").tolist()[3:-3]
+filelist_grib1=[f'grib1/{date[:4]}/{date[:4]}.{date[4:6]}/fnl_{date}_00.grib1' for date in date1]
+# grib2 20071206_12_00-20200921_18_00
+date2 = pd.date_range('20071206', '20200922', freq='6H').strftime("%Y%m%d_%H").tolist()[2:-1]
+filelist_grib2=[f'grib1/{date[:4]}/{date[:4]}.{date[4:6]}/fnl_{date}_00.grib1' for date in date2]
+# 合并
+filelist_grib1.extend(filelist_grib2)
+filelist = filelist_grib1
 
-filelist = filelist.split(" ")
 # filelist = [
 # 'grib1/1999/1999.07/fnl_19990730_18_00.grib1',
 # 'grib1/1999/1999.08/fnl_19990801_00_00.grib1',
