@@ -558,23 +558,26 @@ filelist = filelist_grib1
 # 'grib1/1999/1999.12/fnl_19991231_18_00.grib1']
 
 for file in filelist:
-    try:
-        filename = dspath + file
-        file_base = "H:/data/NECP_FNL/" + os.path.basename(file)
-        print('Downloading', file_base)
-        req = requests.get(filename, cookies=ret.cookies, allow_redirects=True, stream=True)
-        filesize = int(req.headers['Content-length'])
-        with open(file_base, 'wb') as outfile:
-            chunk_size = 1048576
-            for chunk in req.iter_content(chunk_size=chunk_size):
-                outfile.write(chunk)
-                if chunk_size < filesize:
-                    check_file_status(file_base, filesize)
-        check_file_status(file_base, filesize)
-        print()
-    except:
-        with open("H:/data/NECP_FNL/fail_name.txt", 'a') as f:
-            f.write("\n" + file)
-        print("download fail")
+    if os.path.basename(file) in os.listdir('H:/data/NECP_FNL'):  # 防止重复文件下载
         continue
+    else:
+        try:
+            filename = dspath + file
+            file_base = "H:/data/NECP_FNL/" + os.path.basename(file)
+            print('Downloading', file_base)
+            req = requests.get(filename, cookies=ret.cookies, allow_redirects=True, stream=True)
+            filesize = int(req.headers['Content-length'])
+            with open(file_base, 'wb') as outfile:
+                chunk_size = 1048576
+                for chunk in req.iter_content(chunk_size=chunk_size):
+                    outfile.write(chunk)
+                    if chunk_size < filesize:
+                        check_file_status(file_base, filesize)
+            check_file_status(file_base, filesize)
+            print()
+        except:
+            with open("H:/data/NECP_FNL/fail_name.txt", 'a') as f:
+                f.write("\n" + file)
+            print("download fail")
+            continue
 # TODO 加多线程
