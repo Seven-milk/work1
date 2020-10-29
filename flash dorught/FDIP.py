@@ -41,7 +41,7 @@ class Drought():
     @staticmethod
     def percentile(x: np.ndarray) -> np.ndarray:
         """ calculate the percentile for each point in x """
-        pass
+        return x
 
     def cal_SM_percentile(self) -> np.ndarray:
         """ calculate SM percentile using SM, with process of timestep(e.g. daily) """
@@ -73,9 +73,11 @@ class Drought():
 
     def eliminate(self):
         """ eliminate mild drought events which are not dry based on threshold2 """
+        index = []
         for i in range(len(self.dry_flag_start)):
-            if min(self.SM_percentile[self.dry_flag_start[i]:self.dry_flag_end[i]]) > self.threshold2:
-                del self.dry_flag_start[i], self.dry_flag_end[i]
+            if min(self.SM_percentile[self.dry_flag_start[i]:self.dry_flag_end[i] + 1]) > self.threshold2:
+                index.append(i)
+        self.dry_flag_start, self.dry_flag_end = np.delete(self.dry_flag_start, index), np.delete(self.dry_flag_end, index)
         # TODO eliminate mild drought with short duration or small severity
 
     def character(self) -> (np.ndarray, np.ndarray, np.ndarray):
@@ -127,18 +129,18 @@ class FD(Drought):
         self.RImax_threshold = RImax_threshold
         self.dry_flag_end_fd, self.RI_mean, self.RI_max= self.cal_RI()
 
-    def cal_RI(self) -> (np.ndarray, np.ndarray, np.ndarray):
-        """ extract extract flash development period of drought event
-         and calculate RImean and RImax for each flash drought event, unit = 1/time interval of input SM """
-        n = len(self.dry_flag_start)  # the number of flash drought events
-        for i in range(n):
-            if i==0 & self.dry_flag_start[0] == 0:
-                RI = self.SM_percentile[]
-            else:
-                start = self.dry_flag_start[i]
-                end = self.dry_flag_end[i]
-                RI = self.SM_percentile[start, end + 1] - self.SM_percentile[start-1, end]
-                flag_end_fd_index = RI[]
+    # def cal_RI(self) -> (np.ndarray, np.ndarray, np.ndarray):
+    #     """ extract extract flash development period of drought event
+    #      and calculate RImean and RImax for each flash drought event, unit = 1/time interval of input SM """
+    #     n = len(self.dry_flag_start)  # the number of flash drought events
+    #     for i in range(n):
+    #         if i==0 & self.dry_flag_start[0] == 0:
+    #             RI = self.SM_percentile[]
+    #         else:
+    #             start = self.dry_flag_start[i]
+    #             end = self.dry_flag_end[i]
+    #             RI = self.SM_percentile[start, end + 1] - self.SM_percentile[start-1, end]
+    #             flag_end_fd_index = RI[]
     #     RI_mean = np.full((n,), np.NAN, dtype='float')
     #     RI_max = np.full((n,), np.NAN, dtype='float')
     #     for i in range(n):
@@ -183,23 +185,27 @@ class FD(Drought):
 
         # dry_flag_end_fd
 
-    def eliminate(self):
-        """ eliminate mild drought events which are not dry based on threshold2
-        and mild drought events which are not flash based on RImean_threshold / self.RImean_threshold"""
-        for i in range(len(self.dry_flag_start)):
-            if min(self.SM_percentile[self.dry_flag_start[i]:self.dry_flag_end[i]]) > self.threshold2 \
-                    | self.RI_mean[i] <= self.RImean_threshold | self.RI_max <= self.RImean_threshold:
-                del self.dry_flag_start[i], self.dry_flag_end[i]
-        # TODO add rule to elominate drought event with RI_mean > RImean_threshold and RI_max > RImax_threshold
-        #  but duration too short
+    # def eliminate(self):
+    #     """ eliminate mild drought events which are not dry based on threshold2
+    #     and mild drought events which are not flash based on RImean_threshold / self.RImean_threshold"""
+    #     for i in range(len(self.dry_flag_start)):
+    #         if min(self.SM_percentile[self.dry_flag_start[i]:self.dry_flag_end[i]]) > self.threshold2 \
+    #                 | self.RI_mean[i] <= self.RImean_threshold | self.RI_max <= self.RImean_threshold:
+    #             del self.dry_flag_start[i], self.dry_flag_end[i]
+    #     # TODO add rule to elominate drought event with RI_mean > RImean_threshold and RI_max > RImax_threshold
+    #     #  but duration too short
+    #
+    # def character(self) -> pd.DataFrame:
+    #     """ extract the drought character variables
+    #     RI_mean/RI_max
+    #     FDD: duration of a flash drought event
+    #     FDS: severity of a flash drought event
+    #     """
+    #     FD_character = pd.DataFrame(columns=("Date_start", "Date_end", "flag_start", "flag_end", "RI_mean", "RI_max",
+    #                                          "FDD", "FDS", ""))
+    #
+    #     return FD_character
 
-    def character(self) -> pd.DataFrame:
-        """ extract the drought character variables
-        RI_mean/RI_max
-        FDD: duration of a flash drought event
-        FDS: severity of a flash drought event
-        """
-        FD_character = pd.DataFrame(columns=("Date_start", "Date_end", "flag_start", "flag_end", "RI_mean", "RI_max",
-                                             "FDD", "FDS", ""))
-
-        return FD_character
+if __name__ == "__main__":
+    sm = np.random.rand(365, )
+    D1 = Drought(sm, 365)
