@@ -5,6 +5,7 @@
 # reference:Two Different Methods for Flash Drought Identification: Comparison of Their Strengths and Limitations
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 class Drought():
@@ -77,7 +78,8 @@ class Drought():
         for i in range(len(self.dry_flag_start)):
             if min(self.SM_percentile[self.dry_flag_start[i]:self.dry_flag_end[i] + 1]) > self.threshold2:
                 index.append(i)
-        self.dry_flag_start, self.dry_flag_end = np.delete(self.dry_flag_start, index), np.delete(self.dry_flag_end, index)
+        self.dry_flag_start, self.dry_flag_end = np.delete(self.dry_flag_start, index), np.delete(self.dry_flag_end,
+                                                                                                  index)
         # TODO eliminate mild drought with short duration or small severity
 
     def character(self) -> (np.ndarray, np.ndarray, np.ndarray):
@@ -99,11 +101,43 @@ class Drought():
         n = len(self.dry_flag_start)  # the number of flash drought events
         Date_start = np.array([self.Date[self.dry_flag_start[i]] for i in range(n)])
         Date_end = np.array([self.Date[self.dry_flag_end[i]] for i in range(n)])
-        Drought_character = pd.DataFrame(np.vstack((Date_start, Date_end, self.dry_flag_start, self.dry_flag_end, self.DD, self.DS, self.SM_min)).T,
-                                         columns=("Date_start", "Date_end", "flag_start", "flag_end", "DD", "DS", "SM_min"))
+        Drought_character = pd.DataFrame(
+            np.vstack((Date_start, Date_end, self.dry_flag_start, self.dry_flag_end, self.DD, self.DS, self.SM_min)).T,
+            columns=("Date_start", "Date_end", "flag_start", "flag_end", "DD", "DS", "SM_min"))
         if xlsx == 1:
             Drought_character.to_excel("/Drought_character", index=False)
         return Drought_character
+
+    def plot(self, title="Drought", yes=0):
+        """plot the drought events: time series of index; threshold1/2; drought events
+        title: string, the title of this figure, it also will be the path for save figure
+        yes: bool, save or not save this figure
+        """
+        fig = plt.figure()
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+        # plot
+        ax1.bar(self.Date, self.SM, label="observation SM", color="cornflowerblue", alpha=0.5)  # sm bar
+        ax2.plot(self.Date, self.SM_percentile, label="SM Percentile", color="royalblue",
+                 linewidth=0.9)  # sm_percentile
+        ax2.plot(self.Date, np.full((len(self.Date),), fill_value=self.threshold1),
+                 label=f"Threshold1={self.threshold1}", color="chocolate")  # threshold1
+        ax2.plot(self.Date, np.full((len(self.Date),), fill_value=self.threshold2),
+                 label=f"Threshold2={self.threshold2}", color="darkred")  # threshold2
+        ax2.plot(self.Date, np.full((len(self.Date),), fill_value=0.5), label=f"Mean", color="sandybrown")  # mean
+        # TODO plot drought events; plot the trend line of sm (MK trend test)
+        # set figure
+        ax1.set_ylabel("SM")
+        ax2.set_ylabel("SM Percentile")
+        ax2.set_xlabel("Date")
+        ax1.set_xlim(xmin=self.Date[0], xmax=self.Date[-1])
+        ax2.set_xlim(xmin=self.Date[0], xmax=self.Date[-1])
+        ax1.legend(loc="upper right")
+        ax2.legend(loc="upper right")
+        ax1.set_title(title, loc="center")
+        plt.show()
+        if yes == 1:
+            plt.savefig("Drought/" + title)
 
 
 class FD(Drought):
@@ -127,7 +161,7 @@ class FD(Drought):
         Drought.__init__(self)
         self.RImean_threshold = RImean_threshold
         self.RImax_threshold = RImax_threshold
-        self.dry_flag_end_fd, self.RI_mean, self.RI_max= self.cal_RI()
+        self.dry_flag_end_fd, self.RI_mean, self.RI_max = self.cal_RI()
 
     # def cal_RI(self) -> (np.ndarray, np.ndarray, np.ndarray):
     #     """ extract extract flash development period of drought event
@@ -161,29 +195,29 @@ class FD(Drought):
     #             RI_mean[i] = sum(RI) / m
     #             RI_max[i] = max(RI)
     #     return RI_mean, RI_max
-        # #
-        # n = len(dry_flag_start)
-        # for i in range(n):
-        #     if i == 0 & dry_flag_start[0] == 0:
-        #         start = dry_flag_start[0]
-        #         end = dry_flag_end[0]
-        #         RI = [0]
-        #         for j in range(start + 1, end + 1):
-        #             RI.append(self.SM_percentile[j] - self.SM_percentile[j - 1])
-        #         dry_flag_end_fd = [for k in range()]
-        #
-        #
-        #         # cal RImean RImax
-        #         m = dry_flag_end[i] - dry_flag_start[i] + 1  # the number of drought duration of each event
-        #
-        #
-        #     else:
-        #         start = self.dry_flag_start[i]
-        #         end = self.dry_flag_end[i]
-        #         m = self.dry_flag_end[i] - self.dry_flag_start[i] + 1
-        #         RI = [self.SM_percentile[j] - self.SM_percentile[j - 1] for j in range(start, end + 1)]
+    # #
+    # n = len(dry_flag_start)
+    # for i in range(n):
+    #     if i == 0 & dry_flag_start[0] == 0:
+    #         start = dry_flag_start[0]
+    #         end = dry_flag_end[0]
+    #         RI = [0]
+    #         for j in range(start + 1, end + 1):
+    #             RI.append(self.SM_percentile[j] - self.SM_percentile[j - 1])
+    #         dry_flag_end_fd = [for k in range()]
+    #
+    #
+    #         # cal RImean RImax
+    #         m = dry_flag_end[i] - dry_flag_start[i] + 1  # the number of drought duration of each event
+    #
+    #
+    #     else:
+    #         start = self.dry_flag_start[i]
+    #         end = self.dry_flag_end[i]
+    #         m = self.dry_flag_end[i] - self.dry_flag_start[i] + 1
+    #         RI = [self.SM_percentile[j] - self.SM_percentile[j - 1] for j in range(start, end + 1)]
 
-        # dry_flag_end_fd
+    # dry_flag_end_fd
 
     # def eliminate(self):
     #     """ eliminate mild drought events which are not dry based on threshold2
@@ -205,6 +239,7 @@ class FD(Drought):
     #                                          "FDD", "FDS", ""))
     #
     #     return FD_character
+
 
 if __name__ == "__main__":
     sm = np.random.rand(365, )
