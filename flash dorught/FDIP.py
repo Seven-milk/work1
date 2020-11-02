@@ -116,7 +116,7 @@ class Drought():
         fig = plt.figure()
         ax1 = fig.add_subplot(211)
         ax2 = fig.add_subplot(212)
-        # plot
+        # plot fundamental figure : SM
         ax1.bar(self.Date, self.SM, label="observation SM", color="cornflowerblue", alpha=0.5)  # sm bar
         ax2.plot(self.Date, self.SM_percentile, label="SM Percentile", color="royalblue",
                  linewidth=0.9)  # sm_percentile
@@ -125,7 +125,17 @@ class Drought():
         ax2.plot(self.Date, np.full((len(self.Date),), fill_value=self.threshold2),
                  label=f"Threshold2={self.threshold2}", color="darkred")  # threshold2
         ax2.plot(self.Date, np.full((len(self.Date),), fill_value=0.5), label=f"Mean", color="sandybrown")  # mean
-        # TODO plot drought events; plot the trend line of sm (MK trend test)
+        # plot the trend line of sm
+        z = np.polyfit(range(len(self.Date)), self.SM, deg=1)
+        p = np.poly1d(z)
+        ax1.plot(self.Date, p(range(len(self.Date))), color="brown", alpha=0.5, label=f"Trend:{p}")
+        # plot drought events
+        events = np.full((len(self.Date),), fill_value=self.threshold1)
+        for i in range(len(self.dry_flag_start)):
+            events[self.dry_flag_start[i]:self.dry_flag_end[i] + 1] = \
+                self.SM_percentile[self.dry_flag_start[i]:self.dry_flag_end[i] + 1]
+        ax2.fill_between(self.Date, events, self.threshold1, alpha=0.8, facecolor="goldenrod",
+                         label="Drought events", interpolate=True)
         # set figure
         ax1.set_ylabel("SM")
         ax2.set_ylabel("SM Percentile")
@@ -244,3 +254,4 @@ class FD(Drought):
 if __name__ == "__main__":
     sm = np.random.rand(365, )
     D1 = Drought(sm, 365)
+    D1.plot()
