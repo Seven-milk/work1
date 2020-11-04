@@ -8,7 +8,56 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-class Drought():
+class SM_percentile():
+    def __init__(self, SM, timestep):
+        """
+        SM ——> SM_percentile: Statistics method(self.cal_SM_percentile)
+        input:
+            SM: SOIL MOISTURE, list or numpy array
+            timestep: the timestep of SM （the number of SM data in one year）, which is used to do cal_SM_percentile
+            (reshape a vector to a array, which shape is (n(year)+1 * timestep))
+                365 : daily, 365 data in one year
+                12 : monthly, 12 data in one year
+                73 : pentad(5), 73 data in one year
+                x ：x data in one year
+
+        output:
+            self.SM_percentile
+        """
+        self.SM_percentile = self.cal_SM_percentile()
+
+    @staticmethod
+    def percentile(x: np.ndarray) -> np.ndarray:
+        """ calculate the percentile for each point in x
+        input:
+            x: 1D numpy.ndarray
+        output:
+            x_percentile: 1D numpy.ndarray
+        """
+        x_percentile = x
+        return x_percentile
+
+    def cal_SM_percentile(self) -> np.ndarray:
+        """ calculate SM percentile using SM, with process of reshape based on timestep(e.g. daily)
+        ps: distribution fited in a section
+        SM 1D ——> timestep * section 2D ——> SM_percentile 1D
+        """
+        n = len(self.SM) // self.timestep
+        SM_percentile = np.full((n + 1, self.timestep), np.NAN, dtype='float')
+        SM_percentile[:n, :] = self.SM[:(n * self.timestep)].reshape((n, self.timestep))
+        SM_percentile[n:, :len(self.SM[(n * self.timestep):])] = self.SM[(n * self.timestep):]
+        for i in range(self.timestep):
+            l = SM_percentile[:, i]
+            l = l[~np.isnan(l)]
+            # l百分比计算
+            l = self.percentile(l)
+            SM_percentile[:len(l), i] = l
+        SM_percentile = SM_percentile.flatten()
+        SM_percentile = SM_percentile[~np.isnan(SM_percentile)]
+        return SM_percentile
+
+
+class Drought(SM_percentile):
     def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2):
         """
         input:
@@ -24,7 +73,7 @@ class Drought():
                 x ：x data in one year
 
         output:
-            self.SM_percentile:
+            self.SM_percentile: SM_percentile calculated by SM using self.cal_SM_percentile
             self.dry_flag_start, self.dry_flag_end: start end of each drought events
             self.DD, self.DS, self.SM_min: character of each drought events
             plot: use self.plot(plot(self, title="Drought", yes=0)), save figure set yes = 1: plot dorught
@@ -41,31 +90,10 @@ class Drought():
         self.timestep = timestep
         self.threshold1 = threshold1
         self.threshold2 = threshold2
-        self.SM_percentile = self.cal_SM_percentile()
+        SM_percentile.__init__(self, SM, timestep)
         self.dry_flag_start, self.dry_flag_end = self.run_threshold(self.SM_percentile, self.threshold1)
         self.eliminate()
         self.DD, self.DS, self.SM_min = self.character()
-
-    @staticmethod
-    def percentile(x: np.ndarray) -> np.ndarray:
-        """ calculate the percentile for each point in x """
-        return x
-
-    def cal_SM_percentile(self) -> np.ndarray:
-        """ calculate SM percentile using SM, with process of timestep(e.g. daily) """
-        n = len(self.SM) // self.timestep
-        SM_percentile = np.full((n + 1, self.timestep), np.NAN, dtype='float')
-        SM_percentile[:n, :] = self.SM[:(n * self.timestep)].reshape((n, self.timestep))
-        SM_percentile[n:, :len(self.SM[(n * self.timestep):])] = self.SM[(n * self.timestep):]
-        for i in range(self.timestep):
-            l = SM_percentile[:, i]
-            l = l[~np.isnan(l)]
-            # l百分比计算
-            l = self.percentile(l)
-            SM_percentile[:len(l), i] = l
-        SM_percentile = SM_percentile.flatten()
-        SM_percentile = SM_percentile[~np.isnan(SM_percentile)]
-        return SM_percentile
 
     @staticmethod
     def run_threshold(index: np.ndarray, threshold: float) -> (np.ndarray, np.ndarray):
@@ -118,7 +146,7 @@ class Drought():
             np.vstack((Date_start, Date_end, self.dry_flag_start, self.dry_flag_end, self.DD, self.DS, self.SM_min,
                        threshold1, threshold2)).T,
             columns=(
-            "Date_start", "Date_end", "flag_start", "flag_end", "DD", "DS", "SM_min", "thrshold1", "threshold2"))
+                "Date_start", "Date_end", "flag_start", "flag_end", "DD", "DS", "SM_min", "thrshold1", "threshold2"))
         if xlsx == 1:
             Drought_character.to_excel("/Drought_character", index=False)
         return Drought_character
@@ -166,7 +194,8 @@ class Drought():
 
 
 class FD(Drought):
-    def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2, RI_threshold=0.1, RI_mean_threshold=0.065):
+    def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2, RI_threshold=0.1,
+                 RI_mean_threshold=0.065):
         """
         input:
             SM: SOIL MOISTURE, list or numpy array
@@ -208,7 +237,8 @@ class FD(Drought):
         dry_flag = np.argwhere(index >= threshold).flatten()
         dry_flag_start = dry_flag[np.argwhere(dry_flag - np.roll(dry_flag, 1).flatten() != 1)].flatten()[1:]
         dry_flag_end = dry_flag[np.argwhere(dry_flag - np.roll(dry_flag, -1).flatten() != -1)].flatten()[:-1]
-        # because the rare of develop period(index(RI) > threshold) when the threshold is not zero, dry_flag may be a [], a check is nesscessary
+        # because the rare of develop period(index(RI) > threshold) when the threshold is not zero, dry_flag may be a []
+        # , a check is nesscessary
         # ps: if threshold set as zero, it cant be [], because of a drought event must have +- RI, dry_flag cant be a []
         if len(dry_flag) > 0:
             if index[dry_flag[0]] >= threshold:
@@ -349,13 +379,13 @@ class FD(Drought):
                 self.SM_percentile[self.dry_flag_start[i]:self.dry_flag_end[i] + 1]
         ax2.fill_between(self.Date, events, self.threshold1, alpha=0.5, facecolor="red",
                          label="Drought events", interpolate=True)
-        # TODO fix the fill plot
         # plot flash drought
         for i in range(len(self.fd_flag_start)):
             for j in range(len(self.fd_flag_start[i])):
                 start = self.fd_flag_start[i][j]
                 end = self.fd_flag_end[i][j]
-                ax2.plot(self.Date[start:end+1], self.SM_percentile[start:end+1], color="r", linewidth=2, marker=7, markersize=6)
+                ax2.plot(self.Date[start:end + 1], self.SM_percentile[start:end + 1], color="r", linewidth=2, marker=7,
+                         markersize=6)
                 print(i, j)
         # set figure
         ax1.set_ylabel("SM")
@@ -370,10 +400,9 @@ class FD(Drought):
         if yes == 1:
             plt.savefig("Drought/" + title)
 
+
 if __name__ == "__main__":
     sm = np.random.rand(365, )
-    D1 = Drought(sm, 365)
-    print(D1.out_put())
     FD1 = FD(sm, 365)
     FD1.plot()
     print(FD1.out_put())
