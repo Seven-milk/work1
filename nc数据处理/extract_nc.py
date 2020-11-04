@@ -38,7 +38,7 @@ def extract_nc_daily(path, coord_path, variable_name, precision=3):
         lon_index.append(np.where(lon == coord["lon"][j])[0][0])
     f1.close()
 
-    # read variable based on the lat_index/lon_index\
+    # read variable based on the lat_index/lon_index
     for i in range(len(result)):
         f = Dataset(result[i], 'r')
         Dataset.set_auto_mask(f, False)
