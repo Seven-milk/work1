@@ -2,7 +2,9 @@
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
 # Flash Drought Identify Process
-# reference:Two Different Methods for Flash Drought Identification: Comparison of Their Strengths and Limitations
+# reference:
+# [1] Two Different Methods for Flash Drought Identification: Comparison of Their Strengths and Limitations
+# [2] A new framework for tracking flash drought events in space and time
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
