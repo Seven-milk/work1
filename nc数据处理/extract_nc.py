@@ -17,13 +17,16 @@ def extract_nc_daily(path, coord_path, variable_name, precision=3):
         precision: the minimum precision of lat/lon, to match the lat/lon of source nc file
 
     output:
-        {variable_name}.txt
+        {variable_name}.txt [i, j]: i(file number) j(grid point number)
         lat_index.txt/lon_index.txt
         coord.txt
     """
+    print(f"variable:{variable_name}")
     coord = pd.read_csv(coord_path, sep=",")  # read coord(extract by fishnet)
+    print(f"grid point number:{len(coord)}")
     coord = coord.round(precision)  # 处理单位以便与nc中lat lon一致
     result = [path + "/" + d for d in os.listdir(path) if d[-4:] == ".nc4"]
+    print(f"file number:{len(result)}")
     variable = np.zeros((len(result), len(coord)))
 
     # calculate the index of lat/lon in coord from source nc file
@@ -38,14 +41,16 @@ def extract_nc_daily(path, coord_path, variable_name, precision=3):
         lon_index.append(np.where(lon == coord["lon"][j])[0][0])
     f1.close()
 
-    # read variable based on the lat_index/lon_index
+    # read variable based on the lat_index/lon_index TODO asyncio io密集型
     for i in range(len(result)):
         f = Dataset(result[i], 'r')
         Dataset.set_auto_mask(f, False)
         for j in range(len(coord)):
             variable[i, j] = f.variables[variable_name][0, lat_index[j], lon_index[j]]
             # require: nc file only have three dimension
-            # 读取黄河流域部分,只取相交部分1057个，所以不能用f.variables['Rainf_f_tavg'][0, lat_index_lp, lon_index_lp]（1057*1057）
+            # f.variables['Rainf_f_tavg'][0, lat_index_lp, lon_index_lp]is a mistake, we only need the file
+            # that lat/lon corssed (1057) rather than meshgrid(lat, lon) (1057*1057)
+        print(f"complete read file:{i}")
         f.close()
 
     # save
@@ -62,13 +67,15 @@ def overview(path):
     print('****************************')
     print(f"number of nc file:{len(result)}")
     print('****************************')
-    print(f"key:{rootgrp.variables.keys()}")
+    print(f"variable key:{rootgrp.variables.keys()}")
     print('****************************')
     print(f"rootgrp:{rootgrp}")
     print('****************************')
     print(f"lat:{rootgrp.variables['lat'][:]}")
     print('****************************')
     print(f"lon:{rootgrp.variables['lon'][:]}")
+    print(f"variable:{rootgrp.variables}")
+    print('****************************')
     variable_name = input("variable name:")  # if you want to see the variable, input its name here
     while variable_name != "":
         print('****************************')
