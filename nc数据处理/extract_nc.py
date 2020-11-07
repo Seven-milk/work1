@@ -85,4 +85,6 @@ def overview(path):
 
 
 if __name__ == "__main__":
-    pass
+    path = "f:/"
+    coord_path = "F:/小论文2/代码/results/month_gldas/coord.txt"
+    extract_nc_daily(path, coord_path, "Rainf_f_tavg", precision=3)
