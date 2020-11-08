@@ -15,5 +15,4 @@ path = "D:\GLADS\daily_data"
 coord_path = "H:\GIS\Flash_drought\coord.txt"
 pd.read_csv(coord_path, sep=",")
 ex.overview(path)
-ex.extract_nc_daily(path, coord_path, 'Rainf_f_tavg', precision=3)
-
+ex.extract_nc_daily(path, coord_path, 'Evap_tavg', precision=3)

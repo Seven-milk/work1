@@ -6,16 +6,18 @@ import numpy as np
 from netCDF4 import Dataset
 import os
 import pandas as pd
+from pathos.multiprocessing import ProcessingPool as Pool
 import time
 
 
-def extract_nc_daily(path, coord_path, variable_name, precision=3):
+def extract_nc_daily(path, coord_path, variable_name, precision=3, num_pool=3):
     """extract variable(given region by coord) from .nc file
     input:
         path: path of the source nc file
         coord_path: path of the coord extracted by fishnet: OID_, lon, lat
         variable_name: name of the variable need to read
         precision: the minimum precision of lat/lon, to match the lat/lon of source nc file
+        num_pool: the number of processes
 
     output:
         {variable_name}.txt [i, j]: i(file number) j(grid point number)
@@ -42,18 +44,26 @@ def extract_nc_daily(path, coord_path, variable_name, precision=3):
         lon_index.append(np.where(lon == coord["lon"][j])[0][0])
     f1.close()
 
-    # read variable based on the lat_index/lon_index
-    for i in range(len(result)):
+    # read variable based on the lat_index/lon_index, based on multiprocessing
+    def read(i):
+        """read variable from nc file(i), used in pool"""
+        vb = []
         f = Dataset(result[i], 'r')
         Dataset.set_auto_mask(f, False)
         for j in range(len(coord)):
-            variable[i, j] = f.variables[variable_name][0, lat_index[j], lon_index[j]]
+            vb.append(f.variables[variable_name][0, lat_index[j], lon_index[j]])
             # require: nc file only have three dimension
             # f.variables['Rainf_f_tavg'][0, lat_index_lp, lon_index_lp]is a mistake, we only need the file
             # that lat/lon corssed (1057) rather than meshgrid(lat, lon) (1057*1057)
         print(f"complete read file:{i}")
-        f.close()
+        return vb
 
+    po = Pool(num_pool)  # pool
+    res_po = [po.amap(read, (i,)) for i in range(len(result))]  # the results of every process
+    po.close()
+    po.join()
+    for i in range(len(result)):
+        variable[i, :] = res_po[i].get()[0]  # get varibale from result
     # save
     np.savetxt(f'{variable_name}.txt', variable, delimiter=' ')
     np.savetxt('lat_index.txt', lat_index, delimiter=' ')
@@ -91,4 +101,4 @@ if __name__ == "__main__":
     coord_path = "H:\GIS\Flash_drought\coord.txt"
     extract_nc_daily(path, coord_path, "SoilMoist_RZ_tavg", precision=3)
     end = time.time()
-    print("extract_nc time：", end - start)
+    print("extract_nc_mp time：", end - start)

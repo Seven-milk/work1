@@ -38,6 +38,7 @@ class SM_percentile():
         """
         x_percentile = x
         return x_percentile
+    # TODO 计算percentile
 
     def cal_SM_percentile(self) -> np.ndarray:
         """ calculate SM percentile using SM, with process of reshape based on timestep(e.g. daily)
