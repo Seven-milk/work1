@@ -10,7 +10,7 @@ from pathos.multiprocessing import ProcessingPool as Pool
 import time
 
 
-def extract_nc_daily(path, coord_path, variable_name, precision=3, num_pool=3):
+def extract_nc(path, coord_path, variable_name, precision=3, num_pool=3):
     """extract variable(given region by coord) from .nc file
     input:
         path: path of the source nc file
@@ -99,6 +99,6 @@ if __name__ == "__main__":
     start = time.time()
     path = "H:/test"
     coord_path = "H:\GIS\Flash_drought\coord.txt"
-    extract_nc_daily(path, coord_path, "SoilMoist_RZ_tavg", precision=3)
+    extract_nc(path, coord_path, "SoilMoist_RZ_tavg", precision=3)
     end = time.time()
     print("extract_nc_mp time：", end - start)
