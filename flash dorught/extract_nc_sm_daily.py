@@ -12,9 +12,9 @@ import numpy as np
 import pandas as pd
 
 """ extarct variable using serial function """
-# path = "D:\GLADS\daily_data"
-# coord_path = "H:\GIS\Flash_drought\coord.txt"
-# pd.read_csv(coord_path, sep=",")
+path = "D:\GLADS\daily_data"
+coord_path = "H:\GIS\Flash_drought\coord.txt"
+coord = pd.read_csv(coord_path, sep=",")
 # ex.overview(path)
 # ex.extract_nc(path, coord_path, 'ESoil_tavg', precision=3)
 

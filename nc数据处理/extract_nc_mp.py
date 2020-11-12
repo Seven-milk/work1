@@ -106,6 +106,6 @@ if __name__ == "__main__":
     """Execute  code, extract variable from GLDAS nc file"""
     path = "D:\GLADS\daily_data"
     coord_path = "H:\GIS\Flash_drought\coord.txt"
-    pd.read_csv(coord_path, sep=",")
+    coord = pd.read_csv(coord_path, sep=",")
     overview(path)
-    extract_nc(path, coord_path, 'Qg_tavg', precision=3, num_pool=8)
+    # extract_nc(path, coord_path, 'Qg_tavg', precision=3, num_pool=8)
