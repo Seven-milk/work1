@@ -532,7 +532,8 @@ class FD_RI(FD):
 
 
 if __name__ == "__main__":
-    sm = np.random.rand(365 * 5, )
+    # sm = np.random.rand(365 * 5, )
+    sm = np.random.normal(loc=0, scale=0.3, size=365 * 5)
     sm = np.convolve(sm, np.repeat(1 / 3, 3), mode='full')  # running means
     FD1 = FD_RI(sm, 365)
     RI = FD1.RI
