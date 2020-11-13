@@ -18,12 +18,7 @@ coord = pd.read_csv(coord_path, sep=",")
 # soil moisture data validation
 sm_rz = np.loadtxt(os.path.join(data_path, "SoilMoist_RZ_tavg.txt"), dtype="float", delimiter=" ")
 
-# pretreatment
-# smooth
-
-# distrbution
-# hist
-for i in range(len()):
+# pretreatment: smooth
 
 # Identify FD event based on average sm
 sm_rz_avg = sm_rz.mean(axis=1)

@@ -8,6 +8,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy import stats
 
 
 class SM_percentile():
@@ -29,16 +30,33 @@ class SM_percentile():
         self.SM_percentile = self.cal_SM_percentile()
 
     @staticmethod
-    def percentile(x: np.ndarray) -> np.ndarray:
-        """ calculate the percentile for each point in x
+    def percentile(x: np.ndarray, path="1", y=0, bw_method="scott") -> np.ndarray:
+        """ calculate the percentile for each point in x, using kernel density estimation, bw_method='Scott'
         input:
             x: 1D numpy.ndarray
         output:
             x_percentile: 1D numpy.ndarray
         """
-        x_percentile = x
+        kde = stats.gaussian_kde(x, bw_method=bw_method)
+        x_percentile = np.array([kde.integrate_box_1d(low=0, high=x[i]) for i in range(len(x))])
+        # plot while y set to 1
+        if y == 1:
+            fig, ax1 = plt.subplots()
+            ax2 = ax1.twinx()
+            ax1.hist(x, label="Hist", alpha=0.5)
+            x_eval = np.linspace(x.min(), x.max(), num=(x.max() - x.min()) * 100)
+            ax1.plot(x, np.zeros(x.shape), '+', color='navy', ms=20, label="Samples")
+            ax1.set_ylabel("Number of samples")
+            ax2.plot(x_eval, kde(x_eval), 'r-', label="KDE based on bw_method: " + bw_method)
+            ax2.set_ylabel("PDF")
+            ax1.set_title("Kernel density estimation")
+            ax1.set_xlim(x.min(), x.max())
+            plt.legend([ax1, ax2])
+            handles1, labels1 = ax1.get_legend_handles_labels()
+            handles2, labels2 = ax2.get_legend_handles_labels()
+            plt.legend(handles1 + handles2, labels1 + labels2, loc='upper right')
+            plt.savefig(f"/SM_kde/SM_kde{path}")
         return x_percentile
-    # TODO 计算percentile
 
     def cal_SM_percentile(self) -> np.ndarray:
         """ calculate SM percentile using SM, with process of reshape based on timestep(e.g. daily)
@@ -514,8 +532,8 @@ class FD_RI(FD):
 
 
 if __name__ == "__main__":
-    sm = np.random.rand(365*5, )
-    sm = np.convolve(sm, np.repeat(1/3, 3), mode='full')  # running means
+    sm = np.random.rand(365 * 5, )
+    sm = np.convolve(sm, np.repeat(1 / 3, 3), mode='full')  # running means
     FD1 = FD_RI(sm, 365)
     RI = FD1.RI
     FD1.plot()
