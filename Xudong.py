@@ -7,7 +7,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeat
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from cartopy.io.shapereader import Reader, natural_earth
-
+import scipy.stats as st
 import pandas as pd
 import numpy as np
 
@@ -22,7 +22,7 @@ from numba import jit
 
 import more_itertools as mit
 
-from mpl_toolkits.basemap import Basemap
+# from mpl_toolkits.basemap import Basemap
 from netCDF4 import Dataset
 
 import os
@@ -115,7 +115,7 @@ def array_cal(extend, det, lat_index, lon_index, data):
     return array_data, array_data_lon, array_data_lat
 
 
-def plot_data(ax, array_data_lon, array_data_lat, array_data, title, cmap_name='YlOrBr'):
+def pcolor_data(ax, array_data_lon, array_data_lat, array_data, title, cmap_name='YlOrBr'):
     '''封装绘图函数，传入数据，绘制网格点图
     ax 基于create_map创建的map句柄
     array_data_lon, array_data_lat, array_data 基于array_cal生成的完整绘图数组及与之对应的经纬度数组
@@ -248,7 +248,7 @@ def map_plot(filename, variable_name):
 # <editor-fold, desc="MK检验">
 def MK_test(x):
     '''MK检验
-    x 传入序列
+    x 传入序列, np.ndarray or list
     返回
         (slope, zc1)：分别为slope倾斜度度量和Z统计量
         (统计量反映了序列的差异程度，统计量越大，越可能存在趋势，正负表示正负趋势)
@@ -256,11 +256,11 @@ def MK_test(x):
     s = 0
     length = len(x)
     for m in range(0, length - 1):
-        print(m)
-        print('/')
+        # print(m)
+        # print('/')
         for n in range(m + 1, length):
-            print(n)
-            print('*')
+            # print(n)
+            # print('*')
             if x[n] > x[m]:
                 s = s + 1
             elif x[n] == x[m]:
@@ -291,6 +291,98 @@ def MK_test(x):
 
     slope = np.median(slope1)
     return (slope, zc1)
+
+
+# </editor-fold>
+
+
+# <editor-fold, desc="MK检验-标准"> https://github.com/manaruchi/MannKendall_Sen_Rainfall
+def mann_kendall(vals, confidence=0.95):
+    n = len(vals)
+
+    box = np.ones((len(vals), len(vals)))
+    box = box * 5
+    sumval = 0
+    for r in range(len(vals)):
+        for c in range(len(vals)):
+            if (r > c):
+                if (vals[r] > vals[c]):
+                    box[r, c] = 1
+                    sumval = sumval + 1
+                elif (vals[r] < vals[c]):
+                    box[r, c] = -1
+                    sumval = sumval - 1
+                else:
+                    box[r, c] = 0
+
+    freq = 0
+    # Lets caluclate frequency now
+    tp = np.unique(vals, return_counts=True)
+    for tpx in range(len(tp[0])):
+        if (tp[1][tpx] > 1):
+            tp1 = tp[1][tpx]
+            sev = tp1 * (tp1 - 1) * (2 * tp1 + 5)
+            freq = freq + sev
+
+    se = ((n * (n - 1) * (2 * n + 5) - freq) / 18.0) ** 0.5
+
+    # Lets calc the z value
+    if (sumval > 0):
+        z = (sumval - 1) / se
+    else:
+        z = (sumval + 1) / se
+
+    # lets see the p value
+
+    p = 2 * st.norm.cdf(-abs(z))
+
+    # trend type
+    if (p < (1 - confidence) and z < 0):
+        tr_type = -1
+    elif (p < (1 - confidence) and z > 0):
+        tr_type = +1
+    else:
+        tr_type = 0
+
+    return z, p, tr_type
+
+
+# </editor-fold>
+
+
+# <editor-fold, desc="sen-slope"> https://github.com/manaruchi/MannKendall_Sen_Rainfall
+def sen_slope(vals, confidence=0.95):
+    alpha = 1 - confidence
+    n = len(vals)
+
+    box = np.ones((len(vals), len(vals)))
+    box = box * 5
+    boxlist = []
+
+    for r in range(len(vals)):
+        for c in range(len(vals)):
+            if (r > c):
+                box[r, c] = (vals[r] - vals[c]) / (r - c)
+                boxlist.append((vals[r] - vals[c]) / (r - c))
+    freq = 0
+    # Lets caluclate frequency now
+    tp = np.unique(vals, return_counts=True)
+    for tpx in range(len(tp[0])):
+        if (tp[1][tpx] > 1):
+            tp1 = tp[1][tpx]
+            sev = tp1 * (tp1 - 1) * (2 * tp1 + 5)
+            freq = freq + sev
+
+    se = ((n * (n - 1) * (2 * n + 5) - freq) / 18.0) ** 0.5
+
+    no_of_vals = len(boxlist)
+
+    # lets find K value
+
+    k = st.norm.ppf(1 - (0.05 / 2)) * se
+
+    slope = np.median(boxlist)
+    return slope, k, se
 
 
 # </editor-fold>
