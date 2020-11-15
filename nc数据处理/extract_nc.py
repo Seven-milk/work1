@@ -7,6 +7,7 @@ from netCDF4 import Dataset
 import os
 import pandas as pd
 import time
+import re
 
 
 def extract_nc(path, coord_path, variable_name, precision=3):
@@ -28,7 +29,7 @@ def extract_nc(path, coord_path, variable_name, precision=3):
     coord = coord.round(precision)  # 处理单位以便与nc中lat lon一致
     result = [path + "/" + d for d in os.listdir(path) if d[-4:] == ".nc4"]
     print(f"file number:{len(result)}")
-    variable = np.zeros((len(result), len(coord)))
+    variable = np.zeros((len(result), len(coord) + 1))  # save the path correlated with read order
 
     # calculate the index of lat/lon in coord from source nc file
     f1 = Dataset(result[0], 'r')
@@ -46,16 +47,19 @@ def extract_nc(path, coord_path, variable_name, precision=3):
     for i in range(len(result)):
         f = Dataset(result[i], 'r')
         Dataset.set_auto_mask(f, False)
+        variable[i, 0] = float(re.search(r"\d{8}", result[i])[0])
         for j in range(len(coord)):
-            variable[i, j] = f.variables[variable_name][0, lat_index[j], lon_index[j]]
+            variable[i, j + 1] = f.variables[variable_name][0, lat_index[j], lon_index[j]]
             # require: nc file only have three dimension
             # f.variables['Rainf_f_tavg'][0, lat_index_lp, lon_index_lp]is a mistake, we only need the file
             # that lat/lon corssed (1057) rather than meshgrid(lat, lon) (1057*1057)
         print(f"complete read file:{i}")
         f.close()
 
+    # sort by time
+    variable = variable[variable[:, 0].argsort()]
     # save
-    np.savetxt(f'{variable_name}.txt', variable, delimiter=' ')
+    np.savetxt(f'{variable_name}.txt', variable, delimiter=' ')  # TODO 验证时间是否一致，这里的y轴最好是重新排序一下
     np.savetxt('lat_index.txt', lat_index, delimiter=' ')
     np.savetxt('lon_index.txt', lon_index, delimiter=' ')
     coord.to_csv("coord.txt")

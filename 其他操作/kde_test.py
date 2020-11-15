@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from scipy import stats
 
-x = np.random.normal(loc=0, scale=0.3, size=100)
+x = np.random.normal(loc=0, scale=0.3, size=1000)
 # fig, ax1 = plt.subplots()
 # ax2 = ax1.twinx()
 # ax1.hist(x)
@@ -20,7 +20,7 @@ kde = stats.gaussian_kde(x, bw_method="scott")
 # ax.plot(x, [kde2.integrate_box_1d(low=0, high=x[i]) for i in range(len(x))], 'k-', label="silverman")
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
-ax1.hist(x, label="Hist", alpha=0.5)
+ax1.hist(x, label="Hist", alpha=0.5)  #, bins=int(kde.neff)
 x_eval = np.linspace(x.min(), x.max(), num=int((x.max() - x.min())*100))
 ax1.plot(x, np.zeros(x.shape), '+', color='navy', ms=20, label="Samples")
 ax1.set_ylabel("Number of samples")
