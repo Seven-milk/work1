@@ -85,7 +85,7 @@ class Drought(SM_percentile):
             SM: SOIL MOISTURE, list or numpy array
             threshold1: the threshold to identify dry bell
             threshold2: the threshold to eliminate mild drought events
-            Date: the Date of SM
+            Date: the Date of SM, np.ndarray
             timestep: the timestep of SM （the number of SM data in one year）, which is used to do cal_SM_percentile
             (reshape a vector to a array, which shape is (n(year)+1 * timestep))
                 365 : daily, 365 data in one year
@@ -218,11 +218,10 @@ class Drought(SM_percentile):
 
 
 class FD(Drought):
-    def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2, RI_threshold=0.1,
-                 RI_mean_threshold=0.065):
+    def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2, RI_threshold=0.05):
         """
-        Identify flash drought based on rule: RI > threshold -> fd_flag_start, fd_flag_end, eliminate no flash develop
-        events by RImean < RI_mean_threshold
+        Identify flash drought based on rule: RI > threshold -> fd_flag_start, fd_flag_end
+        elimate...
 
         this identification regard flash drought as a flash develop period of a normal drought event, and a normal
         drought can contain more than one flash drought
@@ -232,8 +231,7 @@ class FD(Drought):
             threshold1: the threshold to identify dry bell
             threshold2: the threshold to eliminate mild drought events
             RI_threshold: the threshold of RI to extract extract flash development period(RI instantaneous)
-            RI_mean_threshold: the RI_mean_threshold to eliminate mild flash drought events which not flash(RI mean)
-            Date: the Date of SM
+            Date: the Date of SM, np.ndarray
             timestep: the timestep of SM （the number of SM data in one year）, which is used to do cal_SM_percentile
             (reshape a vector to a array, which shape is (n(year)+1 * timestep))
                 365 : daily, 365 data in one year
@@ -252,7 +250,6 @@ class FD(Drought):
         """
         Drought.__init__(self, SM, timestep, Date, threshold1, threshold2)
         self.RI_threshold = RI_threshold
-        self.RI_mean_threshold = RI_mean_threshold
         self.fd_flag_start, self.fd_flag_end, self.RImean, self.RImax, self.RI = self.develop_period()
         self.fd_eliminate()
         self.dp, self.FDD, self.FDS = self.fd_character()
@@ -319,7 +316,9 @@ class FD(Drought):
         return fd_flag_start, fd_flag_end, RImean, RImax, RI
 
     def fd_eliminate(self):
-        """ eliminate develop period which are not flash based on RI_mean_threshold of each drought event
+        """ eliminate develop period which are not flash based on RI_mean_threshold of each drought event;
+        However, this definition based on RI has ensured large enough RI, so dont have to elimate based on RI_mean
+        """
         """
         n = len(self.dry_flag_start)  # the number of drought events
         indexi = []
@@ -336,6 +335,7 @@ class FD(Drought):
                 self.fd_flag_end[indexi[k]] = np.delete(self.fd_flag_end[indexi[k]], indexj[k])
                 self.RImean[indexi[k]] = np.delete(self.RImean[indexi[k]], indexj[k])
                 self.RImax[indexi[k]] = np.delete(self.RImax[indexi[k]], indexj[k])
+        """
         # TODO add rule to elominate drought event with RI_mean > RImean_threshold but duration too short
         #  合并连续骤旱（合并发展阶段），剔除小骤旱
 
@@ -371,12 +371,11 @@ class FD(Drought):
         threshold1 = np.full((n,), self.threshold1, dtype='float')
         threshold2 = np.full((n,), self.threshold2, dtype='float')
         RI_threshold = np.full((n,), self.RI_threshold, dtype='float')
-        RI_mean_threshold = np.full((n,), self.RI_mean_threshold, dtype='float')
         Drought_character = pd.DataFrame(
             np.vstack((Date_start, Date_end, self.dry_flag_start, self.dry_flag_end, self.DD, self.DS, self.SM_min,
-                       self.SM_min_flag, threshold1, threshold2, RI_threshold, RI_mean_threshold)).T,
+                       self.SM_min_flag, threshold1, threshold2, RI_threshold)).T,
             columns=("Date_start", "Date_end", "flag_start", "flag_end", "DD", "DS", "SM_min", "SM_min_flag",
-                     "thrshold1", "threshold2", "RI_threshold", "RI_mean_threshold"))
+                     "thrshold1", "threshold2", "RI_threshold"))
         Drought_character["fd_flag_start"] = self.fd_flag_start
         Drought_character["fd_flag_end"] = self.fd_flag_end
         Drought_character["RImean"] = self.RImean
@@ -443,8 +442,7 @@ class FD(Drought):
 
 
 class FD_RI(FD):
-    def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2, RI_threshold=0.1,
-                 RI_mean_threshold=0.065):
+    def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2, RI_threshold=0.1):
         """
         Identify flash drought based on rule: RI > threshold -> fd_flag_end
         But fd_flag_start = dry_flag_start and there is no eliminate procedure for not flash event
@@ -457,7 +455,6 @@ class FD_RI(FD):
             threshold1: the threshold to identify dry bell
             threshold2: the threshold to eliminate mild drought events
             RI_threshold: the threshold of RI to eliminate mild flash drought events which not flash(RI max)
-            RI_mean_threshold: the RI_mean_threshold to eliminate mild flash drought events which not flash(RI mean)
             Date: the Date of SM
             timestep: the timestep of SM （the number of SM data in one year）, which is used to do cal_SM_percentile
             (reshape a vector to a array, which shape is (n(year)+1 * timestep))
@@ -475,7 +472,7 @@ class FD_RI(FD):
             xlsx: use self.out_put(self, xlsx=1) , set xlsx=1: out put drought the xlsx
 
         """
-        FD.__init__(self, SM, timestep, Date, threshold1, threshold2, RI_threshold, RI_mean_threshold)
+        FD.__init__(self, SM, timestep, Date, threshold1, threshold2, RI_threshold)
 
     def develop_period(self) -> (list, list, list, list):
         """ extract extract flash development period of drought event, RI is instantaneous
