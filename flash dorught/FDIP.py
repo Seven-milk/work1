@@ -43,7 +43,7 @@ class SM_percentile():
         if y == 1:
             fig, ax1 = plt.subplots()
             ax2 = ax1.twinx()
-            ax1.hist(x, label="Hist", alpha=0.5)
+            ax1.hist(x, bins=int(len(x)*kde.covariance_factor()), label="Hist", alpha=0.5)
             x_eval = np.linspace(x.min(), x.max(), num=(x.max() - x.min()) * 100)
             ax1.plot(x, np.zeros(x.shape), '+', color='navy', ms=20, label="Samples")
             ax1.set_ylabel("Number of samples")
