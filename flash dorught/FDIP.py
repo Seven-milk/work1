@@ -30,35 +30,42 @@ class SM_percentile():
         self.SM_percentile = self.cal_SM_percentile()
 
     @staticmethod
-    def percentile(x: np.ndarray, path="1", y=0, bw_method="scott") -> np.ndarray:
+    def percentile(x: np.ndarray, method="kde", path="1", y=0, bw_method="scott") -> np.ndarray:
         """ calculate the percentile for each point in x, using kernel density estimation, bw_method='Scott'
+        and Gringorten estimation
         input:
             x: 1D numpy.ndarray
         output:
             x_percentile: 1D numpy.ndarray
         """
-        kde = stats.gaussian_kde(x, bw_method=bw_method)
-        x_percentile = np.array([kde.integrate_box_1d(low=0, high=x[i]) for i in range(len(x))])
-        # plot while y set to 1
-        if y == 1:
-            fig, ax1 = plt.subplots()
-            ax2 = ax1.twinx()
-            ax1.hist(x, bins=int(len(x)*kde.covariance_factor()), label="Hist", alpha=0.5)
-            x_eval = np.linspace(x.min(), x.max(), num=(x.max() - x.min()) * 100)
-            ax1.plot(x, np.zeros(x.shape), '+', color='navy', ms=20, label="Samples")
-            ax1.set_ylabel("Number of samples")
-            ax2.plot(x_eval, kde(x_eval), 'r-', label="KDE based on bw_method: " + bw_method)
-            ax2.set_ylabel("PDF")
-            ax1.set_title("Kernel density estimation")
-            ax1.set_xlim(x.min(), x.max())
-            plt.legend([ax1, ax2])
-            handles1, labels1 = ax1.get_legend_handles_labels()
-            handles2, labels2 = ax2.get_legend_handles_labels()
-            plt.legend(handles1 + handles2, labels1 + labels2, loc='upper right')
-            plt.savefig(f"/SM_kde/SM_kde{path}")
+        if method == "kde":
+            kde = stats.gaussian_kde(x, bw_method=bw_method)
+            x_percentile = np.array([kde.integrate_box_1d(low=0, high=x[i]) for i in range(len(x))])
+            # plot while y set to 1
+            if y == 1:
+                fig, ax1 = plt.subplots()
+                ax2 = ax1.twinx()
+                ax1.hist(x, bins=int(len(x) * kde.covariance_factor()), label="Hist", alpha=0.5)
+                x_eval = np.linspace(x.min(), x.max(), num=int((x.max() - x.min()) * 100))
+                ax1.plot(x, np.zeros(x.shape), '+', color='navy', ms=20, label="Samples")
+                ax1.set_ylabel("Number of samples")
+                ax2.plot(x_eval, kde(x_eval), 'r-', label="KDE based on bw_method: " + bw_method)
+                ax2.set_ylabel("PDF")
+                ax1.set_title("Kernel density estimation")
+                ax1.set_xlim(x.min(), x.max())
+                plt.legend([ax1, ax2, ])
+                handles1, labels1 = ax1.get_legend_handles_labels()
+                handles2, labels2 = ax2.get_legend_handles_labels()
+                plt.legend(handles1 + handles2, labels1 + labels2, loc='upper right')
+                plt.savefig(f"/SM_kde/SM_kde{path}")
+        elif method == "Gringorten":
+            series_ = pd.Series(x)
+            x_percentile_ = [(series_.rank(axis=0, method="min", ascending=1)[i] - 0.44) / (len(series_) + 0.12) for i
+                             in range(len(series_))]
+            x_percentile = np.array(x_percentile_)
         return x_percentile
 
-    def cal_SM_percentile(self) -> np.ndarray:
+    def cal_SM_percentile(self, y=0) -> np.ndarray:
         """ calculate SM percentile using SM, with process of reshape based on timestep(e.g. daily)
         ps: distribution fited in a section
         SM 1D ——> timestep * section 2D ——> SM_percentile 1D
@@ -70,8 +77,8 @@ class SM_percentile():
         for i in range(self.timestep):
             l = SM_percentile[:, i]
             l = l[~np.isnan(l)]
-            # l百分比计算
-            l = self.percentile(l)
+            # percentile
+            l = self.percentile(l, method="kde", path=str(i), y=y)
             SM_percentile[:len(l), i] = l
         SM_percentile = SM_percentile.flatten()
         SM_percentile = SM_percentile[~np.isnan(SM_percentile)]
@@ -79,13 +86,13 @@ class SM_percentile():
 
 
 class Drought(SM_percentile):
-    def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2):
+    def __init__(self, SM, timestep=365, Date_tick=[], threshold1=0.4, threshold2=0.2):
         """
         input:
             SM: SOIL MOISTURE, list or numpy array
             threshold1: the threshold to identify dry bell
             threshold2: the threshold to eliminate mild drought events
-            Date: the Date of SM, np.ndarray
+            Date_tick: the Date of SM, np.ndarray
             timestep: the timestep of SM （the number of SM data in one year）, which is used to do cal_SM_percentile
             (reshape a vector to a array, which shape is (n(year)+1 * timestep))
                 365 : daily, 365 data in one year
@@ -104,10 +111,11 @@ class Drought(SM_percentile):
             self.SM = SM
         else:
             self.SM = np.array(SM, dtype='float')
-        if Date == 0:
-            self.Date = list(range(len(SM)))
+        if len(Date_tick) == 0:
+            self.Date_tick = list(range(len(SM)))
         else:
-            self.Date = Date
+            self.Date_tick = Date_tick
+        self.Date = list(range(len(SM)))
         self.timestep = timestep
         self.threshold1 = threshold1
         self.threshold2 = threshold2
@@ -162,8 +170,8 @@ class Drought(SM_percentile):
     def out_put(self, xlsx=0) -> pd.DataFrame:
         """ output the drought event to a dataframe and .xlsx file(to set xlsx=1) """
         n = len(self.dry_flag_start)  # the number of flash drought events
-        Date_start = np.array([self.Date[self.dry_flag_start[i]] for i in range(n)])
-        Date_end = np.array([self.Date[self.dry_flag_end[i]] for i in range(n)])
+        Date_start = np.array([self.Date_tick[self.dry_flag_start[i]] for i in range(n)])
+        Date_end = np.array([self.Date_tick[self.dry_flag_end[i]] for i in range(n)])
         threshold1 = np.full((n,), self.threshold1, dtype='float')
         threshold2 = np.full((n,), self.threshold2, dtype='float')
         Drought_character = pd.DataFrame(
@@ -212,13 +220,17 @@ class Drought(SM_percentile):
         ax1.legend(loc="upper right")
         ax2.legend(loc="upper right")
         ax1.set_title(title, loc="center")
+        ax1.set_xticks(self.Date[::int(len(self.Date) / 6)])  # set six ticks
+        ax1.set_xticklabels(self.Date_tick[::int(len(self.Date) / 6)])
+        ax2.set_xticks(self.Date[::int(len(self.Date) / 6)])  # set six ticks
+        ax2.set_xticklabels(self.Date_tick[::int(len(self.Date) / 6)])
         plt.show()
         if yes == 1:
             plt.savefig("Drought/" + title)
 
 
 class FD(Drought):
-    def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2, RI_threshold=0.05):
+    def __init__(self, SM, timestep=365, Date_tick=[], threshold1=0.4, threshold2=0.2, RI_threshold=0.05):
         """
         Identify flash drought based on rule: RI > threshold -> fd_flag_start, fd_flag_end
         elimate...
@@ -231,7 +243,7 @@ class FD(Drought):
             threshold1: the threshold to identify dry bell
             threshold2: the threshold to eliminate mild drought events
             RI_threshold: the threshold of RI to extract extract flash development period(RI instantaneous)
-            Date: the Date of SM, np.ndarray
+            Date_tick: the Date of SM, np.ndarray
             timestep: the timestep of SM （the number of SM data in one year）, which is used to do cal_SM_percentile
             (reshape a vector to a array, which shape is (n(year)+1 * timestep))
                 365 : daily, 365 data in one year
@@ -248,7 +260,7 @@ class FD(Drought):
             xlsx: use self.out_put(self, xlsx=1) , set xlsx=1: out put drought the xlsx
 
         """
-        Drought.__init__(self, SM, timestep, Date, threshold1, threshold2)
+        Drought.__init__(self, SM, timestep, Date_tick, threshold1, threshold2)
         self.RI_threshold = RI_threshold
         self.fd_flag_start, self.fd_flag_end, self.RImean, self.RImax, self.RI = self.develop_period()
         self.fd_eliminate()
@@ -336,8 +348,9 @@ class FD(Drought):
                 self.RImean[indexi[k]] = np.delete(self.RImean[indexi[k]], indexj[k])
                 self.RImax[indexi[k]] = np.delete(self.RImax[indexi[k]], indexj[k])
         """
-        # TODO add rule to elominate drought event with RI_mean > RImean_threshold but duration too short
-        #  合并连续骤旱（合并发展阶段），剔除小骤旱
+        pass
+        # TODO 合并连续骤旱（合并发展阶段），剔除小骤旱
+        #  add rule to elominate drought event with RI_mean > RImean_threshold but duration too short
 
     def fd_character(self) -> (list, list, list):
         """ extract the drought character variables
@@ -366,8 +379,8 @@ class FD(Drought):
     def out_put(self, xlsx=0) -> pd.DataFrame:
         """ output the drought event to a dataframe and .xlsx file(to set xlsx=1) """
         n = len(self.dry_flag_start)  # the number of flash drought events
-        Date_start = np.array([self.Date[self.dry_flag_start[i]] for i in range(n)])
-        Date_end = np.array([self.Date[self.dry_flag_end[i]] for i in range(n)])
+        Date_start = np.array([self.Date_tick[self.dry_flag_start[i]] for i in range(n)])
+        Date_end = np.array([self.Date_tick[self.dry_flag_end[i]] for i in range(n)])
         threshold1 = np.full((n,), self.threshold1, dtype='float')
         threshold2 = np.full((n,), self.threshold2, dtype='float')
         RI_threshold = np.full((n,), self.RI_threshold, dtype='float')
@@ -436,16 +449,21 @@ class FD(Drought):
         ax1.legend(loc="upper right")
         ax2.legend(loc="upper right")
         ax1.set_title(title, loc="center")
+        ax1.set_xticks(self.Date[::int(len(self.Date) / 6)])  # set six ticks
+        ax1.set_xticklabels(self.Date_tick[::int(len(self.Date) / 6)])
+        ax2.set_xticks(self.Date[::int(len(self.Date) / 6)])  # set six ticks
+        ax2.set_xticklabels(self.Date_tick[::int(len(self.Date) / 6)])
         plt.show()
         if yes == 1:
             plt.savefig("Drought/" + title)
 
 
 class FD_RI(FD):
-    def __init__(self, SM, timestep=365, Date=0, threshold1=0.4, threshold2=0.2, RI_threshold=0.1):
+    def __init__(self, SM, timestep=365, Date_tick=[], threshold1=0.4, threshold2=0.2, RI_threshold=0.05):
         """
         Identify flash drought based on rule: RI > threshold -> fd_flag_end
-        But fd_flag_start = dry_flag_start and there is no eliminate procedure for not flash event
+        different with FD: no more than one flash development in a drought event, fd_flag_start = dry_flag_start
+        and there is no eliminate procedure for not flash event
         (this identification class inherit FD and modify develop_period function and fd_eliminate function)
 
         each dorught have no more than one flash drought development
@@ -455,7 +473,7 @@ class FD_RI(FD):
             threshold1: the threshold to identify dry bell
             threshold2: the threshold to eliminate mild drought events
             RI_threshold: the threshold of RI to eliminate mild flash drought events which not flash(RI max)
-            Date: the Date of SM
+            Date_tick: the Date of SM
             timestep: the timestep of SM （the number of SM data in one year）, which is used to do cal_SM_percentile
             (reshape a vector to a array, which shape is (n(year)+1 * timestep))
                 365 : daily, 365 data in one year
@@ -472,7 +490,7 @@ class FD_RI(FD):
             xlsx: use self.out_put(self, xlsx=1) , set xlsx=1: out put drought the xlsx
 
         """
-        FD.__init__(self, SM, timestep, Date, threshold1, threshold2, RI_threshold)
+        FD.__init__(self, SM, timestep, Date_tick, threshold1, threshold2, RI_threshold)
 
     def develop_period(self) -> (list, list, list, list):
         """ extract extract flash development period of drought event, RI is instantaneous
@@ -529,9 +547,9 @@ class FD_RI(FD):
 
 
 if __name__ == "__main__":
-    sm = np.random.rand(365 * 5, )
+    sm = np.random.rand(365 * 3, )
     sm = np.convolve(sm, np.repeat(1 / 3, 3), mode='full')  # running means
-    FD1 = FD_RI(sm, 365)
+    FD1 = FD(sm, 365)
     RI = FD1.RI
     FD1.plot()
     print(FD1.out_put())
