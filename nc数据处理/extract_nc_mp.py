@@ -67,7 +67,7 @@ def extract_nc(path, coord_path, variable_name, precision=3, num_pool=4):
     for i in range(len(result)):
         variable[i, :] = res_po[i].get()[0]  # get varibale from result
     # sort by time
-    # variable = variable[variable[:, 0].argsort()]
+    variable = variable[variable[:, 0].argsort()]
     # save
     np.savetxt(f'{variable_name}.txt', variable, delimiter=' ')  # TODO 验证时间是否一致，这里的y轴最好是重新排序一下
     np.savetxt('lat_index.txt', lat_index, delimiter=' ')
@@ -102,14 +102,14 @@ def overview(path):
 if __name__ == "__main__":
     """example"""
     # start = time.time()
-    path = "H:/test"
-    coord_path = "H:\GIS\Flash_drought\coord.txt"
-    extract_nc(path, coord_path, "Rainf_f_tavg", precision=3)
+    # path = "H:/test"
+    # coord_path = "H:\GIS\Flash_drought\coord.txt"
+    # extract_nc(path, coord_path, "Rainf_f_tavg", precision=3)
     # end = time.time()
     # print("extract_nc_mp time：", end - start)
     """Execute  code, extract variable from GLDAS nc file"""
-    # path = "D:\GLADS\daily_data"
-    # coord_path = "H:\GIS\Flash_drought\coord.txt"
-    # coord = pd.read_csv(coord_path, sep=",")
-    # overview(path)
-    # extract_nc(path, coord_path, 'Qg_tavg', precision=3, num_pool=8)
+    path = "D:\GLADS\daily_data"
+    coord_path = "H:\GIS\Flash_drought\coord.txt"
+    coord = pd.read_csv(coord_path, sep=",")
+    overview(path)
+    extract_nc(path, coord_path, 'SoilMoist_RZ_tavg', precision=3, num_pool=8)
