@@ -6,7 +6,7 @@ import numpy as np
 from netCDF4 import Dataset
 import os
 import pandas as pd
-import time
+# import time
 import re
 
 
@@ -26,7 +26,7 @@ def extract_nc(path, coord_path, variable_name, precision=3):
     print(f"variable:{variable_name}")
     coord = pd.read_csv(coord_path, sep=",")  # read coord(extract by fishnet)
     print(f"grid point number:{len(coord)}")
-    coord = coord.round(precision)  # 处理单位以便与nc中lat lon一致
+    coord = coord.round(precision)  # coord precision correlating with .nc file lat/lon
     result = [path + "/" + d for d in os.listdir(path) if d[-4:] == ".nc4"]
     print(f"file number:{len(result)}")
     variable = np.zeros((len(result), len(coord) + 1))  # save the path correlated with read order
@@ -47,7 +47,8 @@ def extract_nc(path, coord_path, variable_name, precision=3):
     for i in range(len(result)):
         f = Dataset(result[i], 'r')
         Dataset.set_auto_mask(f, False)
-        variable[i, 0] = float(re.search(r"\d{8}", result[i])[0])
+        variable[i, 0] = float(re.search(r"\d{6}", result[i])[0])
+        # re: the number depend on the nc file name(daily=8, month=6)
         for j in range(len(coord)):
             variable[i, j + 1] = f.variables[variable_name][0, lat_index[j], lon_index[j]]
             # require: nc file only have three dimension
@@ -90,9 +91,9 @@ def overview(path):
 
 
 if __name__ == "__main__":
-    start = time.time()
-    path = "H:/test"
-    coord_path = "H:\GIS\Flash_drought\coord.txt"
-    extract_nc(path, coord_path, "SoilMoist_RZ_tavg", precision=3)
-    end = time.time()
-    print("extract_nc time：", end - start)
+    # start = time.time()
+    path = "F:/Yanxiang/gldas"
+    coord_path = "F:/Yanxiang/coord.txt"
+    extract_nc(path, coord_path, "Snowf_tavg", precision=3)
+    # end = time.time()
+    # print("extract_nc time：", end - start)

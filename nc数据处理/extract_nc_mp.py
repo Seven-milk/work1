@@ -28,7 +28,7 @@ def extract_nc(path, coord_path, variable_name, precision=3, num_pool=4):
     print(f"variable:{variable_name}")
     coord = pd.read_csv(coord_path, sep=",")  # read coord(extract by fishnet)
     print(f"grid point number:{len(coord)}")
-    coord = coord.round(precision)  # 处理单位以便与nc中lat lon一致
+    coord = coord.round(precision)  # coord precision correlating with .nc file lat/lon
     result = [path + "/" + d for d in os.listdir(path) if d[-4:] == ".nc4"]
     print(f"file number:{len(result)}")
     variable = np.zeros((len(result), len(coord) + 1))  # save the path correlated with read order
@@ -51,6 +51,7 @@ def extract_nc(path, coord_path, variable_name, precision=3, num_pool=4):
         vb = []
         f = Dataset(result[i], 'r')
         vb.append(float(re.search(r"\d{8}", result[i])[0]))
+        # re: the number depend on the nc file name(daily=8, month=6)
         Dataset.set_auto_mask(f, False)
         for j in range(len(coord)):
             vb.append(f.variables[variable_name][0, lat_index[j], lon_index[j]])
