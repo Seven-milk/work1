@@ -59,7 +59,7 @@ def extract_nc(path, coord_path, variable_name, precision=3):
     # sort by time
     variable = variable[variable[:, 0].argsort()]
     # save
-    np.savetxt(f'{variable_name}.txt', variable, delimiter=' ')  # TODO 验证时间是否一致，这里的y轴最好是重新排序一下
+    np.savetxt(f'{variable_name}.txt', variable, delimiter=' ')
     np.savetxt('lat_index.txt', lat_index, delimiter=' ')
     np.savetxt('lon_index.txt', lon_index, delimiter=' ')
     coord.to_csv("coord.txt")
