@@ -138,6 +138,7 @@ def compare(date, observation, model_data, path):
         path: the path to save fig, such as GUYUAN_compare
 
     output
+        r, p_value: correlation analysis of model data and observation data
     '''
     plot_compare(date_model=date, date_observation=observation.index, data_model=model_data,
                  data_observation=observation.iloc[:, 0], y=0, path=path)
