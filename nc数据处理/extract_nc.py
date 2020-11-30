@@ -6,7 +6,7 @@ import numpy as np
 from netCDF4 import Dataset
 import os
 import pandas as pd
-# import time
+import time
 import re
 
 
@@ -91,9 +91,9 @@ def overview(path):
 
 
 if __name__ == "__main__":
-    # start = time.time()
-    path = "F:/Yanxiang/gldas"
-    coord_path = "F:/Yanxiang/coord.txt"
+    start = time.time()
+    path = "F:/Yanxiang/Python/gldas"
+    coord_path = "F:/Yanxiang/Python/coord.txt"
     extract_nc(path, coord_path, "Snowf_tavg", precision=3)
-    # end = time.time()
-    # print("extract_nc time：", end - start)
+    end = time.time()
+    print("extract_nc time：", end - start)
