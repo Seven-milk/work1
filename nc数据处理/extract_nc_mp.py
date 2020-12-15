@@ -8,7 +8,7 @@ import os
 import pandas as pd
 from pathos.multiprocessing import ProcessingPool as Pool
 import re
-# import time
+import time
 
 
 def extract_nc(path, coord_path, variable_name, precision=3, num_pool=4):
@@ -50,7 +50,7 @@ def extract_nc(path, coord_path, variable_name, precision=3, num_pool=4):
         """read variable from nc file(i), used in pool"""
         vb = []
         f = Dataset(result[i], 'r')
-        vb.append(float(re.search(r"\d{8}", result[i])[0]))
+        vb.append(float(re.search(r"\d{6}", result[i])[0]))
         # re: the number depend on the nc file name(daily=8, month=6)
         Dataset.set_auto_mask(f, False)
         for j in range(len(coord)):
@@ -102,15 +102,15 @@ def overview(path):
 
 if __name__ == "__main__":
     """example"""
-    # start = time.time()
-    # path = "H:/test"
+    start = time.time()
+    path = "F:/Yanxiang/Python/gldas"
+    coord_path = "F:/Yanxiang/Python/coord.txt"
+    extract_nc(path, coord_path, "Snowf_tavg", precision=3)
+    end = time.time()
+    print("extract_nc_mp time：", end - start)
+    # """Execute  code, extract variable from GLDAS nc file"""
+    # path = "D:\GLADS\daily_data"
     # coord_path = "H:\GIS\Flash_drought\coord.txt"
-    # extract_nc(path, coord_path, "Rainf_f_tavg", precision=3)
-    # end = time.time()
-    # print("extract_nc_mp time：", end - start)
-    """Execute  code, extract variable from GLDAS nc file"""
-    path = "D:\GLADS\daily_data"
-    coord_path = "H:\GIS\Flash_drought\coord.txt"
-    coord = pd.read_csv(coord_path, sep=",")
-    overview(path)
-    extract_nc(path, coord_path, 'SoilMoist_RZ_tavg', precision=3, num_pool=8)
+    # coord = pd.read_csv(coord_path, sep=",")
+    # overview(path)
+    # extract_nc(path, coord_path, 'SoilMoist_RZ_tavg', precision=3, num_pool=8)
