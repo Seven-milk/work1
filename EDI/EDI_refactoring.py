@@ -46,18 +46,25 @@ def run_theory(x: numpy.ndarray, h: float) -> numpy.ndarray:
     # flag_end = numpy.array(flag_end)
     # ------------------------------------------------------------------------
     dry_flag = numpy.argwhere(x <= h).flatten()
-    flag_start = dry_flag[numpy.argwhere(dry_flag - numpy.roll(dry_flag, 1).flatten() != 1)].flatten()[1:]
-    flag_end = dry_flag[numpy.argwhere(dry_flag - numpy.roll(dry_flag, -1).flatten() != -1)].flatten()[:-1]
+    flag_start = dry_flag[numpy.argwhere(dry_flag - numpy.roll(dry_flag, 1).flatten() != 1)].flatten()
+    flag_end = dry_flag[numpy.argwhere(dry_flag - numpy.roll(dry_flag, -1).flatten() != -1)].flatten()
 
-    if x[dry_flag[0]] <= h:
-        flag_start = numpy.insert(flag_start, 0, dry_flag[0])
+    # flag_start = dry_flag[numpy.argwhere(dry_flag - numpy.roll(dry_flag, 1).flatten() != 1)].flatten()[1:] # 不需要判断
+    # ，因为开头和结尾那个点一定是满足<= h的，所以一定是开始和结尾，不论其是单独一个点的开始结尾，还是一段的开始结尾，所以这一句
+    # （取[1:]和[:-1]+判断）完全多余，简化如上
+    # 情况：开头的点一定是开始（只要被识别出来），结尾的点一定是结尾（只要被识别出来）
+    # 情况：开头的点是否是结束，结尾的点是否是开始：分单独和连续两种情况，但这被roll减这一步已经识别出来了，综上，所以不用再判断
+    # flag_end = dry_flag[numpy.argwhere(dry_flag - numpy.roll(dry_flag, -1).flatten() != -1)].flatten()[:-1]
+    #
+    # if x[dry_flag[0]] <= h: # 恒成立
+    #     flag_start = numpy.insert(flag_start, 0, dry_flag[0])
         # if x[1] > h:
         #     flag_end = numpy.insert(flag_end, 0, dry_flag[0])
         #  这个方法不需要对end进行第一个值的判断，因为flag_start = dry_flag[numpy.argwhere(dry_flag - numpy.roll(dry_flag, 1)
-        #  .flatten() != 1)].flatten()[1:]方法只是flag_start第一个值没判断，flag_end是最后一个值没判断（第一个值判断过了）
+        #  .flatten() != 1)].flatten()[1:]方法只是flag_start第一个值没判断(当其只有一个值服从时，看这个值是否是单独的起始和终止)，flag_end是最后一个值没判断（第一个值判断过了）
 
-    if x[dry_flag[-1]] <= h:
-        flag_end = numpy.append(flag_end, dry_flag[-1])
+    # if x[dry_flag[-1]] <= h:
+    #     flag_end = numpy.append(flag_end, dry_flag[-1])
         # if x[dry_flag[-2]] > h:
         #     flag_start = numpy.append(flag_start, dry_flag[-1])
 

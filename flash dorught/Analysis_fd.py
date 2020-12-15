@@ -16,22 +16,9 @@ data_path = os.path.join(home, "GLDAS_Catchment")
 coord_path = "H:/GIS/Flash_drought/coord.txt"
 coord = pd.read_csv(coord_path, sep=",")
 date = pd.date_range('19480101', '20141230', freq='d').strftime("%Y%m%d").to_numpy(dtype="int")
-
-# soil moisture data validation
 sm_rz = np.loadtxt(os.path.join(data_path, "SoilMoist_RZ_tavg.txt"), dtype="float", delimiter=" ")
 
-
-
-
-
-
-
-
-
-
-
-
-
+# soil moisture data validation: sm_validation.py
 
 # pretreatment: pentad/5days sm_rz
 num_pentad = len(date) // 5
@@ -46,7 +33,7 @@ for i in range(num_pentad):
 
 # spaital average sm
 sm_rz_pentad_avg = sm_rz_pentad.mean(axis=1)
-FD_avg = FDIP.FD_RI(sm_rz_pentad_avg, timestep=73, Date_tick=date_pentad, threshold1=0.4, threshold2=0.2,
+FD_avg = FDIP.FD(sm_rz_pentad_avg, timestep=73, Date_tick=date_pentad, threshold1=0.4, threshold2=0.2,
                     RI_threshold=0.05)
 FD_avg.plot()
 out = FD_avg.out_put()
