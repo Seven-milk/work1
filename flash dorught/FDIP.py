@@ -131,10 +131,10 @@ class Drought(SM_percentile):
         self.rds = rds
         SM_percentile.__init__(self, SM, timestep)
         self.dry_flag_start, self.dry_flag_end = self.run_threshold(self.SM_percentile, self.threshold)
-        if self.pooling == True:
+        if self.pooling:
             self.cal_pooling()
         self.DD, self.DS, self.SM_min, self.SM_min_flag = self.character()
-        if self.excluding == True:
+        if self.excluding:
             self.cal_excluding()
 
     @staticmethod
@@ -155,11 +155,11 @@ class Drought(SM_percentile):
         size = len(self.dry_flag_start)
         i = 0
         while i < size - 1:
-            ti = self.dry_flag_start[i+1] - self.dry_flag_end[i]
-            vi = (self.SM_percentile[self.dry_flag_end[i] + 1: self.dry_flag_start[i+1]]-self.threshold).sum()
+            ti = self.dry_flag_start[i + 1] - self.dry_flag_end[i]
+            vi = (self.SM_percentile[self.dry_flag_end[i] + 1: self.dry_flag_start[i + 1]] - self.threshold).sum()
             si = (self.threshold - self.SM_percentile[self.dry_flag_start[i]: self.dry_flag_end[i] + 1]).sum()
             if (ti < self.tc) and ((vi / si) < self.pc):
-                self.dry_flag_end[i] = self.dry_flag_end[i+1]
+                self.dry_flag_end[i] = self.dry_flag_end[i + 1]
                 self.dry_flag_start = np.delete(self.dry_flag_start, i + 1)
                 self.dry_flag_end = np.delete(self.dry_flag_end, i + 1)
                 size -= 1
@@ -263,16 +263,43 @@ class Drought(SM_percentile):
         if yes == 1:
             plt.savefig("Drought/" + title)
 
+    def Drought_character_plot(self, yes=0):
+        """ plot the boxplot of flash drought characters: RImean/RImax/FDD/FDS"""
+        plt.figure()
+        plt.subplot(2, 2, 1)
+        plt.boxplot(self.DD)  # np.array([i for j in FD1.RImean for i in j]).min()
+        plt.title("DD")
+        plt.subplot(2, 2, 2)
+        plt.boxplot(self.DS)
+        plt.title("DS")
+        plt.subplot(2, 2, 3)
+        plt.boxplot(self.SM_min)
+        plt.title("SM_min")
+        plt.subplot(2, 2, 4)
+        plt.boxplot(self.SM_percentile)
+        plt.title("SM_percentile")
+        if yes == 1:
+            plt.savefig("Drought_character_boxplot")
+
 
 class FD(Drought):
     def __init__(self, SM, timestep=365, Date_tick=[], threshold=0.4, pooling=True, tc=1, pc=0.2, excluding=True,
-                 rds=0.41, RI_threshold=0.05, eliminate_threshold=0.2):
+                 rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2, fd_pooling=True, fd_tc=1,
+                 fd_pc=0.2, fd_excluding=True, fd_rds=0.41):
         """
         Identify flash drought based on rule: extract from a drought event(start-1 : end)
         (ps: start/i - 1 means it can represent the rapid change from wet to drought)
             flash intensification : instantaneous RI[i] > RI_threshold -> fd_flag_start = i - 1, fd_flag_end
-            drought : eliminate flash drought whose minimal SM_percentile > eliminate_threshold
+            drought(activate by eliminating = True) : eliminate flash drought whose minimal SM_percentile > eliminate_threshold
 
+        fd_pooling: bool, whether activate pooling: pooling flash drought in every drought events while (fd_ti < fd_tc)
+        & (fd_vi/fd_si < fd_pc) , based on IC method
+            fd_tc:  predefined critical flash drought duration
+            fd_pc: pooling ratio, the critical ratio of excess volume(vj) of inter-event time and the preceding deficit
+                    volume(sj), this volume is the changed volume
+        fd_excluding: bool, whether activate excluding: excluding while (fd_rd = FDDi / FDD_mean < fd_rds) or (fd_rs =
+        FDSi / FDS_mean < rds), based on IC method
+            fd_rds: predefined critical excluding ratio, compare with fd_rd/rs = FDD/FDS / FDD/FDS_mean
         this identification regard flash drought as a flash develop period of a normal drought event, and a normal
         drought can contain more than one flash drought
 
@@ -285,6 +312,7 @@ class FD(Drought):
                     volume(si)
             excluding: bool, whether activate excluding: excluding while (rd = di / dmean < rds) or (rs = si / smean < rds)
                     , based on IC method
+                rds: predefined critical excluding ratio, compare with rd/rs = d/s / d/s_mean
             RI_threshold: the threshold of RI to extract extract flash development period(RI instantaneous)
             Date_tick: the Date of SM, np.ndarray
             timestep: the timestep of SM （the number of SM data in one year）, which is used to do cal_SM_percentile
@@ -305,10 +333,23 @@ class FD(Drought):
         """
         Drought.__init__(self, SM, timestep, Date_tick, threshold, pooling, tc, pc, excluding, rds)
         self.RI_threshold = RI_threshold
+        self.fd_pooling = fd_pooling
+        self.fd_tc = fd_tc
+        self.fd_pc = fd_pc
+        self.fd_excluding = fd_excluding
+        self.fd_rds = fd_rds
+        self.eliminating = eliminating
         self.eliminate_threshold = eliminate_threshold
-        self.fd_flag_start, self.fd_flag_end, self.RImean, self.RImax, self.RI = self.develop_period()
-        self.fd_eliminate()
-        self.dp, self.FDD, self.FDS = self.fd_character()
+        self.fd_flag_start, self.fd_flag_end, self.RI = self.develop_period()
+        if self.fd_pooling:
+            self.fd_cal_pooling()
+        if self.eliminating:
+            self.fd_eliminate()
+        self.dp, self.FDD, self.FDS, self.RImean, self.RImax = self.fd_character()
+        self.FDD_mean = np.array([i for j in self.FDD for i in j]).mean()
+        self.FDS_mean = np.array([i for j in self.FDS for i in j]).mean()
+        if self.fd_excluding:
+            self.fd_cal_excluding()
 
     @staticmethod
     def fd_run_threshold(index: np.ndarray, threshold: float) -> (np.ndarray, np.ndarray):
@@ -337,7 +378,7 @@ class FD(Drought):
                 list[array, array, ...] --> list: n(drought) array: m(flash)
                 SM[--drought1[--flash develop period1[--fd_flag_start, fd_flag_end, RImean, RImax--],..flash develop periodn[]--], ...droughtn[]--]
 
-            RI = self.SM_percentile - np.append(self.SM_percentile[0], self.SM_percentile[:-1]) * -1
+            RI = self.SM_percentile - np.append(self.SM_percentile[0], self.SM_percentile[:-1]) * -1(series rather events)
 
         """
         n = len(self.dry_flag_start)  # the number of drought events
@@ -351,7 +392,7 @@ class FD(Drought):
         # hypothesize RI in the first position is zero(self.SM_percentile[0]-self.SM_percentile[0])
         # diff= sm[t]-sm[t-1] < 0: develop: RI > 0 ——> multiply factor: -1
         # list[array, array, ...] --> list: n(drought) array: m(flash)
-        fd_flag_start, fd_flag_end, RImean, RImax = [], [], [], []
+        fd_flag_start, fd_flag_end = [], []
         # list, each element is a df_flag_start/end/RImean/RImax series of a drought event
         # namely, it represents the develop periods(number > 1) of a dought event
 
@@ -361,10 +402,6 @@ class FD(Drought):
             end = self.dry_flag_end[i]
             RI_ = RI[start: end + 1]
             fd_flag_start_, fd_flag_end_ = self.fd_run_threshold(RI_, self.RI_threshold)  # this flag based on RI_ index
-            RImean_ = np.array([RI_[fd_flag_start_[j]: fd_flag_end_[j] + 1].mean() for j in range(len(fd_flag_start_))],
-                               dtype="float")
-            RImax_ = np.array([RI_[fd_flag_start_[j]: fd_flag_end_[j] + 1].max() for j in range(len(fd_flag_start_))],
-                              dtype="float")
             fd_flag_start_, fd_flag_end_ = fd_flag_start_ + start, fd_flag_end_ + start  # calculate flag based on SM index
             # ps: start / i - 1 means it can represent the rapid change from wet to drought, check the first point
             # (or index can be -1)
@@ -376,9 +413,26 @@ class FD(Drought):
                     fd_flag_start_ -= 1
             fd_flag_start.append(fd_flag_start_)  # list(np.ndarray)
             fd_flag_end.append(fd_flag_end_)  # list(np.ndarray)
-            RImean.append(RImean_)  # list(np.ndarray)
-            RImax.append(RImax_)
-        return fd_flag_start, fd_flag_end, RImean, RImax, RI
+
+        return fd_flag_start, fd_flag_end, RI
+
+    def fd_cal_pooling(self):
+        """ pooling flash drought in every drought events while (fd_ti < fd_tc) & (fd_vi/fd_si < fd_pc) , based on IC
+        method """
+        for i in range(len(self.fd_flag_start)):
+            size = len(self.fd_flag_start[i])
+            j = 0
+            while j < size - 1:
+                tj = self.fd_flag_start[i][j + 1] - self.fd_flag_end[i][j]
+                vj = self.SM_percentile[self.fd_flag_start[i][j + 1]] - self.SM_percentile[self.fd_flag_end[i][j]]
+                sj = -(self.SM_percentile[self.fd_flag_end[i][j]] - self.SM_percentile[self.fd_flag_start[i][j]])
+                if (tj < self.fd_tc) and ((vj / sj) < self.fd_pc):
+                    self.fd_flag_end[i][j] = self.fd_flag_end[i][j + 1]
+                    self.fd_flag_start[i] = np.delete(self.fd_flag_start[i], j + 1)
+                    self.fd_flag_end[i] = np.delete(self.fd_flag_end[i], j + 1)
+                    size -= 1
+                else:
+                    j += 1
 
     def fd_eliminate(self):
         """ To satisfy the drought condition in the flash drought identification
@@ -388,39 +442,66 @@ class FD(Drought):
             size = len(self.fd_flag_start[i])
             j = 0
             while j < size:
-                if min(self.SM_percentile[self.fd_flag_start[i][j]: self.fd_flag_end[i][j] + 1]) > self.eliminate_threshold:
+                if min(self.SM_percentile[
+                       self.fd_flag_start[i][j]: self.fd_flag_end[i][j] + 1]) > self.eliminate_threshold:
                     self.fd_flag_start[i] = np.delete(self.fd_flag_start[i], j)
                     self.fd_flag_end[i] = np.delete(self.fd_flag_end[i], j)
-                    self.RImean[i] = np.delete(self.RImean[i], j)
-                    self.RImax[i] = np.delete(self.RImax[i], j)
                     size -= 1
                 else:
                     j += 1
-        # TODO 合并连续骤旱（合并发展阶段），剔除小骤旱
-        #  add rule to elominate drought event with RI_mean > RImean_threshold but duration too short
 
     def fd_character(self) -> (list, list, list):
         """ extract the drought character variables
-        the develop period number of each drought
+        dp: the develop period number of each drought
         FDD: duration of a flash drought event(develop period)
         FDS: severity of a flash drought event, equaling to the change during flash drought period
         """
         n = len(self.dry_flag_start)  # the number of drought events
         dp = []  # number of develop periods of each drought event
-        FDD, FDS = [], []
+        FDD, FDS, RImean, RImax = [], [], [], []
         for i in range(n):
+            # FDD/FDS/RI_mean/max
             m = len(self.fd_flag_start[i])  # number of flash develop periods of each drought event
             dp.append(m)
             FDD_ = []
             FDS_ = []
+            RImean_ = []
+            RImax_ = []
             for j in range(m):
                 start = self.fd_flag_start[i][j]
                 end = self.fd_flag_end[i][j]
                 FDD_.append(end - start + 1)
                 FDS_.append(self.SM_percentile[end] - self.SM_percentile[start])
-            FDD.append(FDD_)
+                RImean_.append(self.RI[start + 1: end + 1].mean())  # start + 1: RI calculate from start + 1
+                RImax_.append(self.RI[start + 1: end + 1].max())
+            FDD.append(FDD_)  # list(np.ndarray)
             FDS.append(FDS_)
-        return dp, FDD, FDS
+            RImean.append(RImean_)
+            RImax.append(RImax_)
+        return dp, FDD, FDS, RImean, RImax
+
+    def fd_cal_excluding(self):
+        """ excluding while (fd_rd = FDDi / FDD_mean < fd_rds) or (fd_rs = FDSi / FDS_mean < rds)
+        , based on IC method """
+        for i in range(len(self.fd_flag_start)):
+            size = len(self.fd_flag_start[i])
+            j = 0
+            while j < size:
+                FD_RD = self.FDD[i][j] / self.FDD_mean
+                FD_RS = self.FDS[i][j] / self.FDS_mean
+                if (FD_RD < self.fd_rds) or (FD_RS < self.fd_rds):
+                    self.fd_flag_start[i] = np.delete(self.fd_flag_start[i], j)
+                    self.fd_flag_end[i] = np.delete(self.fd_flag_end[i], j)
+                    self.RImean[i] = np.delete(self.RImean[i], j)
+                    self.RImax[i] = np.delete(self.RImax[i], j)
+                    self.FDD[i] = np.delete(self.FDD[i], j)
+                    self.FDS[i] = np.delete(self.FDS[i], j)
+                    self.dp[i] -= 1
+                    size -= 1
+                else:
+                    j += 1
+        self.FDD_mean = np.array([i for j in self.FDD for i in j]).mean()
+        self.FDS_mean = np.array([i for j in self.FDS for i in j]).mean()
 
     def out_put(self, xlsx=0) -> pd.DataFrame:
         """ output the drought event to a dataframe and .xlsx file(to set xlsx=1) """
@@ -502,6 +583,25 @@ class FD(Drought):
         plt.show()
         if yes == 1:
             plt.savefig("Drought/" + title)
+
+    def FD_character_plot(self, yes=0):
+        """ plot the boxplot of flash drought characters: RImean/RImax/FDD/FDS"""
+        plt.figure()
+        plt.subplot(2, 2, 1)
+        plt.boxplot(np.array([i for j in self.RImean for i in j]))  # np.array([i for j in FD1.RImean for i in j]).min()
+        plt.title("RImean")
+        plt.subplot(2, 2, 2)
+        plt.boxplot(np.array([i for j in self.RImax for i in j]))
+        plt.title("RImax")
+        plt.subplot(2, 2, 3)
+        plt.boxplot(np.array([i for j in self.FDD for i in j]))
+        plt.title("FDD")
+        plt.subplot(2, 2, 4)
+        plt.boxplot(np.array([i for j in self.FDS for i in j]))
+        plt.title("FDS")
+        if yes == 1:
+            plt.savefig("FD_character_boxplot")
+
 
 # class FD_RI(FD):
 #     def __init__(self, SM, timestep=365, Date_tick=[], threshold=0.4, threshold2=0.2, RI_threshold=0.05):
@@ -588,16 +688,47 @@ class FD(Drought):
 #
 #     def fd_eliminate(self):
 #         """ There is no eliminate procedure for not flash event """
-#         # TODO 最小历时剔除小骤旱
-#         pass
+#         #pass
 
 
 if __name__ == "__main__":
+    # test code through using a random series(with a random seed)
     np.random.seed(15)
     sm = np.random.rand(365 * 3, )
-    sm = np.convolve(sm, np.repeat(1 / 3, 3), mode='full')  # running means
-    FD1 = FD(sm, 365)
+    sm = np.convolve(sm, np.repeat(1 / 2, 3), mode='full')  # running means
+    tc = 10
+    pc = 0.5
+    rds = 0.41
+    fd_pc = 0.2
+    fd_tc = 2
+    FD1 = FD(sm, 365, tc=tc, pc=pc, rds=rds, eliminating=True, fd_pooling=True, fd_tc=fd_tc, fd_pc=fd_pc,
+             fd_excluding=False)
+    sm_per = FD1.SM_percentile
     RI = FD1.RI
     FD1.plot()
     print(FD1.out_put())
     out = FD1.out_put()
+    dp = sum(FD1.dp)
+    # ------------------------------------------------------------------ compare results with different configuration
+    # D1 = Drought(sm, 365, tc=tc, pc=pc, rds=rds)
+    # sm_per = D1.SM_percentile
+    # D1.plot()
+    # print(D1.out_put())
+    # out1 = D1.out_put()
+    # D2 = Drought(sm, 365, pooling=False, excluding=False, tc=tc, pc=pc, rds=rds)
+    # D2.plot()
+    # print(D2.out_put())
+    # out2 = D2.out_put()
+    # D3 = Drought(sm, 365, pooling=True, excluding=False, tc=tc, pc=pc, rds=rds)
+    # D3.plot()
+    # print(D3.out_put())
+    # out3 = D3.out_put()
+    # D4 = Drought(sm, 365, pooling=False, excluding=True, tc=tc, pc=pc, rds=rds)
+    # D4.plot()
+    # print(D4.out_put())
+    # out4 = D4.out_put()
+    # np.savetxt("1.txt", D1.SM_percentile)
+    # out.to_excel("1.xlsx")
+    # out2.to_excel("2.xlsx")
+    # out3.to_excel("3.xlsx")
+    # out4.to_excel("4.xlsx")
