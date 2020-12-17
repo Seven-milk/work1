@@ -620,6 +620,21 @@ class FD(Drought):
         if yes == 1:
             plt.savefig("FD_character_boxplot")
 
+    def general_out(self):
+        self.plot()
+        self.Drought_character_plot()
+        self.FD_character_plot()
+        print("-----------------------------------------------")
+        print("SM_percentile: \n", self.SM_percentile, "\n")
+        print("-----------------------------------------------")
+        print("RI: \n", self.RI, "\n")
+        print("-----------------------------------------------")
+        print("output: \n", self.out_put(), "\n")
+        print("-----------------------------------------------")
+        print("dp: \n", sum(self.dp), "\n")
+        print("-----------------------------------------------")
+        return self.SM_percentile, self.RI, self.out_put(), self.dp
+
 
 if __name__ == "__main__":
     # test code through using a random series(with a random seed)
