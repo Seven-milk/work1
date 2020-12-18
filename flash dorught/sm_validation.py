@@ -7,13 +7,12 @@
 
 import numpy as np
 import pandas as pd
-import FDIP
 import os
 import re
 from matplotlib import pyplot as plt
 from scipy.stats import pearsonr
 
-# soil moisture data validation
+# sm from gldas (extracted from .nc file)
 home = "H:/research/flash_drough/"
 data_path = os.path.join(home, "GLDAS_Catchment")
 coord_path = "H:/GIS/Flash_drought/coord.txt"
@@ -30,24 +29,31 @@ stations = os.listdir(network_china)
 years = list(range(1981, 2000))
 months = list(range(1, 13))
 days = [8, 18, 28]
-pd_index = [f"{year}/{month}/{day}" for year in years for month in months for day in days]
+pd_index = [f"{year}/{month}/{day}" for year in years for month in months for day in days]  # time index
 pd_index = pd.to_datetime(pd_index)
-# for station in stations:
-#     result = pd.DataFrame(np.full((len(pd_index), 11), fill_value=np.NAN), index=pd_index)
-#     stms = [os.path.join(network_china, station, d) for d in os.listdir(os.path.join(network_china, station)) if
-#             d[-4:] == ".stm"]
-#     for i in range(len(stms)):
-#         with open(stms[i]) as f:
-#             str_ = f.read()
-#         str_ = str_.splitlines()
-#         index_ = pd.to_datetime([i[:10] for i in str_[2:]])
-#         data_ = pd.Series([float(i[19:25]) for i in str_[2:]], index=index_)
-#         for j in range(len(data_)):
-#             result.loc[data_.index[j], i] = data_.loc[data_.index[j]]
-#     result.to_excel(f"{station}.xlsx")
 
-names = locals()
+
+def read_txt_to_excel():
+    """ read txt file to excel, based on time index, time without data set to empty """
+    for station in stations:
+        result = pd.DataFrame(np.full((len(pd_index), 11), fill_value=np.NAN), index=pd_index)
+        stms = [os.path.join(network_china, station, d) for d in os.listdir(os.path.join(network_china, station)) if
+                d[-4:] == ".stm"]
+        for i in range(len(stms)):
+            with open(stms[i]) as f:
+                str_ = f.read()
+            str_ = str_.splitlines()
+            index_ = pd.to_datetime([i[:10] for i in str_[2:]])
+            data_ = pd.Series([float(i[19:25]) for i in str_[2:]], index=index_)
+            for j in range(len(data_)):
+                result.loc[data_.index[j], i] = data_.loc[data_.index[j]]
+        result.to_excel(f"{station}.xlsx")
+
+
+names = locals()  # local namespace
 stations = [os.path.join(network_china, d) for d in stations if d[-5:] == ".xlsx"]
+# read xlsx and put the data into a dataframe with name "station", then deal the empty value (NaN), Set a coefficient to
+# keep same unit
 for station in stations:
     Dataframe_ = pd.read_excel(station, index_col=0)
     nan_df = Dataframe_.isnull().any(axis=1)
@@ -178,7 +184,7 @@ avg_xifengzh = average_coord(source_data=sm_rz, source_coord=coord, coord_=coord
 coord_yongning = pd.read_csv(os.path.join(network_china, "YONGNING.txt"), sep=",")
 avg_yongning = average_coord(source_data=sm_rz, source_coord=coord, coord_=coord_yongning)
 
-# compare
+# compare the model data (gldas sm data) and observations (network sm data) using compare function
 observations_ = ["GUYUAN", "HUANXIAN", "TIANSHUI", "TONGWEI", "XIFENGZH", "YONGNING"]
 model_datas = [avg_guyuan, avg_huanxian, avg_tianshui, avg_tongwei, avg_xifengzh, avg_yongning]
 paths_ = [i + "_compare_series" for i in observations_]
