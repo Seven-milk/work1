@@ -169,7 +169,7 @@ class Drought(SmPercentile):
             ti = self.dry_flag_start[i + 1] - self.dry_flag_end[i]
             vi = (self.SM_percentile[self.dry_flag_end[i] + 1: self.dry_flag_start[i + 1]] - self.threshold).sum()
             si = (self.threshold - self.SM_percentile[self.dry_flag_start[i]: self.dry_flag_end[i] + 1]).sum()
-            if (ti < self.tc) and ((vi / si) < self.pc):
+            if (ti <= self.tc) and ((vi / si) <= self.pc):
                 self.dry_flag_end[i] = self.dry_flag_end[i + 1]
                 self.dry_flag_start = np.delete(self.dry_flag_start, i + 1)
                 self.dry_flag_end = np.delete(self.dry_flag_end, i + 1)
@@ -200,7 +200,7 @@ class Drought(SmPercentile):
         size = len(RD)
         i = 0
         while i < size:
-            if (RD[i] < self.rds) or (RS[i] < self.rds):
+            if (RD[i] <= self.rds) or (RS[i] <= self.rds):
                 self.dry_flag_start = np.delete(self.dry_flag_start, i)
                 self.dry_flag_end = np.delete(self.dry_flag_end, i)
                 self.DD = np.delete(self.DD, i)
@@ -444,7 +444,7 @@ class FD(Drought):
                 tj = self.fd_flag_start[i][j + 1] - self.fd_flag_end[i][j]
                 vj = self.SM_percentile[self.fd_flag_start[i][j + 1]] - self.SM_percentile[self.fd_flag_end[i][j]]
                 sj = -(self.SM_percentile[self.fd_flag_end[i][j]] - self.SM_percentile[self.fd_flag_start[i][j]])
-                if (tj < self.fd_tc) and ((vj / sj) < self.fd_pc):
+                if (tj <= self.fd_tc) and ((vj / sj) <= self.fd_pc):
                     self.fd_flag_end[i][j] = self.fd_flag_end[i][j + 1]
                     self.fd_flag_start[i] = np.delete(self.fd_flag_start[i], j + 1)
                     self.fd_flag_end[i] = np.delete(self.fd_flag_end[i], j + 1)
@@ -507,7 +507,7 @@ class FD(Drought):
             while j < size:
                 FD_RD = self.FDD[i][j] / self.FDD_mean
                 FD_RS = self.FDS[i][j] / self.FDS_mean
-                if (FD_RD < self.fd_rds) or (FD_RS < self.fd_rds):
+                if (FD_RD <= self.fd_rds) or (FD_RS <= self.fd_rds):
                     self.fd_flag_start[i] = np.delete(self.fd_flag_start[i], j)
                     self.fd_flag_end[i] = np.delete(self.fd_flag_end[i], j)
                     self.RImean[i] = np.delete(self.RImean[i], j)
