@@ -33,7 +33,7 @@ def plot_subplot(x: list, x_label: str, ratio_DD_mean: list, ratio_DS_mean: list
     plt.subplot(2, 2, 1)
     plt.plot(x, ratio_DD_mean, linestyle="-", marker="o", markersize=3)
     plt.xlim(0, 0.5)
-    plt.ylim(1, )
+    # plt.ylim(1, )
     plt.title("Duration", font_title)
     plt.ylabel("Ratio of Mean", font_label)
     plt.xlabel(x_label, font_label)
@@ -43,7 +43,7 @@ def plot_subplot(x: list, x_label: str, ratio_DD_mean: list, ratio_DS_mean: list
     plt.subplot(2, 2, 2)
     plt.plot(x, ratio_DS_mean, linestyle="-", marker="o", markersize=3)
     plt.xlim(0, 0.5)
-    plt.ylim(1, )
+    # plt.ylim(1, )
     plt.title("Severity", font_title)
     plt.ylabel("Ratio of Mean", font_label)
     plt.xlabel(x_label, font_label)
@@ -53,7 +53,7 @@ def plot_subplot(x: list, x_label: str, ratio_DD_mean: list, ratio_DS_mean: list
     plt.subplot(2, 2, 3)
     plt.plot(x, ratio_number, linestyle="-", marker="o", markersize=3)
     plt.xlim(0, 0.5)
-    plt.ylim(top=1)
+    # plt.ylim(top=1)
     plt.title("Events number", font_title)
     plt.ylabel("Ratio of Mean", font_label)
     plt.xlabel(x_label, font_label)
@@ -63,7 +63,7 @@ def plot_subplot(x: list, x_label: str, ratio_DD_mean: list, ratio_DS_mean: list
     plt.subplot(2, 2, 4)
     plt.plot(x, ratio_SM_min_mean, linestyle="-", marker="o", markersize=3)
     plt.xlim(0, 0.5)
-    plt.ylim(top=1.02)
+    # plt.ylim(top=1.02)
     plt.title("Peak Value", font_title)
     plt.ylabel("Ratio of Mean", font_label)
     plt.xlabel(x_label, font_label)
@@ -147,9 +147,14 @@ def sensitity_Drought():
     plot_subplot(x=pc_avg, x_label="Excluding Ratio", ratio_DD_mean=ratio_DD_mean_pec, ratio_DS_mean=ratio_DS_mean_pec,
                  ratio_number=ratio_number_pec, ratio_SM_min_mean=ratio_SM_min_mean_pec)
 
-    return np.array([ratio_DD_mean_p, ratio_DS_mean_p, ratio_number_p, ratio_SM_min_mean_p, ratio_DD_mean_e,
+    out_ = np.array([ratio_DD_mean_p, ratio_DS_mean_p, ratio_number_p, ratio_SM_min_mean_p, ratio_DD_mean_e,
                      ratio_DS_mean_e, ratio_number_e, ratio_SM_min_mean_e, ratio_DD_mean_pec, ratio_DS_mean_pec,
                      ratio_number_pec, ratio_SM_min_mean_pec])
+    out = pd.DataFrame(out_, index=["ratio_DD_mean_p", "ratio_DS_mean_p", "ratio_number_p", "ratio_SM_min_mean_p",
+                                    "ratio_DD_mean_e", "ratio_DS_mean_e", "ratio_number_e", "ratio_SM_min_mean_e",
+                                    "ratio_DD_mean_pec", "ratio_DS_mean_pec", "ratio_number_pec",
+                                    "ratio_SM_min_mean_pec"], columns=[_ / 100 for _ in list(range(0, 51, 1))])
+    return out
 
 
 # sensitity analysis: drought
@@ -228,7 +233,7 @@ def sensitity_FD():
     # sensitity analysis: under different pooling/excluding parameters (fd_tc, fd_pc, fd_rds)
     fd_tc_avg = 2
     pc_avg = 0.28
-    rds_avg = 0.23  # has been pooling and excluding in drought perspective
+    rds_avg = 0.22  # has been pooling and excluding in drought perspective
     FD_avg = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
                      pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
                      eliminate_threshold=0.2,
@@ -273,7 +278,7 @@ def sensitity_FD():
                                                                            i in j]).mean())
 
     # sensitity analysis: (pooling at fd_pc = 0.25 & excluding at fd_rds = 0 : 0.1 : 0.5) vs (no pooling & no excluding)
-    fd_pc_selected = 0.25
+    fd_pc_selected = 0.29
     ratio_FDD_mean_pe, ratio_FDS_mean_pe, ratio_number_pe, ratio_number_NFD_pe, ratio_RImean_mean_pe, ratio_RImax_mean_pe = [], [], [], [], [], []
     for i in range(len(fd_pc_avg)):
         FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
@@ -291,7 +296,7 @@ def sensitity_FD():
 
     # sensitity analysis: (pooling at fd_pc = 0.25 & excluding at fd_rds = 0 : 0.1 : 0.5) vs (pooling at fd_pc = 0.25
     # & no excluding)
-    fd_pc_selected = 0.25
+    fd_pc_selected = 0.29
     ratio_FDD_mean_pec, ratio_FDS_mean_pec, ratio_number_pec, ratio_number_NFD_pec, ratio_RImean_mean_pec, ratio_RImax_mean_pec = [], [], [], [], [], []
     for i in range(len(fd_pc_avg)):
         FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
@@ -340,9 +345,33 @@ def sensitity_FD():
                     ratio_RImean_mean=ratio_RImean_mean_pec,
                     ratio_RImax_mean=ratio_RImax_mean_pec)
 
-    return np.array([ratio_FDD_mean_p, ratio_FDS_mean_p, ratio_number_p, ratio_number_NFD_p, ratio_RImean_mean_p,
+    out_ = np.array([ratio_FDD_mean_p, ratio_FDS_mean_p, ratio_number_p, ratio_number_NFD_p, ratio_RImean_mean_p,
                      ratio_RImax_mean_p, ratio_FDD_mean_e, ratio_FDS_mean_e, ratio_number_e, ratio_number_NFD_e,
                      ratio_RImean_mean_e, ratio_RImax_mean_e, ratio_FDD_mean_pe, ratio_FDS_mean_pe, ratio_number_pe,
                      ratio_number_NFD_pe, ratio_RImean_mean_pe, ratio_RImax_mean_pe, ratio_FDD_mean_pec,
                      ratio_FDS_mean_pec, ratio_number_pec, ratio_number_NFD_pec, ratio_RImean_mean_pec,
                      ratio_RImax_mean_pec])
+    out = pd.DataFrame(out_, index=["ratio_FDD_mean_p", "ratio_FDS_mean_p", "ratio_number_p", "ratio_number_NFD_p",
+                                    "ratio_RImean_mean_p", "ratio_RImax_mean_p", "ratio_FDD_mean_e", "ratio_FDS_mean_e",
+                                    "ratio_number_e", "ratio_number_NFD_e", "ratio_RImean_mean_e", "ratio_RImax_mean_e",
+                                    "ratio_FDD_mean_pe", "ratio_FDS_mean_pe", "ratio_number_pe", "ratio_number_NFD_pe",
+                                    "ratio_RImean_mean_pe", "ratio_RImax_mean_pe", "ratio_FDD_mean_pec",
+                                    "ratio_FDS_mean_pec", "ratio_number_pec", "ratio_number_NFD_pec",
+                                    "ratio_RImean_mean_pec", "ratio_RImax_mean_pec"],
+                                    columns=[_ / 100 for _ in list(range(0, 51, 1))])
+    return out
+
+
+def compare():
+    FD_before = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=False, tc=tc_avg, pc=0.2,
+                     excluding=False, rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                     fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+    _, _, out_put_before, _ = FD_before.general_out()
+
+    # tc = 5 pc=0.28 rds = 0.22
+    # fd_tc = 2 fd_pc=0.29 fd_rds=0.28
+    FD_after = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5, pc=0.28,
+                     excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                     fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+    _, _, out_put_after, _ = FD_after.general_out()
+    return out_put_before, out_put_after

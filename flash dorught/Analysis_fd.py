@@ -33,10 +33,11 @@ for i in range(num_pentad):
 
 # spaital average sm
 sm_rz_pentad_avg = sm_rz_pentad.mean(axis=1)
-FD_avg = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=1, pc=0.2,
-                 excluding=True, rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                 fd_pooling=True, fd_tc=1, fd_pc=0.2, fd_excluding=True, fd_rds=0.41)
-
-SM_percentile, RI, out_put, dp = FD_avg.general_out()
 
 # adjustment parameters: see Adjust_param.py
+# tc = 5 pc=0.28 rds = 0.22
+# fd_tc = 2 fd_pc=0.29 fd_rds=0.28
+FD_avg = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5, pc=0.28,
+                 excluding=True, rds=0.23, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                 fd_pooling=True, fd_tc=2, fd_pc=0.25, fd_excluding=True, fd_rds=0.31)
+SM_percentile, RI, out_put, dp = FD_avg.general_out()
