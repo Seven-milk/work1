@@ -38,6 +38,6 @@ sm_rz_pentad_avg = sm_rz_pentad.mean(axis=1)
 # tc = 5 pc=0.28 rds = 0.22
 # fd_tc = 2 fd_pc=0.29 fd_rds=0.28
 FD_avg = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5, pc=0.28,
-                 excluding=True, rds=0.23, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                 fd_pooling=True, fd_tc=2, fd_pc=0.25, fd_excluding=True, fd_rds=0.31)
+                 excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                 fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
 SM_percentile, RI, out_put, dp = FD_avg.general_out()
