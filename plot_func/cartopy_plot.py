@@ -111,8 +111,8 @@ def plot_cartopy_raster(extend: list, det: float, array_data: np.ndarray, array_
             alpha=0.5,
             linestyle='--'
         )
-        gl.xlabels_top = False  # close x top label
-        gl.ylabels_right = False  # close y right label
+        gl.top_labels = False  # close top label
+        gl.right_labels = False  # close right label
         gl.xformatter = LONGITUDE_FORMATTER  # set x label as lon format
         gl.yformatter = LATITUDE_FORMATTER  # set y label as lat format
         gl.xlocator = mticker.FixedLocator(np.arange(int(extend_[0]), int(extend_[1]) + 1, 1))

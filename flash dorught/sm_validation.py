@@ -3,6 +3,7 @@
 # email: Z786909151@163.com
 # validation the sm data
 # Root Zone Soil moisture: 'SoilMoist_RZ_tavg' kg m-2 = mm ——> 10-3 m
+# soil moisture data validation
 # Soil moisture network: dm ——> 10-1m
 
 import numpy as np

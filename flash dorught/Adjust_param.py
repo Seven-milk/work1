@@ -1,6 +1,10 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
+# adjustment pooling and excluding parameters: Drought and FD
+# result:
+# tc = 5 pc=0.28 rds = 0.22
+# fd_tc = 2 fd_pc=0.29 fd_rds=0.28
 import numpy as np
 import pandas as pd
 import FDIP
@@ -368,6 +372,7 @@ def compare():
                      fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
     _, _, out_put_before, _ = FD_before.general_out()
 
+    # result:
     # tc = 5 pc=0.28 rds = 0.22
     # fd_tc = 2 fd_pc=0.29 fd_rds=0.28
     FD_after = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5, pc=0.28,
