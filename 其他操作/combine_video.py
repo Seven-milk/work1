@@ -10,7 +10,6 @@ list_video = [os.path.join(home, list_) for list_ in os.listdir(home)]
 video_result = []
 for video_path in list_video:
     video = VideoFileClip(video_path)
-    video.to_ImageClip
     video_result.append(video)
     video.close()
 
