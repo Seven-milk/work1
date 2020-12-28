@@ -9,27 +9,27 @@ import numpy as np
 home = "H:/data_zxd/oco2"
 data_path = [os.path.join(home, data_) for data_ in os.listdir(home) if data_[-4:] == ".nc4"]
 
-data0 = nc.Dataset(data_path[0])
-lat0 = data0.variables['latitude'][:]
-lon0 = data0.variables['longitude'][:]
-xco20 = data0.variables['xco2'][:]
-data0.close()
+# data0 = nc.Dataset(data_path[0])
+# lat0 = data0.variables['latitude'][:]
+# lon0 = data0.variables['longitude'][:]
+# xco20 = data0.variables['xco2'][:]
+# data0.close()
 
-lat = np.full((len(data_path), len(lat0)), fill_value=-9999, dtype="float")
-lon = np.full((len(data_path), len(lon0)), fill_value=-9999, dtype="float")
-xco2 = np.full((len(data_path), len(xco20)), fill_value=-9999, dtype="float")
+data_result = []
 
 for i in range(len(data_path)):
     data_nc = nc.Dataset(data_path[i])
-    lat[i, :] = data_nc.variables['latitude'][:]
-    lon[i, :] = data_nc.variables['longitude'][:]
-    xco2[i, :] = data_nc.variables['xco2'][:]
+    lat = data_nc.variables['latitude'][:]
+    lon = data_nc.variables['longitude'][:]
+    xco2 = data_nc.variables['xco2'][:]
+    result = np.vstack((lat, lon, xco2))
+    data_result.append(result)
     data_nc.close()
 
 
 # 画散点图
 plt.figure()
 # plt.boxplot(xco2)
-plt.scatter(lon[0, :], lat[0, :], s=3, c=xco2[0, :], cmap='YlOrRd', vmax=450)
+plt.scatter(data_result[0][1, :], data_result[0][0, :], s=3, c=data_result[0][2, :], cmap='YlOrRd', vmax=450)
 plt.colorbar()
 plt.show()
