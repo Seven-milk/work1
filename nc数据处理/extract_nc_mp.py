@@ -102,13 +102,15 @@ def overview(path):
 
 if __name__ == "__main__":
     """example"""
-    start = time.time()
-    path = "F:/Yanxiang/Python/gldas"
-    # path = "G:/GLADS/daily_data"
-    coord_path = "F:/Yanxiang/Python/coord.txt"
-    extract_nc(path, coord_path, "Snowf_tavg", precision=3)
-    end = time.time()
-    print("extract_nc_mp time：", end - start)
+    # start = time.time()
+    # path = "F:/Yanxiang/Python/gldas"
+    path = "D:/GLADS/daily_data"
+    # coord_path = "F:/Yanxiang/Python/coord.txt"
+    coord_path = "H:/research/flash_drough/coord.txt"
+    # overview(path)
+    extract_nc(path, coord_path, "Wind_f_tavg", precision=3)
+    # end = time.time()
+    # print("extract_nc_mp time：", end - start)
     # """Execute  code, extract variable from GLDAS nc file"""
     # path = "D:\GLADS\daily_data"
     # coord_path = "H:\GIS\Flash_drought\coord.txt"

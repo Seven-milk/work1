@@ -7,7 +7,10 @@ Profile Soil moisture: 'SoilMoist_P_tavg'; Total precipitation rate: "Rainf_f_ta
 air_temperature: "Tair_f_tavg"; Direct Evaporation from Bare Soil: "ESoil_tavg"
 Plant canopy surface water: 'CanopInt_tavg'; transpiration_flux_from_veg: "TVeg_tavg"
 Canopy water evaporation: 'ECanop_tavg'; Evapotranspiration: 'Evap_tavg'
-Heat flux: 'Qg_tavg'; """
+Heat flux: 'Qg_tavg';
+surface_runoff_amount(Storm surface runoff): "Qs_tavg";
+subsurface_runoff_amount(Baseflow-groundwater runoff): "Qsb_tavg"
+wind_speed: 'Wind_f_tavg'"""
 
 import extract_nc as ex
 import numpy as np
