@@ -24,7 +24,7 @@ def index_cal(extend: list, det: float, data_lat: np.ndarray, data_lon: np.ndarr
         data_lat/lon_index index of the data_lat/lon in the extend, np.ndarray
     '''
     data_lat_index = np.array([int((data_lat[i] - extend[2]) / det) for i in range(len(data_lat))])
-    data_lon_index = np.array([int((data_lon[i] - extend[0]) / det) for i in range(len(data_lon))])  # - det/2
+    data_lon_index = np.array([int((data_lon[i] - extend[0]) / det) for i in range(len(data_lon))])
     return data_lat_index, data_lon_index
 
 
@@ -50,11 +50,18 @@ def array_cal(extend: list, det: float, lat_index: np.ndarray, lon_index: np.nda
     # put the data into the full array based on index
     for i in range(len(lat_index)):
         array_data[expand + lon_index[i], expand + lat_index[i]] = data[i]
-    # +det/2: move to the center of each raster(because plot in the center location, instead of the edge)
+    # array_data_lon/lat is the center point
     array_data_lon = np.linspace(extend[0] - det * expand, extend[1] + det * expand,
-                                 num=int((extend[1] - extend[0]) / det + 1 + 2 * expand))  # det / 2
+                                 num=int((extend[1] - extend[0]) / det + 1 + 2 * expand))
     array_data_lat = np.linspace(extend[2] - det * expand, extend[3] + det * expand,
-                                 num=int((extend[3] - extend[2]) / det + 1 + 2 * expand))  # det / 2
+                                 num=int((extend[3] - extend[2]) / det + 1 + 2 * expand))
+
+    # move center point to edge, "pcolormesh" require *X* and *Y* can be used to specify the corners,
+    # depend shading method, but the x/y(lat/lon) should specify the corners
+    array_data_lon -= det / 2
+    np.append(array_data_lon, array_data_lon[-1] + det)
+    array_data_lat -= det / 2
+    np.append(array_data_lat, array_data_lat[-1] + det)
 
     return array_data, array_data_lon, array_data_lat
 
@@ -129,7 +136,7 @@ def plot_cartopy_raster(extend: list, det: float, array_data: np.ndarray, array_
     pc = ax.pcolormesh(array_data_lon, array_data_lat, array_data.T, cmap=cMap)
     cb = plt.colorbar(pc, orientation='horizontal', extend='both', shrink=0.5)  # colorbar
     cb.ax.tick_params(labelsize=9)
-    cb.set_label(cb_label, fontdict=font_label, loc="center")
+    cb.set_label(cb_label, fontdict=font_label)
     for l in cb.ax.yaxis.get_ticklabels():
         l.set_family('Times New Roman')
     plt.rcParams['font.size'] = 7
@@ -155,7 +162,7 @@ def general_cartopy_plot(extend: list, det: float, data:np.ndarray, lat: np.ndar
 
 if __name__ == "__main__":
     # general set
-    home = "H:/research/flash_drough/"
+    home = "F:/research/flash_drough/"
     data_path = os.path.join(home, "GLDAS_Catchment/SoilMoist_RZ_tavg.txt")
     coord_path = os.path.join(home, "coord.txt")
     coord = pd.read_csv(coord_path, sep=",")
