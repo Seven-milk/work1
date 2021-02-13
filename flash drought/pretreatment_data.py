@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 # general set
 home = "H:/research/flash_drough/"
 data_path = os.path.join(home, "GLDAS_Catchment")
-coord_path = "H:/GIS/Flash_drought/coord.txt"
+coord_path = os.path.join(home, "coord.txt")
 coord = pd.read_csv(coord_path, sep=",")
 date = pd.date_range('19480101', '20141230', freq='d').strftime("%Y%m%d").to_numpy(dtype="int")
 sm_rz = np.loadtxt(os.path.join(data_path, "SoilMoist_RZ_tavg.txt"), dtype="float", delimiter=" ")
