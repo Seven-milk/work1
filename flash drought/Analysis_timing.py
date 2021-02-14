@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import FDIP
 import os
-import re
 from matplotlib import pyplot as plt
 
 # general set
