@@ -49,23 +49,24 @@ def date2month(date: int) -> int:
 
 def cal_stat_params():
     # calculate the statistical params for all grid (one value for one grid) (define)
-    Drought_FOC = np.full((Num_point, ), np.NAN, dtype='float')  # Drought FOC
-    Drought_number = np.full((Num_point, ), np.NAN, dtype='float')  # Drought number
-    DD_mean = np.full((Num_point, ), np.NAN, dtype='float')  # DD timing mean (mean by drought events number)
-    DS_mean = np.full((Num_point, ), np.NAN, dtype='float')  # DS timing mean
-    SM_min_mean = np.full((Num_point, ), np.NAN, dtype='float')  # SM_min timing mean
+    Drought_FOC = np.full((Num_point,), np.NAN, dtype='float')  # Drought FOC
+    Drought_number = np.full((Num_point,), np.NAN, dtype='float')  # Drought number
+    DD_mean = np.full((Num_point,), np.NAN, dtype='float')  # DD timing mean (mean by drought events number)
+    DS_mean = np.full((Num_point,), np.NAN, dtype='float')  # DS timing mean
+    SM_min_mean = np.full((Num_point,), np.NAN, dtype='float')  # SM_min timing mean
 
-    FD_FOC = np.full((Num_point, ), np.NAN, dtype='float')  # FD FOC
-    FD_number = np.full((Num_point, ), np.NAN, dtype='float')  # FD number
-    FDD_mean = np.full((Num_point, ), np.NAN, dtype='float')  # FDD timing mean
-    FDS_mean = np.full((Num_point, ), np.NAN, dtype='float')  # FDS timing mean
-    RI_mean_mean = np.full((Num_point, ), np.NAN, dtype='float')  # RI_mean timing mean
-    RI_max_mean = np.full((Num_point, ), np.NAN, dtype='float')  # RI_max timing mean
+    FD_FOC = np.full((Num_point,), np.NAN, dtype='float')  # FD FOC
+    FD_number = np.full((Num_point,), np.NAN, dtype='float')  # FD number
+    FDD_mean = np.full((Num_point,), np.NAN, dtype='float')  # FDD timing mean
+    FDS_mean = np.full((Num_point,), np.NAN, dtype='float')  # FDS timing mean
+    RI_mean_mean = np.full((Num_point,), np.NAN, dtype='float')  # RI_mean timing mean
+    RI_max_mean = np.full((Num_point,), np.NAN, dtype='float')  # RI_max timing mean
 
     # calculate the statistical params for all grid (loop)
     for i in range(Num_point):
         # the sm_rz_pentad time series of every point
-        FD_ = FDIP.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5, pc=0.28,
+        FD_ = FDIP.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+                      pc=0.28,
                       excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
                       fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
         # SM_percentile, RI, out_put, dp = FD_.general_out()
@@ -97,83 +98,93 @@ def cal_stat_params():
     static_params.to_excel("static_params.xlsx")
 
 
-# calculate season params in all grid (season feature) (one value for one grid) (define)
-# all define based on the start time
-Drought_spring = np.full((Num_point, ), np.NAN, dtype='int')  # drought events number occur in spring(3, 4, 5)
-Drought_summer = np.full((Num_point, ), np.NAN, dtype='int')  # drought events number occur in summer(6, 7, 8)
-Drought_autumn = np.full((Num_point, ), np.NAN, dtype='int')  # drought events number occur in autumn(9, 10, 11)
-Drought_winter = np.full((Num_point, ), np.NAN, dtype='int')  # drought events number occur in winter(12, 1, 2)
+def cal_season_params():
+    # calculate season params in all grid (season feature) (one value for one grid) (define)
+    # all define based on the start time
+    Drought_spring = np.full((Num_point,), np.NAN, dtype='int')  # drought events number occur in spring(3, 4, 5)
+    Drought_summer = np.full((Num_point,), np.NAN, dtype='int')  # drought events number occur in summer(6, 7, 8)
+    Drought_autumn = np.full((Num_point,), np.NAN, dtype='int')  # drought events number occur in autumn(9, 10, 11)
+    Drought_winter = np.full((Num_point,), np.NAN, dtype='int')  # drought events number occur in winter(12, 1, 2)
 
-FD_spring = np.full((Num_point, ), np.NAN, dtype='int')  # FD events number occur in spring
-FD_summer = np.full((Num_point, ), np.NAN, dtype='int')  # FD events number occur in summer
-FD_autumn = np.full((Num_point, ), np.NAN, dtype='int')  # FD events number occur in autumn
-FD_winter = np.full((Num_point, ), np.NAN, dtype='int')  # FD events number occur in winter
+    FD_spring = np.full((Num_point,), np.NAN, dtype='int')  # FD events number occur in spring
+    FD_summer = np.full((Num_point,), np.NAN, dtype='int')  # FD events number occur in summer
+    FD_autumn = np.full((Num_point,), np.NAN, dtype='int')  # FD events number occur in autumn
+    FD_winter = np.full((Num_point,), np.NAN, dtype='int')  # FD events number occur in winter
 
-# season flag, describe which season is most happen in this grid (spring: 1, summer: 2, autumn: 3, winter: 4)
-# (one value for one grid)
-Drought_season_Flag = np.full((Num_point, ), np.NAN, dtype='int')  # Drought season Flag
-FD_season_Flag = np.full((Num_point, ), np.NAN, dtype='int')  # FD season Flag
+    # season flag, describe which season is most happen in this grid (spring: 1, summer: 2, autumn: 3, winter: 4)
+    # (one value for one grid)
+    Drought_season_Flag = np.full((Num_point,), np.NAN, dtype='int')  # Drought season Flag
+    FD_season_Flag = np.full((Num_point,), np.NAN, dtype='int')  # FD season Flag
 
-# calculate season params for all grid (season feature) (loop)
-for i in range(Num_point):
-    # the sm_rz_pentad time series of every point
-    FD_ = FDIP.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5, pc=0.28,
-                  excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                  fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+    # calculate season params for all grid (season feature) (loop)
+    for i in range(Num_point):
+        # the sm_rz_pentad time series of every point
+        FD_ = FDIP.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+                      pc=0.28,
+                      excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                      fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
 
-    # calculate season params for this grid
-    Drought_spring_ = 0  # drought events number occur in spring(3, 4, 5)
-    Drought_summer_ = 0  # drought events number occur in summer(6, 7, 8)
-    Drought_autumn_ = 0  # drought events number occur in autumn(9, 10, 11)
-    Drought_winter_ = 0  # drought events number occur in winter(12, 1, 2)
-    FD_spring_ = 0  # FD events number occur in spring
-    FD_summer_ = 0  # FD events number occur in summer
-    FD_autumn_ = 0  # FD events number occur in autumn
-    FD_winter_ = 0  # FD events number occur in winter
+        # calculate season params for this grid
+        Drought_spring_ = 0  # drought events number occur in spring(3, 4, 5)
+        Drought_summer_ = 0  # drought events number occur in summer(6, 7, 8)
+        Drought_autumn_ = 0  # drought events number occur in autumn(9, 10, 11)
+        Drought_winter_ = 0  # drought events number occur in winter(12, 1, 2)
+        FD_spring_ = 0  # FD events number occur in spring
+        FD_summer_ = 0  # FD events number occur in summer
+        FD_autumn_ = 0  # FD events number occur in autumn
+        FD_winter_ = 0  # FD events number occur in winter
 
-    for j in range(len(FD_.dry_flag_start)):
-        Drought_month = date2month(date_pentad[FD_.dry_flag_start[j]])  # Drought start time
-        if Drought_month in [3, 4, 5]:
-            Drought_spring_ += 1
-        elif Drought_month in [6, 7, 8]:
-            Drought_summer_ += 1
-        elif Drought_month in [9, 10, 11]:
-            Drought_autumn_ += 1
-        elif Drought_month in [12, 1, 2]:
-            Drought_winter_ += 1
-        for k in range(len(FD_.fd_flag_start[j])):
-            FD_month = date2month(date_pentad[FD_.fd_flag_start[j][k]])  # FD start time
-            if FD_month in [3, 4, 5]:
-                FD_spring_ += 1
-            elif FD_month in [6, 7, 8]:
-                FD_summer_ += 1
-            elif FD_month in [9, 10, 11]:
-                FD_autumn_ += 1
-            elif FD_month in [12, 1, 2]:
-                FD_winter_ += 1
+        for j in range(len(FD_.dry_flag_start)):
+            Drought_month = date2month(date_pentad[FD_.dry_flag_start[j]])  # Drought start time
+            if Drought_month in [3, 4, 5]:
+                Drought_spring_ += 1
+            elif Drought_month in [6, 7, 8]:
+                Drought_summer_ += 1
+            elif Drought_month in [9, 10, 11]:
+                Drought_autumn_ += 1
+            elif Drought_month in [12, 1, 2]:
+                Drought_winter_ += 1
+            for k in range(len(FD_.fd_flag_start[j])):
+                FD_month = date2month(date_pentad[FD_.fd_flag_start[j][k]])  # FD start time
+                if FD_month in [3, 4, 5]:
+                    FD_spring_ += 1
+                elif FD_month in [6, 7, 8]:
+                    FD_summer_ += 1
+                elif FD_month in [9, 10, 11]:
+                    FD_autumn_ += 1
+                elif FD_month in [12, 1, 2]:
+                    FD_winter_ += 1
 
-    Drought_spring[i] = Drought_spring_  # drought events number occur in spring(3, 4, 5)
-    Drought_summer[i] = Drought_summer_  # drought events number occur in summer(6, 7, 8)
-    Drought_autumn[i] = Drought_autumn_  # drought events number occur in autumn(9, 10, 11)
-    Drought_winter[i] = Drought_winter_  # drought events number occur in winter(12, 1, 2)
-    FD_spring[i] = FD_spring_  # FD events number occur in spring
-    FD_summer[i] = FD_summer_  # FD events number occur in summer
-    FD_autumn[i] = FD_autumn_  # FD events number occur in autumn
-    FD_winter[i] = FD_winter_  # FD events number occur in winter
+        Drought_spring[i] = Drought_spring_  # drought events number occur in spring(3, 4, 5)
+        Drought_summer[i] = Drought_summer_  # drought events number occur in summer(6, 7, 8)
+        Drought_autumn[i] = Drought_autumn_  # drought events number occur in autumn(9, 10, 11)
+        Drought_winter[i] = Drought_winter_  # drought events number occur in winter(12, 1, 2)
+        FD_spring[i] = FD_spring_  # FD events number occur in spring
+        FD_summer[i] = FD_summer_  # FD events number occur in summer
+        FD_autumn[i] = FD_autumn_  # FD events number occur in autumn
+        FD_winter[i] = FD_winter_  # FD events number occur in winter
 
-    # Drought season flag/ FD season flag: which season is most happen in this grid
-    Drought_season_list = np.array([Drought_spring_, Drought_summer_, Drought_autumn_, Drought_winter_])
-    FD_season_list = np.array([FD_spring_, FD_summer_, FD_autumn_, FD_winter_])
-    Drought_season_Flag[i] = np.argmax(Drought_season_list) + 1
-    FD_season_Flag[i] = np.argmax(FD_season_list) + 1
+        # Drought season flag/ FD season flag: which season is most happen in this grid
+        Drought_season_list = np.array([Drought_spring_, Drought_summer_, Drought_autumn_, Drought_winter_])
+        FD_season_list = np.array([FD_spring_, FD_summer_, FD_autumn_, FD_winter_])
+        Drought_season_Flag[i] = np.argmax(Drought_season_list) + 1
+        FD_season_Flag[i] = np.argmax(FD_season_list) + 1
 
-# init dataframe to save season params
-season_params = pd.DataFrame(np.vstack((Drought_spring, Drought_summer, Drought_autumn, Drought_winter,
-                                        FD_spring, FD_summer, FD_autumn, FD_winter,
-                                        Drought_season_Flag, FD_season_Flag)).T,
-                             columns=("Drought_spring", "Drought_summer", "Drought_autumn", "Drought_winter",
-                                      "FD_spring", "FD_summer", "FD_autumn", "FD_winter",
-                                      "Drought_season_Flag", "FD_season_Flag"))
+    # init dataframe to save season params
+    season_params = pd.DataFrame(np.vstack((Drought_spring, Drought_summer, Drought_autumn, Drought_winter,
+                                            FD_spring, FD_summer, FD_autumn, FD_winter,
+                                            Drought_season_Flag, FD_season_Flag)).T,
+                                 columns=("Drought_spring", "Drought_summer", "Drought_autumn", "Drought_winter",
+                                          "FD_spring", "FD_summer", "FD_autumn", "FD_winter",
+                                          "Drought_season_Flag", "FD_season_Flag"))
 
-# save to excel
-season_params.to_excel("season_params.xlsx")
+    # save to excel
+    # season_params.to_excel("season_params.xlsx")
+
+
+# 1036, the grid with 376 drought events and 314 FD events
+FD_ = FDIP.FD(sm_rz_pentad[:, 1036], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+              pc=0.28,
+              excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+              fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+FD_.general_out()
