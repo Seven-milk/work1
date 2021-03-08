@@ -8,7 +8,8 @@ import FDIP
 import os
 
 # general set
-home = "F:/research/flash_drough/"
+root = "H"
+home = f"{root}:/research/flash_drough/"
 data_path = os.path.join(home, "GLDAS_Catchment/SoilMoist_RZ_tavg.txt")
 coord_path = os.path.join(home, "coord.txt")
 coord = pd.read_csv(coord_path, sep=",")

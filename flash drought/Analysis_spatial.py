@@ -10,7 +10,8 @@ from matplotlib import pyplot as plt
 import cartopy_plot
 
 # general set
-home = "F:/research/flash_drough/"
+root = "H"
+home = f"{root}:/research/flash_drough/"
 data_path = os.path.join(home, "GLDAS_Catchment/SoilMoist_RZ_tavg.txt")
 coord_path = os.path.join(home, "coord.txt")
 coord = pd.read_csv(coord_path, sep=",")
@@ -31,7 +32,7 @@ lon_min = min(lon)
 lat_max = max(lat)
 lon_max = max(lon)
 extend = [lon_min, lon_max, lat_min, lat_max]
-shape_file = ["F:/GIS/Flash_drought/f'r_project.shp"]
+shape_file = [f"{root}:/GIS/Flash_drought/f'r_project.shp"]
 
 # spatial plot of time average sm
 sm_rz_time_avg = sm_rz.mean(axis=0)
