@@ -46,6 +46,7 @@ class CopulaDistributionBivariate():
         c = np.zeros((PointNumber, PointNumber))
         for i in range(PointNumber):
             c[i, :] = self.cdistribution.pdf(np.array([np.full_like(v[:], fill_value=u[i]), v[:]]).T)
+        c[np.isnan(c)] = 0
         c = (c - c.min()) / (c.max() - c.min())
         # pcolormesh
         plt.figure()
