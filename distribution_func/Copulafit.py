@@ -8,6 +8,8 @@ import Univariatefit
 from scipy import stats
 from matplotlib import pyplot as plt
 from mpl_toolkits import mplot3d
+from matplotlib.colors import ListedColormap
+from matplotlib.colors import Normalize
 import copulas
 from copulas.univariate import Univariate
 from copulas.bivariate import Bivariate
@@ -47,7 +49,14 @@ class CopulaDistributionBivariate():
         c = (c - c.min()) / (c.max() - c.min())
         # pcolormesh
         plt.figure()
-        plt.pcolormesh(U, V, c, cmap='RdBu')
+        # cmap
+        N = 255
+        varls = np.ones((N, 4))
+        varls[:, 0] = 255/256
+        varls[:, 1] = np.flip(np.linspace(0, 1, N))
+        varls[:, 2] = np.flip(np.linspace(0, 1, N))
+        mymap = ListedColormap(varls)
+        plt.pcolormesh(U, V, c, cmap=mymap, shading='gouraud')
         plt.colorbar(extend='both')
         # data
         plt.scatter(self.cdata[:, 0], self.cdata[:, 1])
