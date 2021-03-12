@@ -61,6 +61,8 @@ class CopulaDistributionBivariate():
         plt.colorbar(extend='both')
         # data
         plt.scatter(self.cdata[:, 0], self.cdata[:, 1])
+        ct = plt.contour(U, V, c, cmap='RdGy')
+        plt.clabel(ct, inline=1, fontsize=10)
         # 3d plot
         plt.figure()
         ax = plt.axes(projection='3d')

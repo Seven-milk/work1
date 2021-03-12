@@ -21,5 +21,5 @@ x4 = data2[[i for i in range(21, len(data2))][::12], 6]
 u3 = UnivariateDistribution(x3, stats.genextreme)
 v4 = UnivariateDistribution(x4, stats.norm)
 cdata_uv = np.array([u3.data_cdf, v4.data_cdf]).T
-c1 = CopulaDistributionBivariate(cdata_uv, copulas.bivariate.Clayton())
+c1 = CopulaDistributionBivariate(cdata_uv, copulas.bivariate.Frank())
 c1.plot()
