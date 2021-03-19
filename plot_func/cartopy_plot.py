@@ -68,7 +68,7 @@ def array_cal(extend: list, det: float, lat_index: np.ndarray, lon_index: np.nda
 
 def plot_cartopy_raster(extend: list, det: float, array_data: np.ndarray, array_data_lon: np.ndarray,
                         array_data_lat: np.ndarray, shape_file=None, proj=crs.PlateCarree(), cmap_name='YlOrBr',
-                        dpi=300, grid=True, save=False, title="Map", cb_label="cb"):
+                        dpi=300, grid=True, save=False, title="Map", cb_label="cb", map_boundry=None):
     '''
     Using cartopy to plot raster map
     input:
@@ -84,7 +84,9 @@ def plot_cartopy_raster(extend: list, det: float, array_data: np.ndarray, array_
         dpi: figure dpi, default=300
         grid: bool, whether to open the grid lines
         save: bool, whether to save figure
-        title: title and also is the figure name to save
+        title: string, title and also is the figure name to save
+        cb_label: string, the label of colorbar
+        map_boundry: none or list, if list, this param sets the map boundry - [vmin, vmax]
     '''
 
     fig = plt.figure(dpi=dpi)
@@ -133,7 +135,10 @@ def plot_cartopy_raster(extend: list, det: float, array_data: np.ndarray, array_
     cMap = plt.get_cmap(cmap_name)
 
     # plot raster
-    pc = ax.pcolormesh(array_data_lon, array_data_lat, array_data.T, cmap=cMap)
+    if map_boundry == None:
+        pc = ax.pcolormesh(array_data_lon, array_data_lat, array_data.T, cmap=cMap)
+    else:
+        pc = ax.pcolormesh(array_data_lon, array_data_lat, array_data.T, cmap=cMap, vmin=map_boundry[0], vmax=map_boundry[1])
     cb = plt.colorbar(pc, orientation='horizontal', extend='both', shrink=0.5)  # colorbar
     cb.ax.tick_params(labelsize=9)
     cb.set_label(cb_label, fontdict=font_label)
@@ -150,14 +155,15 @@ def plot_cartopy_raster(extend: list, det: float, array_data: np.ndarray, array_
         plt.close()
 
 
-def general_cartopy_plot(extend: list, det: float, data:np.ndarray, lat: np.ndarray, lon: np.ndarray, shape_file=None,
-                         expand=10, grid=True, save=False, title="Map", cb_label="cb", cmap_name="YlOrBr"):
+def general_cartopy_plot(extend: list, det: float, data: np.ndarray, lat: np.ndarray, lon: np.ndarray, shape_file=None,
+                         expand=10, grid=True, save=False, title="Map", cb_label="cb", cmap_name="YlOrBr", map_boundry=None):
     """ general plot process: usually change in this function to spectify plot format """
     lat_index, lon_index = index_cal(extend=extend, det=det, data_lat=lat, data_lon=lon)
     array_data, array_data_lon, array_data_lat = array_cal(extend=extend, det=det, lat_index=lat_index,
                                                            lon_index=lon_index, data=data, expand=expand)
-    plot_cartopy_raster(extend, det, array_data, array_data_lon, array_data_lat, shape_file=shape_file, proj=crs.PlateCarree(),
-                        cmap_name=cmap_name, dpi=300, grid=grid, save=save, title=title, cb_label=cb_label)
+    plot_cartopy_raster(extend, det, array_data, array_data_lon, array_data_lat, shape_file=shape_file,
+                        proj=crs.PlateCarree(),
+                        cmap_name=cmap_name, dpi=300, grid=grid, save=save, title=title, cb_label=cb_label, map_boundry=map_boundry)
 
 
 if __name__ == "__main__":
@@ -184,4 +190,4 @@ if __name__ == "__main__":
     lon_max = max(lon)
     extend = [lon_min, lon_max, lat_min, lat_max]
 
-    general_cartopy_plot(extend, det, sm_rz_time_avg, lat, lon)
+    general_cartopy_plot(extend, det, sm_rz_time_avg, lat, lon, map_boundry=[0, 400])
