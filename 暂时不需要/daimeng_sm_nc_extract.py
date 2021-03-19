@@ -1,17 +1,16 @@
 # code: utf-8
-# author: "Xudong Zheng" 
+# author: "Xudong Zheng"
 # email: Z786909151@163.com
 import numpy as np
 from netCDF4 import Dataset
 import os
 import pandas as pd
-import time
 import re
 
-home = 'H:/work/daimeng'
+home = 'E:/VIC'
 path = os.path.join(home, 'soil moisture layer 1')
 # path = os.path.join(home, 'soil moisture layer 2')
-coord_path = os.path.join(home, 'coord.txt')
+coord_path = os.path.join(home, 'coord_gs.txt')
 precision = 3
 variable_name = 'sm1'
 # variable_name = 'sm2'
@@ -33,19 +32,25 @@ for j in range(len(coord)):
     lon_index.append(np.where(lon == coord["lon"][j])[0][0])
 f1.close()
 
+# define variable
+variable = np.zeros((1, coord_number + 1))
+
+
 # read variable based on the lat_index/lon_index
 for i in range(len(result)):
     f = Dataset(result[i], 'r')
     Dataset.set_auto_mask(f, False)
     time_number = f.variables["time"].shape[0]
     variable_ = np.zeros((time_number, coord_number + 1))
-    variable_[0, :] = f.variables["time"][:]
+    variable_[:, 0] = f.variables["time"][:]
     for j in range(len(coord)):
-        for k in len(f.variables["time"]):
-            variable_[i, j + 1] = f.variables[variable_name][f.variables["time"][k], lat_index[j], lon_index[j]]
+        for k in range(len(f.variables["time"])):
+            variable_[i, j + 1] = f.variables[variable_name][k, lat_index[j], lon_index[j]]
     print(f"complete read file:{i}")
     variable = np.vstack((variable, variable_))
     f.close()
+
+variable = variable[1:, :]
 
 # sort by time
 variable = variable[variable[:, 0].argsort()]
