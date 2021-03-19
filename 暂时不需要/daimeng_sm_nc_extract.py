@@ -7,7 +7,8 @@ import os
 import pandas as pd
 import re
 
-home = 'E:/VIC'
+# home = 'E:/VIC'
+home = 'F:/work/daimeng'
 path = os.path.join(home, 'soil moisture layer 1')
 # path = os.path.join(home, 'soil moisture layer 2')
 coord_path = os.path.join(home, 'coord_gs.txt')
@@ -45,7 +46,7 @@ for i in range(len(result)):
     variable_[:, 0] = f.variables["time"][:]
     for j in range(len(coord)):
         for k in range(len(f.variables["time"])):
-            variable_[i, j + 1] = f.variables[variable_name][k, lat_index[j], lon_index[j]]
+            variable_[k, j + 1] = f.variables[variable_name][k, lat_index[j], lon_index[j]]
     print(f"complete read file:{i}")
     variable = np.vstack((variable, variable_))
     f.close()
