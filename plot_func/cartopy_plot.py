@@ -11,59 +11,104 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import numpy as np
 import os
 import pandas as pd
+import abc
 
 
-def index_cal(extend: list, det: float, data_lat: np.ndarray, data_lon: np.ndarray):
-    '''
-    calculate index of the data_lat/lon in the extend
-    input:
-        extend: list extend = [lon_min, lon_max, lat_min, lat_max], is the center point
-        det: resolution of a raster, unit = degree
-        data_lat/lon: the lat/lon array of the data, 1D array, is the center point
-    return:
-        data_lat/lon_index index of the data_lat/lon in the extend, np.ndarray
-    '''
-    data_lat_index = np.array([int((data_lat[i] - extend[2]) / det) for i in range(len(data_lat))])
-    data_lon_index = np.array([int((data_lon[i] - extend[0]) / det) for i in range(len(data_lon))])
-    return data_lat_index, data_lon_index
+# Define MapBase class
+class MapBase(abc.ABC):
+    ''' Map base class '''
+
+    @abc.abstractmethod
+    def plot(self):
+        ''' plot map '''
 
 
-def array_cal(extend: list, det: float, lat_index: np.ndarray, lon_index: np.ndarray, data: np.ndarray,
-              maskvalue=-9999, expand=0):
-    '''
-    create full array based on the extend(a array), put the data into the full array, and mask the area without data
-    input:
-        extend: list extend = [lon_min, lon_max, lat_min, lat_max]
-        det: resolution of a raster, unit = degree
-        lat/lon_index: data_lat/lon_index index of the data_lat/lon in the extend, np.ndarray
-        data: data, 1D array(correlated with lat/lon_index)
-        expand: how many pixels used for expanding the array(for better plotting)
-    output:
-        array_data: full array with data, the area without data has been mask with maskvalue
-        array_data_lon/lat: the lat/lon of the full array(array_data) calculated based on the extend, center point
-    '''
-    array_data = np.full(
-        (int((extend[1] - extend[0]) / det + 1 + 2 * expand), int((extend[3] - extend[2]) / det + 1 + 2 * expand)),
-        fill_value=maskvalue, dtype='float')
-    mask = array_data == maskvalue
-    array_data = np.ma.array(array_data, mask=mask)
-    # put the data into the full array based on index
-    for i in range(len(lat_index)):
-        array_data[expand + lon_index[i], expand + lat_index[i]] = data[i]
-    # array_data_lon/lat is the center point
-    array_data_lon = np.linspace(extend[0] - det * expand, extend[1] + det * expand,
-                                 num=int((extend[1] - extend[0]) / det + 1 + 2 * expand))
-    array_data_lat = np.linspace(extend[2] - det * expand, extend[3] + det * expand,
-                                 num=int((extend[3] - extend[2]) / det + 1 + 2 * expand))
+class MeshgridMap:
+    ''' Mesh a original data (1D array) into a full data (2D array) based on a extend, det, data, data_lat, data_lon'''
 
-    # move center point to edge, "pcolormesh" require *X* and *Y* can be used to specify the corners,
-    # depend shading method, but the x/y(lat/lon) should specify the corners
-    array_data_lon -= det / 2
-    np.append(array_data_lon, array_data_lon[-1] + det)
-    array_data_lat -= det / 2
-    np.append(array_data_lat, array_data_lat[-1] + det)
+    def __init__(self, extend: list, det: float, data_lat: np.ndarray, data_lon: np.ndarray, data: np.ndarray,
+                 maskvalue=-9999, expand=0):
+        ''' init function
+        input:
+            extend: list extend = [lon_min, lon_max, lat_min, lat_max], is the center point
+            det: resolution of a raster, unit = degree
+            data_lat/lon: the lat/lon array of the data, 1D array, is the center point
+            data: data, 1D array(correlated with lat/lon_index)
+            expand: how many pixels used for expanding the array(for better plotting)
+        Main output:
+            self.array_data: full array with data, the area without data has been mask with maskvalue
+            self.array_data_lon/lat: the lat/lon of the full array(array_data) calculated based on the extend, center point
+        '''
+        # load data
+        self.extend = extend
+        self.det = det
+        self.data_lat = data_lat
+        self.data_lon = data_lon
+        self.data = data
+        self.maskvalue = maskvalue
+        self.expand = expand
 
-    return array_data, array_data_lon, array_data_lat
+        self.lat_index, self.lon_index = self.index_cal()  # calculate index of the data_lat/lon in the extend
+
+        self.array_data, self.array_data_lon, self.array_data_lat = self.array_cal()  # create full array based on the
+        # extend(a array), put the data into the full array, and mask the area without data
+
+    def index_cal(self):
+        '''
+        calculate index of the data_lat/lon in the extend
+        input:
+            extend: list extend = [lon_min, lon_max, lat_min, lat_max], is the center point
+            det: resolution of a raster, unit = degree
+            data_lat/lon: the lat/lon array of the data, 1D array, is the center point
+        return:
+            data_lat/lon_index index of the data_lat/lon in the extend, np.ndarray
+        '''
+        data_lat_index = np.array([int((self.data_lat[i] - extend[2]) / det) for i in range(len(self.data_lat))])
+        data_lon_index = np.array([int((self.data_lon[i] - extend[0]) / det) for i in range(len(self.data_lon))])
+        return data_lat_index, data_lon_index
+
+    def array_cal(self):
+        '''
+        create full array based on the extend(a array), put the data into the full array, and mask the area without data
+        input:
+            extend: list extend = [lon_min, lon_max, lat_min, lat_max]
+            det: resolution of a raster, unit = degree
+            lat/lon_index: data_lat/lon_index index of the data_lat/lon in the extend, np.ndarray
+            data: data, 1D array(correlated with lat/lon_index)
+            expand: how many pixels used for expanding the array(for better plotting)
+        output:
+            array_data: full array with data, the area without data has been mask with maskvalue
+            array_data_lon/lat: the lat/lon of the full array(array_data) calculated based on the extend, center point
+        '''
+        array_data = np.full(
+            (int((extend[1] - extend[0]) / det + 1 + 2 * self.expand),
+             int((extend[3] - extend[2]) / det + 1 + 2 * self.expand)),
+            fill_value=self.maskvalue, dtype='float')
+        mask = array_data == self.maskvalue
+        array_data = np.ma.array(array_data, mask=mask)
+        # put the data into the full array based on index
+        for i in range(len(self.lat_index)):
+            array_data[self.expand + self.lon_index[i], self.expand + self.lat_index[i]] = self.data[i]
+        # array_data_lon/lat is the center point
+        array_data_lon = np.linspace(extend[0] - det * self.expand, extend[1] + det * self.expand,
+                                     num=int((extend[1] - extend[0]) / det + 1 + 2 * self.expand))
+        array_data_lat = np.linspace(extend[2] - det * self.expand, extend[3] + det * self.expand,
+                                     num=int((extend[3] - extend[2]) / det + 1 + 2 * self.expand))
+
+        # move center point to edge, "pcolormesh" require *X* and *Y* can be used to specify the corners,
+        # depend shading method, but the x/y(lat/lon) should specify the corners
+        array_data_lon -= det / 2
+        np.append(array_data_lon, array_data_lon[-1] + det)
+        array_data_lat -= det / 2
+        np.append(array_data_lat, array_data_lat[-1] + det)
+
+        return array_data, array_data_lon, array_data_lat
+
+
+class AddRaster(MapBase, MeshgridMap):
+    def __init__(self):
+
+
 
 
 def plot_cartopy_raster(extend: list, det: float, array_data: np.ndarray, array_data_lon: np.ndarray,
@@ -138,7 +183,8 @@ def plot_cartopy_raster(extend: list, det: float, array_data: np.ndarray, array_
     if map_boundry == None:
         pc = ax.pcolormesh(array_data_lon, array_data_lat, array_data.T, cmap=cMap)
     else:
-        pc = ax.pcolormesh(array_data_lon, array_data_lat, array_data.T, cmap=cMap, vmin=map_boundry[0], vmax=map_boundry[1])
+        pc = ax.pcolormesh(array_data_lon, array_data_lat, array_data.T, cmap=cMap, vmin=map_boundry[0],
+                           vmax=map_boundry[1])
     cb = plt.colorbar(pc, orientation='horizontal', extend='both', shrink=0.5)  # colorbar
     cb.ax.tick_params(labelsize=9)
     cb.set_label(cb_label, fontdict=font_label)
@@ -164,7 +210,8 @@ def general_cartopy_plot(extend: list, det: float, data: np.ndarray, lat: np.nda
                                                            lon_index=lon_index, data=data, expand=expand)
     plot_cartopy_raster(extend, det, array_data, array_data_lon, array_data_lat, shape_file=shape_file,
                         proj=crs.PlateCarree(),
-                        cmap_name=cmap_name, dpi=300, grid=grid, save=save_, title=title, cb_label=cb_label, map_boundry=map_boundry)
+                        cmap_name=cmap_name, dpi=300, grid=grid, save=save_, title=title, cb_label=cb_label,
+                        map_boundry=map_boundry)
 
 
 if __name__ == "__main__":
