@@ -156,14 +156,15 @@ def plot_cartopy_raster(extend: list, det: float, array_data: np.ndarray, array_
 
 
 def general_cartopy_plot(extend: list, det: float, data: np.ndarray, lat: np.ndarray, lon: np.ndarray, shape_file=None,
-                         expand=10, grid=True, save=False, title="Map", cb_label="cb", cmap_name="YlOrBr", map_boundry=None):
+                         expand=10, grid=True, save=False, title="Map", cb_label="cb", cmap_name="YlOrBr", save_=False,
+                         map_boundry=None):
     """ general plot process: usually change in this function to spectify plot format """
     lat_index, lon_index = index_cal(extend=extend, det=det, data_lat=lat, data_lon=lon)
     array_data, array_data_lon, array_data_lat = array_cal(extend=extend, det=det, lat_index=lat_index,
                                                            lon_index=lon_index, data=data, expand=expand)
     plot_cartopy_raster(extend, det, array_data, array_data_lon, array_data_lat, shape_file=shape_file,
                         proj=crs.PlateCarree(),
-                        cmap_name=cmap_name, dpi=300, grid=grid, save=save, title=title, cb_label=cb_label, map_boundry=map_boundry)
+                        cmap_name=cmap_name, dpi=300, grid=grid, save=save_, title=title, cb_label=cb_label, map_boundry=map_boundry)
 
 
 if __name__ == "__main__":
@@ -189,5 +190,4 @@ if __name__ == "__main__":
     lat_max = max(lat)
     lon_max = max(lon)
     extend = [lon_min, lon_max, lat_min, lat_max]
-
     general_cartopy_plot(extend, det, sm_rz_time_avg, lat, lon, map_boundry=[0, 400])
