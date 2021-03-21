@@ -7,6 +7,7 @@ from cartopy import crs
 from cartopy import feature
 from cartopy.io.shapereader import Reader, natural_earth
 import matplotlib.ticker as mticker
+import matplotlib
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import numpy as np
 import os
@@ -15,16 +16,19 @@ import abc
 
 
 # Define MapBase class
-class MapBase(abc.ABC):
-    ''' Map base class '''
-
+class Map(abc.ABC):
+    ''' Map abstract class '''
     @abc.abstractmethod
     def plot(self):
         ''' plot map '''
 
+    @abc.abstractmethod
+    def setgrid(self):
+        ''' set grid '''
 
-class MeshgridMap:
-    ''' Mesh a original data (1D array) into a full data (2D array) based on a extend, det, data, data_lat, data_lon'''
+class MeshgridArray:
+    ''' This class meshes a original data (1D array) into a full data (2D array) based on a extend, det, data, data_lat,
+        data_lon '''
 
     def __init__(self, extend: list, det: float, data_lat: np.ndarray, data_lon: np.ndarray, data: np.ndarray,
                  maskvalue=-9999, expand=0):
@@ -105,8 +109,139 @@ class MeshgridMap:
         return array_data, array_data_lon, array_data_lat
 
 
-class AddRaster(MapBase, MeshgridMap):
+class BaseMap(Map):
+    ''' base map '''
+    def __init__(self, grid=True):
+        self.grid = grid
+
+    def plot(self, ax: matplotlib.axes._subplots.AxesSubplot):
+        # add coastline with resolution = 50m
+        ax.add_feature(feature.COASTLINE.with_scale('50m'), linewidth=0.6, zorder=10)
+        # add River and lakes with resolution = 50m
+        ax.add_feature(feature.RIVERS.with_scale('50m'), zorder=10)
+        ax.add_feature(feature.LAKES.with_scale('50m'), zorder=10)
+
+    def setgrid(self, ax: matplotlib.axes._subplots.AxesSubplot):
+        gl = ax.gridlines(
+            draw_labels=True,
+            linewidth=0.2,
+            color='k',
+            alpha=0.5,
+            linestyle='--'
+        )
+        gl.top_labels = False  # close top label
+        gl.right_labels = False  # close right label
+        gl.xformatter = LONGITUDE_FORMATTER  # set x label as lon format
+        gl.yformatter = LATITUDE_FORMATTER  # set y label as lat format
+        gl.xlocator = mticker.FixedLocator(np.arange(int(extend_[0]), int(extend_[1]) + 1, 1))
+        gl.ylocator = mticker.FixedLocator(np.arange(int(extend_[2]), int(extend_[3]) + 1, 1))
+
+class RasterMap(MeshgridArray, Map):
+    ''' raster map '''
+    def __init__(self, extend: list, det: float, data_lat: np.ndarray, data_lon: np.ndarray, data: np.ndarray,
+                 maskvalue=-9999, expand=0):
+        MeshgridArray.__init__(self, extend, det, data_lat, data_lon, data, maskvalue, expand)
+
+
+
+class ShpMap(Map):
+    ''' shp map '''
+
+
+class Figure:
+    ''' figure set '''
+    def __init__(self, dpi=200):
+        ''' init function
+        self.figNumber: fig number in the base map, default=1
+        self.figRow: the row of subfigure, default=1
+        self.figCol: the col of subfigure, default=1
+        dpi: figure dpi, default=300
+
+        Main output: self.ax, a list of subfig in a canvas used to plot
+        note: if the fig close, call Figure.fig.show() function
+        '''
+        self.figNumber = 0
+        self.figRow = 1
+        self.figCol = 1
+        self.dpi = dpi
+        self.fig = plt.figure(dpi=self.dpi)
+        self.addFig()
+
+    def addFig(self, AddNumber=1):
+        ''' add figure and return ax '''
+        self.figNumber += AddNumber
+        if self.figNumber >= 2:
+            self.calrowcol()
+        self.fig.clf()
+        self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol)
+        if isinstance(self.ax, np.ndarray):
+            self.ax = self.ax.flatten()
+
+    def calrowcol(self, rowfirst=True):
+        ''' Decomposition factor of self.figNumber to get self.figRow and self.figCol
+            rowfirst: row first calculating
+        '''
+        # if self.figNumber == 2
+        if self.figNumber == 2:
+            self.figRow =  2
+            self.figCol = 1
+            if rowfirst == False:
+                self.figRow, self.figCol = self.figCol, self.figRow
+            return
+
+        # Determine if self.figNumber is prime and decomposition it
+        while True:
+            # prime
+            for i in range(2, self.figNumber):
+                if not self.figNumber % i:  # remainder equal to 0
+                    self.figRow = i
+                    self.figCol = self.figNumber // self.figRow
+                    if rowfirst == False:
+                        self.figRow, self.figCol = self.figCol, self.figRow
+                    return
+            # not prime: self.figNumber + 1 (blank subplot)
+            self.figNumber += 1
+
+    def reset(self):
+        self.fig.clf()
+        self.figNumber = 0
+        self.figRow = 1
+        self.figCol = 1
+        self.addFig()
+
+
+class FigurePlot:
+    ''' plot the map '''
     def __init__(self):
+        self.plot_function = []
+
+    def plot(self, grid=True, save=False, proj=crs.PlateCarree()):
+        ''' Implements the MapBase.plot function
+        input:
+            dpi: figure dpi, default=300
+            grid: bool, whether to open the grid lines
+            save: bool, whether to save figure
+            proj: projection, crs.Projection, it can be PlateCarree, AlbersEqualArea, AzimuthalEquidistant, EquidistantConic,
+              LambertConformal, LambertCylindrical, Mercator, Miller, Mollweide, Orthographic, Robinson, Sinusoidal,
+              Sinusoidal, TransverseMercator, UTM, InterruptedGoodeHomolosine...
+              reference: https://scitools.org.uk/cartopy/docs/latest/crs/projections.html
+        '''
+
+        for i in range(len(self.plot_function)):
+            self.plot_function[i](ax[i])
+
+        if grid == True:
+            self.setgrid()
+
+    def addmap(self, map: Map):
+        self.plot_function.append(map.plot())
+
+
+
+
+
+
+
 
 
 
