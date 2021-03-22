@@ -122,11 +122,12 @@ class MeshgridArray:
                                      num=int((self.extent[3] - self.extent[2]) / self.det + 1 + 2 * self.expand))
 
         # move center point to edge, "pcolormesh" require *X* and *Y* can be used to specify the corners,
-        # depend shading method, but the x/y(lat/lon) should specify the corners
-        array_data_lon -= self.det / 2
-        np.append(array_data_lon, array_data_lon[-1] + self.det)
-        array_data_lat -= self.det / 2
-        np.append(array_data_lat, array_data_lat[-1] + self.det)
+        # depend shading method, but the x/y(lat/lon) should specify the corners(based on different env the raster might
+        # out of alignment, to correct, use follow code)
+        # array_data_lon -= self.det / 2
+        # np.append(array_data_lon, array_data_lon[-1] + self.det)
+        # array_data_lat -= self.det / 2
+        # np.append(array_data_lat, array_data_lat[-1] + self.det)
 
         return array_data, array_data_lon, array_data_lat
 
