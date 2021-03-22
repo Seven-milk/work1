@@ -42,7 +42,7 @@ f.fig.show()
 '''
 
 # Define MapBase class
-class Map(abc.ABC):
+class MapBase(abc.ABC):
     ''' Map abstract class '''
     @abc.abstractmethod
     def plot(self, ax):
@@ -131,7 +131,7 @@ class MeshgridArray:
         return array_data, array_data_lon, array_data_lat
 
 
-class BaseMap(Map):
+class BaseMap(MapBase):
     ''' base map '''
     def plot(self, ax):
         ''' Implements the MapBase.plot function '''
@@ -142,7 +142,7 @@ class BaseMap(Map):
         ax.add_feature(feature.LAKES.with_scale('50m'), zorder=10)
 
 
-class RasterMap(MeshgridArray, Map):
+class RasterMap(MeshgridArray, MapBase):
     ''' raster map '''
     def __init__(self, extent: list, det: float, data_lat: np.ndarray, data_lon: np.ndarray, data: np.ndarray,
                  maskvalue=-9999, expand: int = 0, cmap_name='RdBu', map_boundry=None, cb_label="cb"):
@@ -181,7 +181,7 @@ class RasterMap(MeshgridArray, Map):
             l.set_family('Times New Roman')
 
 
-class ShpMap(Map):
+class ShpMap(MapBase):
     ''' shp map '''
     def __init__(self, shape_file=None, proj=crs.PlateCarree()):
         ''' init function
@@ -310,7 +310,7 @@ class Map:
         self.title = title
         self.set(self.extent, self.proj, self.grid, self.det, self.title)
 
-    def addmap(self, map: Map):
+    def addmap(self, map: MapBase):
         ''' add map
         input:
             map: Map class, it can be the sub class of Map: such as BaseMap, RasterMap, ShpMap...
