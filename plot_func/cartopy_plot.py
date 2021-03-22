@@ -345,8 +345,8 @@ class Map:
             gl.right_labels = False  # close right label
             gl.xformatter = LONGITUDE_FORMATTER  # set x label as lon format
             gl.yformatter = LATITUDE_FORMATTER  # set y label as lat format
-            gl.xlocator = mticker.FixedLocator(np.arange(int(extent[0]), int(extent[1]) + 1, det))
-            gl.ylocator = mticker.FixedLocator(np.arange(int(extent[2]), int(extent[3]) + 1, det))
+            gl.xlocator = mticker.FixedLocator(np.arange(int(extent[0])-5 * det, int(extent[1]) + 5 * det, det))
+            gl.ylocator = mticker.FixedLocator(np.arange(int(extent[2])-5 * det, int(extent[3]) + 5 * det, det))
         # title
         self.ax.set_title(title)
 
