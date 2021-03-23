@@ -46,7 +46,7 @@ def extract_nc(path, coord_path, variable_name, precision=3):
     # read variable based on the lat_index/lon_index
     for i in range(len(result)):
         f = Dataset(result[i], 'r')
-        Dataset.set_auto_mask(f, False)
+        # Dataset.set_auto_mask(f, False) # if there no mask value, open to improve speed
         variable[i, 0] = float(re.search(r"\d{6}", result[i])[0])
         # re: the number depend on the nc file name(daily=8, month=6)
         for j in range(len(coord)):

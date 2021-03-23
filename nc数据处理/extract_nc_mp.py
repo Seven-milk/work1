@@ -52,7 +52,7 @@ def extract_nc(path, coord_path, variable_name, precision=3, num_pool=4):
         f = Dataset(result[i], 'r')
         vb.append(float(re.search(r"\d{6}", result[i])[0]))
         # re: the number depend on the nc file name(daily=8, month=6)
-        Dataset.set_auto_mask(f, False)
+        # Dataset.set_auto_mask(f, False) # if there no mask value, open to improve speed
         for j in range(len(coord)):
             vb.append(f.variables[variable_name][0, lat_index[j], lon_index[j]])
             # require: nc file only have three dimension
