@@ -6,7 +6,7 @@ from netCDF4 import Dataset
 import os
 import pandas as pd
 
-home = 'F:/work/jianglong'
+home = 'H:/work/jianglong'
 path = os.path.join(home, 'jianglong.nc')
 precision = 3
 variable_name_u = 'u10'
@@ -31,6 +31,7 @@ for j in range(len(coord)):
     lon_index.append(np.where(lons == coord["lon"][j])[0][0])
 
 # get u and v
+Dataset.set_auto_mask(f1, True)
 times = f1.variables["time"][:]
 u = np.zeros((len(times), len(coord)), dtype=float)
 v = np.zeros((len(times), len(coord)), dtype=float)
@@ -39,6 +40,7 @@ for i in range(len(times)):
     for j in range(len(coord)):
         u[i, j] = f1.variables[variable_name_u][i, lat_index[j], lon_index[j]]
         v[i, j] = f1.variables[variable_name_v][i, lat_index[j], lon_index[j]]
+        print(f"complete {j}")
 
 # cal winAbs and winDir
 ''' 
@@ -46,7 +48,7 @@ u: 正西风，朝右
 v: 正南风，朝上
 '''
 windSpeed = (u ** 2 + v ** 2) ** (0.5)
-windDirection = np.arctan(v / u)
+windDirection = np.arctan(v / u)  # -pi/2 ~ pi/2, 可以转换为pi单位的角度值
 
 ret_u = pd.DataFrame(u, index=times, columns=list(range(len(coord))))
 ret_v = pd.DataFrame(v, index=times, columns=list(range(len(coord))))
@@ -54,29 +56,32 @@ ret_windSpeed = pd.DataFrame(windSpeed, index=times, columns=list(range(len(coor
 ret_windDirection = pd.DataFrame(windDirection, index=times, columns=list(range(len(coord))))
 
 
-# f1.close()
-# # define variable
-# variable = np.zeros((1, coord_number + 1))
-#
-#
-# # read variable based on the lat_index/lon_index
-# for i in range(len(result)):
-#     f = Dataset(result[i], 'r')
-#     Dataset.set_auto_mask(f, False)
-#     time_number = f.variables["time"].shape[0]
-#     variable_ = np.zeros((time_number, coord_number + 1))
-#     variable_[:, 0] = f.variables["time"][:]
-#     for j in range(len(coord)):
-#         for k in range(len(f.variables["time"])):
-#             variable_[k, j + 1] = f.variables[variable_name][k, lat_index[j], lon_index[j]]
-#     print(f"complete read file:{i}")
-#     variable = np.vstack((variable, variable_))
-#     f.close()
-#
-# variable = variable[1:, :]
-#
-# # sort by time
-# variable = variable[variable[:, 0].argsort()]
+# find nan index
+index_nan = []
+for i in range(len(coord)):
+    if np.isnan(u[0, i]):
+        index_nan.append(i)
+
+# delete index_nan in coord/ ret_u/ ret_v/ ret_windSpeed/ ret_windDirection = 713 - 421 = 292
+for index in index_nan:
+    ret_u.drop(columns=index, inplace=True)
+    ret_v.drop(columns=index, inplace=True)
+    ret_windSpeed.drop(columns=index, inplace=True)
+    ret_windDirection.drop(columns=index, inplace=True)
+    coord.drop(index=index, inplace=True)
+
+# time
+time_index = pd.date_range('19810101 06:00:00', '19821231 18:00:00', freq='6H')
+ret_u.index = time_index
+ret_v.index = time_index
+ret_windSpeed.index = time_index
+ret_windDirection.index = time_index
+
 # save
-# np.savetxt(f'{variable_name}.txt', variable, delimiter=' ')
-# coord.to_csv("coord.csv")
+ret_u.to_excel('u10.xlsx')
+ret_v.to_excel('v10.xlsx')
+ret_windSpeed.to_excel('windSpeed.xlsx')
+ret_windDirection.to_excel('windDirection.xlsx')
+coord.to_excel('coord.xlsx')
+
+f1.close()
