@@ -7,6 +7,7 @@ from cartopy import crs
 from cartopy import feature
 from cartopy.io.shapereader import Reader, natural_earth
 import matplotlib.ticker as mticker
+import matplotlib.colors as mcolors
 import matplotlib
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import numpy as np
@@ -171,10 +172,10 @@ class RasterMap(MeshgridArray, MapBase):
         cMap = plt.get_cmap(self.cmap_name)
         # plot raster
         if self.map_boundry == None:
-            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap)
+            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap, norm=mcolors.Normalize(clip=True))
         else:
             pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
-                               vmin=self.map_boundry[0], vmax=self.map_boundry[1])
+                               vmin=self.map_boundry[0], vmax=self.map_boundry[1], norm=mcolors.Normalize(clip=True))
         shrinkrate = 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
         extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
         cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', shrink=shrinkrate, pad=0.01, extend=extend)
@@ -263,7 +264,7 @@ class Figure:
         '''
         # if self.figNumber == 2
         if self.figNumber == 2:
-            self.figRow =  2
+            self.figRow = 2
             self.figCol = 1
             if rowfirst == False:
                 self.figRow, self.figCol = self.figCol, self.figRow
