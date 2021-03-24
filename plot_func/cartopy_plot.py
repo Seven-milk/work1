@@ -237,6 +237,7 @@ class Figure:
         self.dpi = dpi
         self.fig = plt.figure(dpi=self.dpi)
         self.proj = proj
+        self.add = False
         self.addFig(addnumber)
         self.font_label = {'family': 'Times New Roman', 'weight': 'normal', 'size': 8 if isinstance(self.ax, np.ndarray) else 10}
         self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal', 'size': 8 if isinstance(self.ax, np.ndarray) else 10}
@@ -245,7 +246,7 @@ class Figure:
         plt.rcParams['font.family'] = 'Times New Roman'
         plt.xticks(fontproperties=self.font_ticks)
         plt.yticks(fontproperties=self.font_ticks)
-        if isinstance(self.ax, np.ndarray):
+        if self.add == True:
             self.unview_last()
 
     def addFig(self, AddNumber=1):
@@ -282,6 +283,7 @@ class Figure:
                     return
             # not prime: self.figNumber + 1 (blank subplot)
             self.figNumber += 1
+            self.add = True
 
     def unview_last(self):
         ''' unview the last ax '''
