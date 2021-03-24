@@ -18,11 +18,11 @@ import abc
 ''' usage 
 
 f = Figure()
-m = Map(f.ax, grid=True, det=1)
+m = Map(f.ax, f, grid=True, res_grid=1, res_label=3)
 m.addmap(BaseMap())
 r = RasterMap(extend, det, lat, lon, sm_rz_time_avg, expand=5)
 m.addmap(r)
-s = ShpMap(shape_file)
+s = ShpMap(shape_file, proj=crs.PlateCarree())
 m.addmap(s)
 f.fig.show()
 
