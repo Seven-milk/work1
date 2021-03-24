@@ -34,7 +34,7 @@ f.fig.show()
 |   MeshgridArray(base class) [trans 1D array into 2D array]---> RasterMap                  |                        |
 |                                                                                           V                        |
 |   Figure --- plot multifigure ---> ax[i] ---> Map ---> addMap(add multimap in one ax) [Map class, Map.plot()]      |
-|    |               |                           |                                                                   |
+|    |               |             Figure.fig    |                                                                   |
 |   .reset()     .addfig()                     .set()                                                                |
 |   .save()          |                                                                                               |
 |                .calrowcol()                                                                                        |
@@ -45,7 +45,7 @@ f.fig.show()
 class MapBase(abc.ABC):
     ''' Map abstract class '''
     @abc.abstractmethod
-    def plot(self, ax):
+    def plot(self, ax, Fig):
         ''' plot map '''
 
 class MeshgridArray:
@@ -134,7 +134,7 @@ class MeshgridArray:
 
 class BaseMap(MapBase):
     ''' base map '''
-    def plot(self, ax):
+    def plot(self, ax, Fig):
         ''' Implements the MapBase.plot function '''
         # add coastline with resolution = 50m
         ax.add_feature(feature.COASTLINE.with_scale('50m'), linewidth=0.6, zorder=10)
@@ -165,7 +165,7 @@ class RasterMap(MeshgridArray, MapBase):
         self.extent_plot = [min(self.array_data_lon) - self.det / 2, max(self.array_data_lon) + self.det / 2,
                        min(self.array_data_lat) - self.det / 2, max(self.array_data_lat) + self.det / 2]
 
-    def plot(self, ax):
+    def plot(self, ax, Fig):
         ''' Implements the MapBase.plot function '''
         ax.set_extent(self.extent_plot)
         cMap = plt.get_cmap(self.cmap_name)
@@ -175,9 +175,14 @@ class RasterMap(MeshgridArray, MapBase):
         else:
             pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
                                vmin=self.map_boundry[0], vmax=self.map_boundry[1])
-        cb = plt.colorbar(pc, orientation='horizontal', extend='both', shrink=0.5)  # colorbar
-        cb.ax.tick_params(labelsize=9)
-        cb.set_label(self.cb_label)
+        shrinkrate = 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
+        extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
+        cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', shrink=shrinkrate, pad=0.01, extend=extend)
+        cb.ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
+        if isinstance(Fig.ax, np.ndarray):
+            cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
+        else:
+            cb.set_label(self.cb_label, fontdict=Fig.font_label)
         for l in cb.ax.yaxis.get_ticklabels():
             l.set_family('Times New Roman')
 
@@ -193,7 +198,7 @@ class ShpMap(MapBase):
         self.shape_file = shape_file
         self.proj = proj
 
-    def plot(self, ax):
+    def plot(self, ax, Fig):
         ''' Implements the MapBase.plot function '''
         # add shape file of users'
         if self.shape_file is not None:
@@ -232,12 +237,15 @@ class Figure:
         self.fig = plt.figure(dpi=self.dpi)
         self.proj = proj
         self.addFig(addnumber)
-        self.font_label = {'family': 'Times New Roman', 'weight': 'normal', 'size': 10}
-        self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal', 'size': 18}
-        self.font_title = {'family': 'Times New Roman', 'weight': 'bold', 'size': 20}
-        plt.rcParams['font.size'] = 7
+        self.font_label = {'family': 'Times New Roman', 'weight': 'normal', 'size': 8 if isinstance(self.ax, np.ndarray) else 10}
+        self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal', 'size': 8 if isinstance(self.ax, np.ndarray) else 10}
+        self.font_title = {'family': 'Times New Roman', 'weight': 'bold', 'size': 10 if isinstance(self.ax, np.ndarray) else 15}
+        plt.rcParams['font.size'] = self.font_label["size"]
+        plt.rcParams['font.family'] = 'Times New Roman'
         plt.xticks(fontproperties=self.font_ticks)
         plt.yticks(fontproperties=self.font_ticks)
+        if isinstance(self.ax, np.ndarray):
+            self.unview_last()
 
     def addFig(self, AddNumber=1):
         ''' add figure and return ax '''
@@ -274,6 +282,10 @@ class Figure:
             # not prime: self.figNumber + 1 (blank subplot)
             self.figNumber += 1
 
+    def unview_last(self):
+        ''' unview the last ax '''
+        self.ax[-1].set_visible(False)
+
     def reset(self):
         ''' reset Figure to the init state '''
         self.fig.clf()
@@ -292,39 +304,44 @@ class Figure:
 
 class Map:
     ''' Add map in one ax, this class is used to represent ax and plot map '''
-    def __init__(self, ax, extent=None, proj: crs.Projection = crs.PlateCarree(), grid=False, det=20, title="map"):
+    def __init__(self, ax, Fig: Figure, extent=None, proj: crs.Projection = crs.PlateCarree(),
+                 grid=False, res_grid=5, res_label=5, title="map"):
         ''' init function
         input:
             ax: a single ax for this map from Figure.ax[i]
+            fig: Figure, the Figure.fig contain this ax, implement the communication between Map and Fig (for plot colobar)
             proj: crs.Projection, the projection for this ax
             extent: list extent = [lon_min, lon_max, lat_min, lat_max], is the center point
             proj: proj: projection for this map, crs.Projection
             grid: bool, whether to open the grid lines
-            det: resolution for grid
+            res_grid: resolution for grid
             title: title of this ax
         '''
         self.ax = ax
+        self.Fig = Fig
         self.extent = extent
         self.proj = proj
         self.grid = grid
-        self.det = det
+        self.res_grid = res_grid
+        self.res_label = res_label
         self.title = title
-        self.set(self.extent, self.proj, self.grid, self.det, self.title)
+        self.set(self.extent, self.proj, self.grid, self.res_grid, self.res_label, self.title)
 
     def addmap(self, map: MapBase):
         ''' add map
         input:
             map: Map class, it can be the sub class of Map: such as BaseMap, RasterMap, ShpMap...
         '''
-        map.plot(self.ax)
+        map.plot(self.ax, self.Fig)
 
-    def set(self, extent=None, proj: crs.Projection = crs.PlateCarree(), grid=False, det=20, title="map"):
+    def set(self, extent=None, proj: crs.Projection = crs.PlateCarree(), grid=False, res_grid=5, res_label=5, title="map"):
         ''' set this Map(ax)
         input:
             extent: list extent = [lon_min, lon_max, lat_min, lat_max], is the center point
             proj: proj: projection for this map, crs.Projection
             grid: bool, whether to open the grid lines
-            det: resolution for grid
+            res_grid: resolution for grid
+            res_label: resolution for grid label, it should be n*res_grid
             title: title of this ax
         '''
         if extent == None:
@@ -333,22 +350,39 @@ class Map:
         self.ax.set_extent(extent, crs=proj)
         # set gridlines
         if grid == True:
+            # grid without label (sub-grid)
+            gl2 = self.ax.gridlines(
+                crs=proj,
+                draw_labels=False,
+                linewidth=0.2,
+                color='k',
+                alpha=0.5,
+                linestyle='--',
+                auto_inline=True
+            )
+            gl2.xlocator = mticker.FixedLocator(np.arange(int(extent[0])-5 * res_grid, int(extent[1]) + 5 * res_grid, res_grid))  # set grid label
+            gl2.ylocator = mticker.FixedLocator(np.arange(int(extent[2])-5 * res_grid, int(extent[3]) + 5 * res_grid, res_grid))
+
+            # label grid (The parent grid)
             gl = self.ax.gridlines(
                 crs=proj,
                 draw_labels=True,
                 linewidth=0.2,
                 color='k',
                 alpha=0.5,
-                linestyle='--'
+                linestyle='--',
+                auto_inline=True
             )
             gl.top_labels = False  # close top label
             gl.right_labels = False  # close right label
             gl.xformatter = LONGITUDE_FORMATTER  # set x label as lon format
             gl.yformatter = LATITUDE_FORMATTER  # set y label as lat format
-            gl.xlocator = mticker.FixedLocator(np.arange(int(extent[0])-5 * det, int(extent[1]) + 5 * det, det))
-            gl.ylocator = mticker.FixedLocator(np.arange(int(extent[2])-5 * det, int(extent[3]) + 5 * det, det))
-        # title
-        self.ax.set_title(title)
+            gl.xlocator = mticker.FixedLocator(
+                np.arange(int(extent[0]) - 5 * res_grid, int(extent[1]) + 5 * res_grid, res_label))  # set grid label
+            gl.ylocator = mticker.FixedLocator(
+                np.arange(int(extent[2]) - 5 * res_grid, int(extent[3]) + 5 * res_grid, res_label))
+        # title and ticks
+        self.ax.set_title(title, fontdict=self.Fig.font_title)
 
 
 if __name__ == "__main__":
@@ -375,7 +409,7 @@ if __name__ == "__main__":
     lon_max = max(lon)
     extend = [lon_min, lon_max, lat_min, lat_max]
     f = Figure()
-    m = Map(f.ax, grid=True, det=1)
+    m = Map(f.ax, f, grid=True, res_grid=1, res_label=3)
     m.addmap(BaseMap())
     r = RasterMap(extend, det, lat, lon, sm_rz_time_avg, expand=5)
     shape_file = [f"{root}:/GIS/Flash_drought/f'r_project.shp"]
