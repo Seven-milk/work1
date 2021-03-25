@@ -190,22 +190,32 @@ class RasterMap(MeshgridArray, MapBase):
 
 class ShpMap(MapBase):
     ''' shp map '''
-    def __init__(self, shape_file=None, proj=crs.PlateCarree()):
+    def __init__(self, shape_file=None,  **kwargs):
         ''' init function
         input:
             shape_file: list, which save the shape_file path（.shp） to plot in the map, default = none(not plot)
-            proj: crs.Projection
+            **kwargs: dict, plot args, it could contain "proj" "edgecolor", "facecolor", "linewidth", "zorder"
         '''
         self.shape_file = shape_file
-        self.proj = proj
+        params = {"proj": crs.PlateCarree(), "edgecolor": 'k', "facecolor": 'none',
+                  "linewidth": 0.6, "zorder": 2, "alpha": 1}
+        for key in params.keys():
+            if key in kwargs.keys():
+                params[key] = kwargs[key]
+        self.proj = params["proj"]
+        self.edgecolor = params["edgecolor"]
+        self.facecolor = params["facecolor"]
+        self.linewidth = params["linewidth"]
+        self.zorder = params["zorder"]
+        self.alpha = params["alpha"]
 
     def plot(self, ax, Fig):
         ''' Implements the MapBase.plot function '''
         # add shape file of users'
-        if self.shape_file is not None:
-            for shape_path in self.shape_file:
-                ax.add_feature(feature.ShapelyFeature(Reader(shape_path).geometries(), crs=self.proj, edgecolor='k',
-                                                      facecolor='none'), linewidth=0.6, zorder=2)
+        for shape_path in self.shape_file:
+            ax.add_feature(feature.ShapelyFeature(Reader(shape_path).geometries(), crs=self.proj,
+                                edgecolor=self.edgecolor, facecolor=self.facecolor), linewidth=self.linewidth,
+                                zorder=self.zorder, alpha=self.alpha)
 
 class Figure:
     ''' figure set '''
@@ -416,6 +426,6 @@ if __name__ == "__main__":
     m.addmap(BaseMap())
     r = RasterMap(extend, det, lat, lon, sm_rz_time_avg, expand=5)
     shape_file = [f"{root}:/GIS/Flash_drought/f'r_project.shp"]
-    s = ShpMap(shape_file, proj=crs.PlateCarree())
+    s = ShpMap(shape_file, facecolor="g")
     m.addmap(r)
     m.addmap(s)
