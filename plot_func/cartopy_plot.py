@@ -194,11 +194,11 @@ class ShpMap(MapBase):
         ''' init function
         input:
             shape_file: list, which save the shape_file path（.shp） to plot in the map, default = none(not plot)
-            **kwargs: dict, plot args, it could contain "proj" "edgecolor", "facecolor", "linewidth", "zorder"
+            **kwargs: dict, plot args, it could contain "proj" "edgecolor", "facecolor", "linewidth", "zorder", "linestyle"
         '''
         self.shape_file = shape_file
         params = {"proj": crs.PlateCarree(), "edgecolor": 'k', "facecolor": 'none',
-                  "linewidth": 0.6, "zorder": 2, "alpha": 1}
+                  "linewidth": 0.6, "zorder": 2, "alpha": 1, "linestyle": "-"}
         for key in params.keys():
             if key in kwargs.keys():
                 params[key] = kwargs[key]
@@ -208,6 +208,7 @@ class ShpMap(MapBase):
         self.linewidth = params["linewidth"]
         self.zorder = params["zorder"]
         self.alpha = params["alpha"]
+        self.linestyle = params["linestyle"]
 
     def plot(self, ax, Fig):
         ''' Implements the MapBase.plot function '''
@@ -215,7 +216,7 @@ class ShpMap(MapBase):
         for shape_path in self.shape_file:
             ax.add_feature(feature.ShapelyFeature(Reader(shape_path).geometries(), crs=self.proj,
                                 edgecolor=self.edgecolor, facecolor=self.facecolor), linewidth=self.linewidth,
-                                zorder=self.zorder, alpha=self.alpha)
+                                zorder=self.zorder, alpha=self.alpha, linestyle=self.linestyle)
 
 class Figure:
     ''' figure set '''
