@@ -426,6 +426,6 @@ if __name__ == "__main__":
     m.addmap(BaseMap())
     r = RasterMap(extend, det, lat, lon, sm_rz_time_avg, expand=5)
     shape_file = [f"{root}:/GIS/Flash_drought/f'r_project.shp"]
-    s = ShpMap(shape_file, facecolor="g")
+    s = ShpMap(shape_file, facecolor="g", alpha=0.5)
     m.addmap(r)
     m.addmap(s)
