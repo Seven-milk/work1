@@ -6,6 +6,7 @@ import numpy as np
 from netCDF4 import Dataset
 import os
 import pandas as pd
+from numpy.core._multiarray_umath import ndarray
 
 home = 'H:/work/jianglong'
 
@@ -118,11 +119,11 @@ start_ = pd.to_datetime('1981-01')
 span = pd.DateOffset(months=1)
 threshold = 5  # TODO 需要你自己设定阈值！！
 time_month = pd.date_range('19810101', '19821231', freq='M')
-duration = np.zeros((len(time_month), windSpeed.shape[1]))
-insufficient = np.zeros((len(time_month), windSpeed.shape[1]))
-max = np.zeros((len(time_month), windSpeed.shape[1]))
-area = np.zeros((len(time_month), windSpeed.shape[1]))
-freq = np.zeros((len(time_month), windSpeed.shape[1]))
+duration: ndarray = np.zeros((len(time_month), windSpeed.shape[1]))
+insufficient: ndarray = np.zeros((len(time_month), windSpeed.shape[1]))
+max: ndarray = np.zeros((len(time_month), windSpeed.shape[1]))
+area: ndarray = np.zeros((len(time_month), windSpeed.shape[1]))
+freq: ndarray = np.zeros((len(time_month), windSpeed.shape[1]))
 i = 0
 while start_ < windSpeed.index[-1]:
     unitDataframe = windSpeed.loc[start_: start_ + span - pd.to_timedelta(6, unit='hours')]
@@ -132,8 +133,9 @@ while start_ < windSpeed.index[-1]:
     start_ += span
     i += 1
 
+
 np.savetxt('duration.csv', duration, delimiter=' ')
-np.savetxt('insufficient.csv', duration, delimiter=' ')
-np.savetxt('max.csv', duration, delimiter=' ')
-np.savetxt('area.csv', duration, delimiter=' ')
-np.savetxt('freq.csv', duration, delimiter=' ')
+np.savetxt('insufficient.csv', insufficient, delimiter=' ')
+np.savetxt('max.csv', max, delimiter=' ')
+np.savetxt('area.csv', area, delimiter=' ')
+np.savetxt('freq.csv', freq, delimiter=' ')
