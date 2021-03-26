@@ -56,11 +56,10 @@ class MeshgridArray:
     ''' This class meshes a original data (1D array) into a full data (2D array) based on a extent, det, data, data_lat,
         data_lon '''
 
-    def __init__(self, extent: list, det: float, data_lat: np.ndarray, data_lon: np.ndarray, data: np.ndarray,
+    def __init__(self, det: float, data_lat: np.ndarray, data_lon: np.ndarray, data: np.ndarray,
                  maskvalue=-9999, expand=0):
         ''' init function
         input:
-            extent: list extent = [lon_min, lon_max, lat_min, lat_max], is the center point
             det: resolution of a raster, unit = degree
             data_lat/lon: the lat/lon array of the data, 1D array, is the center point
             data: data, 1D array(correlated with lat/lon_index)
@@ -70,7 +69,7 @@ class MeshgridArray:
             self.array_data_lon/lat: the lat/lon of the full array(array_data) calculated based on the extent, center point
         '''
         # load data
-        self.extent = extent
+        self.extent = [min(data_lon), max(data_lon), min(data_lat), max(data_lat)]
         self.det = det
         self.data_lat = data_lat
         self.data_lon = data_lon
@@ -153,11 +152,10 @@ class BaseMap(MapBase):
 class RasterMap(MeshgridArray, MapBase):
     ''' raster map '''
 
-    def __init__(self, extent: list, det: float, data_lat: np.ndarray, data_lon: np.ndarray, data: np.ndarray,
+    def __init__(self, det: float, data_lat: np.ndarray, data_lon: np.ndarray, data: np.ndarray,
                  maskvalue=-9999, expand: int = 0, cmap_name='RdBu', map_boundry=None, cb_label="cb"):
         ''' init function
         input:
-            extent: list extent = [lon_min, lon_max, lat_min, lat_max], is the center point
             det: resolution of a raster, unit = degree
             data_lat/lon: the lat/lon array of the data, 1D array, is the center point
             data: data, 1D array(correlated with lat/lon_index)
@@ -166,7 +164,7 @@ class RasterMap(MeshgridArray, MapBase):
             map_boundry: none or list, if list, this param sets the map/colorbar boundry - [vmin, vmax]
             cb_label=string, the label of colorbar
         '''
-        MeshgridArray.__init__(self, extent, det, data_lat, data_lon, data, maskvalue, expand)
+        MeshgridArray.__init__(self, det, data_lat, data_lon, data, maskvalue, expand)
         self.cmap_name = cmap_name
         self.map_boundry = map_boundry
         self.cb_label = cb_label
@@ -366,7 +364,7 @@ class Map:
             ax: a single ax for this map from Figure.ax[i]
             fig: Figure, the Figure.fig contain this ax, implement the communication between Map and Fig (for plot colobar)
             proj: crs.Projection, the projection for this ax
-            extent: list extent = [lon_min, lon_max, lat_min, lat_max], is the center point
+            extent: list extent = [lon_min, lon_max, lat_min, lat_max], is the center point, used to define plot boundry
             proj: proj: projection for this map, crs.Projection
             grid: bool, whether to open the grid lines
             res_grid: resolution for grid
@@ -465,11 +463,11 @@ if __name__ == "__main__":
     lon_min = min(lon)
     lat_max = max(lat)
     lon_max = max(lon)
-    extend = [lon_min, lon_max, lat_min, lat_max]
+    # extend = [lon_min, lon_max, lat_min, lat_max]
     f = Figure()
     m = Map(f.ax, f, grid=True, res_grid=1, res_label=3)
     m.addmap(BaseMap())
-    r = RasterMap(extend, det, lat, lon, sm_rz_time_avg, expand=5)
+    r = RasterMap(det, lat, lon, sm_rz_time_avg, expand=5)
     shape_file = [f"{root}:/GIS/Flash_drought/f'r_project.shp"]
     s = ShpMap(shape_file, facecolor="g", alpha=0.5)
     t = TextMap("Text", [lon[0], lat[0]], color="r")
