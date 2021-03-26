@@ -42,12 +42,15 @@ f.fig.show()
 ----------------------------------------------------------------------------------------------------------------------
 '''
 
+
 # Define MapBase class
 class MapBase(abc.ABC):
     ''' Map abstract class '''
+
     @abc.abstractmethod
     def plot(self, ax, Fig):
         ''' plot map '''
+
 
 class MeshgridArray:
     ''' This class meshes a original data (1D array) into a full data (2D array) based on a extent, det, data, data_lat,
@@ -90,8 +93,10 @@ class MeshgridArray:
         return:
             data_lat/lon_index index of the data_lat/lon in the extent, np.ndarray
         '''
-        data_lat_index = np.array([int((self.data_lat[i] - self.extent[2]) / self.det) for i in range(len(self.data_lat))])
-        data_lon_index = np.array([int((self.data_lon[i] - self.extent[0]) / self.det) for i in range(len(self.data_lon))])
+        data_lat_index = np.array(
+            [int((self.data_lat[i] - self.extent[2]) / self.det) for i in range(len(self.data_lat))])
+        data_lon_index = np.array(
+            [int((self.data_lon[i] - self.extent[0]) / self.det) for i in range(len(self.data_lon))])
         return data_lat_index, data_lon_index
 
     def array_cal(self):
@@ -135,6 +140,7 @@ class MeshgridArray:
 
 class BaseMap(MapBase):
     ''' base map '''
+
     def plot(self, ax, Fig):
         ''' Implements the MapBase.plot function '''
         # add coastline with resolution = 50m
@@ -146,6 +152,7 @@ class BaseMap(MapBase):
 
 class RasterMap(MeshgridArray, MapBase):
     ''' raster map '''
+
     def __init__(self, extent: list, det: float, data_lat: np.ndarray, data_lon: np.ndarray, data: np.ndarray,
                  maskvalue=-9999, expand: int = 0, cmap_name='RdBu', map_boundry=None, cb_label="cb"):
         ''' init function
@@ -164,7 +171,7 @@ class RasterMap(MeshgridArray, MapBase):
         self.map_boundry = map_boundry
         self.cb_label = cb_label
         self.extent_plot = [min(self.array_data_lon) - self.det / 2, max(self.array_data_lon) + self.det / 2,
-                       min(self.array_data_lat) - self.det / 2, max(self.array_data_lat) + self.det / 2]
+                            min(self.array_data_lat) - self.det / 2, max(self.array_data_lat) + self.det / 2]
 
     def plot(self, ax, Fig):
         ''' Implements the MapBase.plot function '''
@@ -172,7 +179,8 @@ class RasterMap(MeshgridArray, MapBase):
         cMap = plt.get_cmap(self.cmap_name)
         # plot raster
         if self.map_boundry == None:
-            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap, norm=mcolors.Normalize(clip=True))
+            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
+                               norm=mcolors.Normalize(clip=True))
         else:
             pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
                                vmin=self.map_boundry[0], vmax=self.map_boundry[1], norm=mcolors.Normalize(clip=True))
@@ -190,33 +198,53 @@ class RasterMap(MeshgridArray, MapBase):
 
 class ShpMap(MapBase):
     ''' shp map '''
-    def __init__(self, shape_file=None,  **kwargs):
+
+    def __init__(self, shape_file=None, proj: crs.Projection = crs.PlateCarree(), edgecolor: str = "k",
+                 facecolor: str = "none",
+                 **kwargs):
         ''' init function
         input:
-            shape_file: list, which save the shape_file path（.shp） to plot in the map, default = none(not plot)
-            **kwargs: dict, plot args, it could contain "proj" "edgecolor", "facecolor", "linewidth", "zorder", "linestyle"
+            shape_file: list of str, which save the shape_file path（.shp） to plot in the map, default = none(not plot)
+            proj: crs.Projection, projection
+            edgecolor: str, the edgecolor of this shp
+            facecolor: str, the facecolor of this shp
+            **kwargs: dict, plot args, it could contain "linewidth", "zorder", "linestyle" "alpha"
         '''
         self.shape_file = shape_file
-        params = {"proj": crs.PlateCarree(), "edgecolor": 'k', "facecolor": 'none',
-                  "linewidth": 0.6, "zorder": 2, "alpha": 1, "linestyle": "-"}
-        for key in params.keys():
-            if key in kwargs.keys():
-                params[key] = kwargs[key]
-        self.proj = params["proj"]
-        self.edgecolor = params["edgecolor"]
-        self.facecolor = params["facecolor"]
-        self.linewidth = params["linewidth"]
-        self.zorder = params["zorder"]
-        self.alpha = params["alpha"]
-        self.linestyle = params["linestyle"]
+        self.proj = proj
+        self.edgecolor = edgecolor
+        self.facecolor = facecolor
+        self.kwargs = kwargs
 
     def plot(self, ax, Fig):
         ''' Implements the MapBase.plot function '''
         # add shape file of users'
         for shape_path in self.shape_file:
             ax.add_feature(feature.ShapelyFeature(Reader(shape_path).geometries(), crs=self.proj,
-                                edgecolor=self.edgecolor, facecolor=self.facecolor), linewidth=self.linewidth,
-                                zorder=self.zorder, alpha=self.alpha, linestyle=self.linestyle)
+                                                  edgecolor=self.edgecolor, facecolor=self.facecolor), **self.kwargs)
+
+
+class TextMap(MapBase):
+    ''' Text Map '''
+
+    def __init__(self, text: str, extent: list, **kwargs):
+        ''' init function
+        input:
+            text: str, the text to plot
+            extent: list of two elements, [lon/x, lat/y], define the position to plot text
+            kwargs: keyword args, it could contain "color" "fontdict"(dict) "alpha" "zorder" ...
+        '''
+        self.text = text
+        self.extent = extent
+        self.kwargs = kwargs
+
+    def plot(self, ax, Fig):
+        ''' Implements the MapBase.plot function '''
+        # define the default fontdict
+        if "fontdict" not in self.kwargs.keys():
+            self.kwargs["fontdict"] = Fig.font_label
+        ax.text(self.extent[0], self.extent[1], self.text, **self.kwargs)
+
 
 class Figure:
     ''' figure set '''
@@ -250,9 +278,12 @@ class Figure:
         self.proj = proj
         self.add = False
         self.addFig(addnumber)
-        self.font_label = {'family': 'Times New Roman', 'weight': 'normal', 'size': 8 if isinstance(self.ax, np.ndarray) else 10}
-        self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal', 'size': 8 if isinstance(self.ax, np.ndarray) else 10}
-        self.font_title = {'family': 'Times New Roman', 'weight': 'bold', 'size': 10 if isinstance(self.ax, np.ndarray) else 15}
+        self.font_label = {'family': 'Times New Roman', 'weight': 'normal',
+                           'size': 8 if isinstance(self.ax, np.ndarray) else 10}
+        self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal',
+                           'size': 8 if isinstance(self.ax, np.ndarray) else 10}
+        self.font_title = {'family': 'Times New Roman', 'weight': 'bold',
+                           'size': 10 if isinstance(self.ax, np.ndarray) else 15}
         plt.rcParams['font.size'] = self.font_label["size"]
         plt.rcParams['font.family'] = 'Times New Roman'
         plt.xticks(fontproperties=self.font_ticks)
@@ -261,7 +292,7 @@ class Figure:
             self.unview_last()
 
     def addFig(self, AddNumber=1):
-        ''' add figure and return ax '''
+        ''' add blank figure and return ax '''
         self.figNumber += AddNumber
         if self.figNumber >= 2:
             self.calrowcol()
@@ -301,12 +332,21 @@ class Figure:
         self.ax[-1].set_visible(False)
 
     def reset(self):
-        ''' reset Figure to the init state '''
+        ''' reset Figure to the init state, the canvas is still exist that can be used '''
         self.fig.clf()
         self.figNumber = 0
         self.figRow = 1
         self.figCol = 1
         self.addFig()
+
+    def resetax(self, num=0, colorbar_num=0):
+        ''' reset ax to the init state, num start from 0, the ax is still exist that can be used '''
+        ax_ = [ax for ax in self.fig.get_axes() if ax._label != "<colorbar>"]
+        ax_[num].cla()
+        ax_[num].outline_patch.set_visible(False)
+        ax_bar = [ax for ax in self.fig.get_axes() if ax._label == "<colorbar>"]
+        if len(ax_bar) != 0:
+            ax_bar[colorbar_num].remove()
 
     def save(self, title):
         ''' save fig
@@ -318,6 +358,7 @@ class Figure:
 
 class Map:
     ''' Add map in one ax, this class is used to represent ax and plot map '''
+
     def __init__(self, ax, Fig: Figure, extent=None, proj: crs.Projection = crs.PlateCarree(),
                  grid=False, res_grid=5, res_label=5, title="map"):
         ''' init function
@@ -348,7 +389,8 @@ class Map:
         '''
         map.plot(self.ax, self.Fig)
 
-    def set(self, extent=None, proj: crs.Projection = crs.PlateCarree(), grid=False, res_grid=5, res_label=5, title="map"):
+    def set(self, extent=None, proj: crs.Projection = crs.PlateCarree(), grid=False, res_grid=5, res_label=5,
+            title="map"):
         ''' set this Map(ax)
         input:
             extent: list extent = [lon_min, lon_max, lat_min, lat_max], is the center point
@@ -374,8 +416,10 @@ class Map:
                 linestyle='--',
                 auto_inline=True
             )
-            gl2.xlocator = mticker.FixedLocator(np.arange(int(extent[0])-5 * res_grid, int(extent[1]) + 5 * res_grid, res_grid))  # set grid label
-            gl2.ylocator = mticker.FixedLocator(np.arange(int(extent[2])-5 * res_grid, int(extent[3]) + 5 * res_grid, res_grid))
+            gl2.xlocator = mticker.FixedLocator(
+                np.arange(int(extent[0]) - 5 * res_grid, int(extent[1]) + 5 * res_grid, res_grid))  # set grid label
+            gl2.ylocator = mticker.FixedLocator(
+                np.arange(int(extent[2]) - 5 * res_grid, int(extent[3]) + 5 * res_grid, res_grid))
 
             # label grid (The parent grid)
             gl = self.ax.gridlines(
@@ -428,5 +472,7 @@ if __name__ == "__main__":
     r = RasterMap(extend, det, lat, lon, sm_rz_time_avg, expand=5)
     shape_file = [f"{root}:/GIS/Flash_drought/f'r_project.shp"]
     s = ShpMap(shape_file, facecolor="g", alpha=0.5)
+    t = TextMap("Text", [lon[0], lat[0]], color="r")
     m.addmap(r)
     m.addmap(s)
+    m.addmap(t)
