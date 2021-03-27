@@ -28,7 +28,7 @@ f.fig.show()
 
     stracture
 ----------------------------------------------------------------------------------------------------------------------
-|      ---  Map(abstract class) --- ——> plot ------------------------------------------------                        |
+|      ---  MapBase(abstract class) --- ——> plot --------------------------------------------                        |
 |      |            |             |                                                         |                        |
 |    BaseMap    RasterMap      ShapeMap [——> plot] (concrete class)                         |                        |
 |                                                                                           |                        |
@@ -45,7 +45,7 @@ f.fig.show()
 
 # Define MapBase class
 class MapBase(abc.ABC):
-    ''' Map abstract class '''
+    ''' MapBase abstract class '''
 
     @abc.abstractmethod
     def plot(self, ax, Fig):
@@ -206,7 +206,7 @@ class ShpMap(MapBase):
             proj: crs.Projection, projection
             edgecolor: str, the edgecolor of this shp
             facecolor: str, the facecolor of this shp
-            **kwargs: dict, plot args, it could contain "linewidth", "zorder", "linestyle" "alpha"
+            **kwargs: keyword args, it could contain "linewidth", "zorder", "linestyle" "alpha"
         '''
         self.shape_file = shape_file
         self.proj = proj
@@ -355,7 +355,7 @@ class Figure:
 
 
 class Map:
-    ''' Add map in one ax, this class is used to represent ax and plot map '''
+    ''' Add map(has proj) in one ax(Geoax), this class is used to represent ax and plot map '''
 
     def __init__(self, ax, Fig: Figure, extent=None, proj: crs.Projection = crs.PlateCarree(),
                  grid=False, res_grid=5, res_label=5, title="map"):
@@ -383,7 +383,7 @@ class Map:
     def addmap(self, map: MapBase):
         ''' add map
         input:
-            map: Map class, it can be the sub class of Map: such as BaseMap, RasterMap, ShpMap...
+            map: MapBase class, it can be the sub class of MapBase: such as BaseMap, RasterMap, ShpMap...
         '''
         map.plot(self.ax, self.Fig)
 
