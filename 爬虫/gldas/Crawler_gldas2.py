@@ -25,11 +25,17 @@
 import requests
 import os
 import re
+import urllib.request
+import urllib
 
 # general set
 root = "E:/"
 home = os.path.join(root, "GLDAS_Noah_3hourly")
 URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
+
+# username & password
+username = "zheng786909151"
+password = "Zheng262404"
 
 # open url file and read url in urls
 with open(URL, 'r') as file:
@@ -53,11 +59,14 @@ else:
     index = [start in name for name in file_name].index(True)
     print("start: ", start)
 
+# fail download links
+fail_url = []
+
 
 # download function
 def download(url, filename):
     print(f"start download {filename}")
-    result = requests.get(url)
+    result = urllib.request.urlopen(url)
     try:
         result.raise_for_status()
         f = open(filename, 'wb')
@@ -70,11 +79,7 @@ def download(url, filename):
 
 # download nc file
 for i in range(index, len(file_name)):
-    download(urls[i], file_name[i])
-
+    fail_url.append(download(urls[i], file_name[i]))
 
 # download pdf file
 # download(url_pdf, pdf_name)
-
-
-
