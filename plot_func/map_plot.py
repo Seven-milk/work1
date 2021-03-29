@@ -284,10 +284,7 @@ class Figure:
                            'size': 8 if isinstance(self.ax, np.ndarray) else 10}
         self.font_title = {'family': 'Times New Roman', 'weight': 'bold',
                            'size': 10 if isinstance(self.ax, np.ndarray) else 15}
-        plt.rcParams['font.size'] = self.font_label["size"]
-        plt.rcParams['font.family'] = 'Times New Roman'
-        plt.xticks(fontproperties=self.font_ticks)
-        plt.yticks(fontproperties=self.font_ticks)
+        self.set(font_label=self.font_label, font_ticks=self.font_ticks)
         if self.add == True:
             self.unview_last()
 
@@ -300,6 +297,13 @@ class Figure:
         self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, subplot_kw={"projection": self.proj}, **kwargs)
         if isinstance(self.ax, np.ndarray):
             self.ax = self.ax.flatten()
+
+    def set(self, font_label, font_ticks, font_family='Times New Roman'):
+        ''' set the fig '''
+        plt.rcParams['font.size'] = font_label["size"]
+        plt.rcParams['font.family'] = font_family
+        plt.xticks(fontproperties=font_ticks)
+        plt.yticks(fontproperties=font_ticks)
 
     def calrowcol(self, rowfirst=True):
         ''' Decomposition factor of self.figNumber to get self.figRow and self.figCol
