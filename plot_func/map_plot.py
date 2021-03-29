@@ -247,7 +247,8 @@ class TextMap(MapBase):
 class Figure:
     ''' figure set '''
 
-    def __init__(self, addnumber: int = 1, dpi: int = 200, proj: crs.Projection = crs.PlateCarree(), **kwargs):
+    def __init__(self, addnumber: int = 1, dpi: int = 200, proj: crs.Projection = crs.PlateCarree(), wspace=0.2,
+                 hspace=0.1, **kwargs):
         ''' init function
         input:
             addnumber: the init add fig number
@@ -257,6 +258,7 @@ class Figure:
                   Mollweide, Orthographic, Robinson, Sinusoidal, Sinusoidal, TransverseMercator, UTM,
                   InterruptedGoodeHomolosine...
                   reference: https://scitools.org.uk/cartopy/docs/latest/crs/projections.html
+            wspace/hspace: the space between subfig
             **kwargs: keyword args of subplots, it could contain "sharex" "sharey"
 
         self.figNumber: fig number in the base map, default=1
@@ -277,7 +279,9 @@ class Figure:
         self.fig = plt.figure(dpi=self.dpi)
         self.proj = proj
         self.add = False
-        self.addFig(addnumber, **self.kwargs)
+        self.wspace = wspace
+        self.hspace = hspace
+        self.addFig(addnumber, wspace=self.wspace, hspace=self.hspace, **self.kwargs)
         self.font_label = {'family': 'Times New Roman', 'weight': 'normal',
                            'size': 8 if isinstance(self.ax, np.ndarray) else 10}
         self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal',
@@ -288,13 +292,14 @@ class Figure:
         if self.add == True:
             self.unview_last()
 
-    def addFig(self, AddNumber=1, **kwargs):
+    def addFig(self, AddNumber=1, wspace=0.2, hspace=0.1, **kwargs):
         ''' add blank figure and return ax '''
         self.figNumber += AddNumber
         if self.figNumber >= 2:
             self.calrowcol()
         self.fig.clf()
         self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, subplot_kw={"projection": self.proj}, **kwargs)
+        self.fig.subplots_adjust(wspace=wspace, hspace=hspace)
         if isinstance(self.ax, np.ndarray):
             self.ax = self.ax.flatten()
 
