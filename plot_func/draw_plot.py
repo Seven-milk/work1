@@ -23,15 +23,18 @@ class DrawBase(abc.ABC):
 class Figure:
     ''' figure set '''
 
-    def __init__(self, addnumber: int = 1, dpi: int = 200):
+    def __init__(self, addnumber: int = 1, dpi: int = 200, wspace=0.2, hspace=0.4, **kwargs):
         ''' init function
         input:
             addnumber: the init add fig number
             dpi: figure dpi, default=300
+            wspace/hspace: the space between subfig
+            **kwargs: keyword args of subplots, it could contain "sharex" "sharey"
 
         self.figNumber: fig number in the base map, default=1
         self.figRow: the row of subfigure, default=1
         self.figCol: the col of subfigure, default=1
+        self.kwargs: keyword args of subplots
 
         Main output: self.ax, a list of subfig in a canvas used to plot
         note:
@@ -43,31 +46,39 @@ class Figure:
         self.figRow = 1
         self.figCol = 1
         self.dpi = dpi
+        self.kwargs = kwargs
         self.fig = plt.figure(dpi=self.dpi)
         self.add = False
-        self.addFig(addnumber)
+        self.wspace = wspace
+        self.hspace = hspace
+        self.addFig(addnumber, wspace=self.wspace, hspace=self.hspace, **self.kwargs)
         self.font_label = {'family': 'Times New Roman', 'weight': 'normal',
-                           'size': 8 if isinstance(self.ax, np.ndarray) else 10}
+                           'size': 12 if isinstance(self.ax, np.ndarray) else 15}
         self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal',
-                           'size': 8 if isinstance(self.ax, np.ndarray) else 10}
+                           'size': 12 if isinstance(self.ax, np.ndarray) else 15}
         self.font_title = {'family': 'Times New Roman', 'weight': 'bold',
-                           'size': 10 if isinstance(self.ax, np.ndarray) else 15}
-        plt.rcParams['font.size'] = self.font_label["size"]
-        plt.rcParams['font.family'] = 'Times New Roman'
-        plt.xticks(fontproperties=self.font_ticks)
-        plt.yticks(fontproperties=self.font_ticks)
+                           'size': 15 if isinstance(self.ax, np.ndarray) else 18}
+        self.set(font_label=self.font_label, font_ticks=self.font_ticks)
         if self.add == True:
             self.unview_last()
 
-    def addFig(self, AddNumber=1):
+    def addFig(self, AddNumber=1, wspace=0.2, hspace=0.4, **kwargs):
         ''' add blank figure and return ax '''
         self.figNumber += AddNumber
         if self.figNumber >= 2:
             self.calrowcol()
         self.fig.clf()
-        self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol)
+        self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, **kwargs)
+        self.fig.subplots_adjust(wspace=wspace, hspace=hspace)
         if isinstance(self.ax, np.ndarray):
             self.ax = self.ax.flatten()
+
+    def set(self, font_label, font_ticks, font_family='Times New Roman'):
+        ''' set the fig '''
+        config = {'font.family': font_family, 'font.size': font_label["size"]}
+        plt.rcParams.update(config)
+        plt.xticks(fontproperties=font_ticks)
+        plt.yticks(fontproperties=font_ticks)
 
     def calrowcol(self, rowfirst=True):
         ''' Decomposition factor of self.figNumber to get self.figRow and self.figCol
@@ -125,20 +136,33 @@ class Figure:
 
 
 class BoxDraw(DrawBase):
+    ''' box plot draw '''
+
+    def __init__(self, x, **kwargs):
+        ''' init function
+        input:
+            x: Array or a sequence of vectors, such as: [box_1, box_2, box_3, box_4]
+            **kwargs: keyword args, it could contain "labels", "vert", "notch" "zorder" "meanline", "showmeans",
+                    "showbox", reference ax.boxplot
+        '''
+        self.x = x
+        self.kwargs = kwargs
 
     def plot(self, ax, Fig):
-        ''' '''
+        ''' Implements the DrawBase.plot function '''
+        ax.boxplot(self.x, **self.kwargs)
 
 
 class Draw:
     ''' Add Draw in one ax, this class is used to represent ax and plot a draw '''
 
-    def __init__(self, ax, Fig: Figure, gridx=False, gridy=False, title="Draw", **kwargs):
+    def __init__(self, ax, Fig: Figure, gridx=False, gridy=False, title="Draw", labelx=None, labely=None, **kwargs):
         ''' init function
         input:
             ax: a single ax for this map from Figure.ax[i]
             fig: Figure, the Figure.fig contain this ax, implement the communication between Map and Fig (for plot colobar)
             gridx/y: bool, whether to open the grid lines
+            labelx/y: str, default=None, plot the label of x and y
             title: title of this ax
             **kwargs: keyword args of this ax, it could contain "xlim"[=(0,10)] "ylim" " "xlabel" ...
         '''
@@ -146,9 +170,12 @@ class Draw:
         self.Fig = Fig
         self.gridx = gridx
         self.gridy = gridy
+        self.labelx = labelx
+        self.labely = labely
         self.title = title
         self.kwargs = kwargs
-        self.set(gridx=self.gridx, gridy=self.gridy, title=self.title, **self.kwargs)
+        self.set(gridx=self.gridx, gridy=self.gridy, title=self.title, labelx=self.labelx, labely=self.labely,
+                 **self.kwargs)
 
     def adddraw(self, draw: DrawBase):
         ''' add draw
@@ -156,17 +183,46 @@ class Draw:
             draw: DrawBase class, it can be the sub class of Drawbase: such as BaseMap, RasterMap, ShpMap...
         '''
         draw.plot(self.ax, self.Fig)
+        self.setticks()
 
-    def set(self, gridx=False, gridy=False, title="Draw", **kwargs):
+    def set(self, gridx=False, gridy=False, title="Draw", labelx=None, labely=None, **kwargs):
         ''' set this Draw(ax)
         input:
             grid: bool, whether to open the grid lines
             title: title of this ax
+            labelx: x label
+            labely: ylabel
+            **kwargs: keyword args of this ax, it could contain "xlim"[=(0,10)] "ylim" " "xlabel" ...
         '''
         # set
         self.ax.set(**kwargs)
         # grid
-        self.ax.grid(gridx, axis="x")
-        self.ax.grid(gridy, axis="y")
+        if gridx:
+            self.ax.grid(gridx, axis="x", alpha=0.5, linestyle='--')
+        else:
+            self.ax.grid(gridx)
+        if gridy:
+            self.ax.grid(gridy, axis="y", alpha=0.5, linestyle='--')
+        else:
+            self.ax.grid(gridy)
+        # x/y labels
+        self.ax.set_xlabel(labelx, fontdict=self.Fig.font_label, loc="right", labelpad=0.001)
+        self.ax.set_ylabel(labely, fontdict=self.Fig.font_label)
         # title
         self.ax.set_title(title, fontdict=self.Fig.font_title)
+
+    def setticks(self):
+        # ticks
+        self.ax.tick_params(labelsize=self.Fig.font_label["size"], direction='in')
+        labels = self.ax.get_xticklabels() + self.ax.get_yticklabels()
+        [label.set_font(self.Fig.font_ticks) for label in labels]
+
+
+if __name__ == "__main__":
+    # np.random.seed(15)
+    f = Figure(3)
+    for i in range(3):
+        x = np.random.rand(100, 3)
+        d = Draw(f.ax[i], f, gridy=True, labelx="X", labely="Y")
+        box = BoxDraw(x, labels=['x1', 'x2', 'x3'])
+        d.adddraw(box)
