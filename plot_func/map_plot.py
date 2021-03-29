@@ -305,8 +305,8 @@ class Figure:
 
     def set(self, font_label, font_ticks, font_family='Times New Roman'):
         ''' set the fig '''
-        plt.rcParams['font.size'] = font_label["size"]
-        plt.rcParams['font.family'] = font_family
+        config = {'font.family': font_family, 'font.size': font_label["size"]}
+        plt.rcParams.update(config)
         plt.xticks(fontproperties=font_ticks)
         plt.yticks(fontproperties=font_ticks)
 
