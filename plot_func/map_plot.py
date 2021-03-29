@@ -247,7 +247,7 @@ class TextMap(MapBase):
 class Figure:
     ''' figure set '''
 
-    def __init__(self, addnumber: int = 1, dpi: int = 200, proj: crs.Projection = crs.PlateCarree()):
+    def __init__(self, addnumber: int = 1, dpi: int = 200, proj: crs.Projection = crs.PlateCarree(), **kwargs):
         ''' init function
         input:
             addnumber: the init add fig number
@@ -257,6 +257,7 @@ class Figure:
                   Mollweide, Orthographic, Robinson, Sinusoidal, Sinusoidal, TransverseMercator, UTM,
                   InterruptedGoodeHomolosine...
                   reference: https://scitools.org.uk/cartopy/docs/latest/crs/projections.html
+            **kwargs: keyword args of subplots, it could contain "sharex" "sharey"
 
         self.figNumber: fig number in the base map, default=1
         self.figRow: the row of subfigure, default=1
@@ -272,10 +273,11 @@ class Figure:
         self.figRow = 1
         self.figCol = 1
         self.dpi = dpi
+        self.kwargs = kwargs
         self.fig = plt.figure(dpi=self.dpi)
         self.proj = proj
         self.add = False
-        self.addFig(addnumber)
+        self.addFig(addnumber, **self.kwargs)
         self.font_label = {'family': 'Times New Roman', 'weight': 'normal',
                            'size': 8 if isinstance(self.ax, np.ndarray) else 10}
         self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal',
@@ -289,13 +291,13 @@ class Figure:
         if self.add == True:
             self.unview_last()
 
-    def addFig(self, AddNumber=1):
+    def addFig(self, AddNumber=1, **kwargs):
         ''' add blank figure and return ax '''
         self.figNumber += AddNumber
         if self.figNumber >= 2:
             self.calrowcol()
         self.fig.clf()
-        self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, subplot_kw={"projection": self.proj})
+        self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, subplot_kw={"projection": self.proj}, **kwargs)
         if isinstance(self.ax, np.ndarray):
             self.ax = self.ax.flatten()
 
