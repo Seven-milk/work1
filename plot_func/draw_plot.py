@@ -183,7 +183,6 @@ class Draw:
             draw: DrawBase class, it can be the sub class of Drawbase: such as BaseMap, RasterMap, ShpMap...
         '''
         draw.plot(self.ax, self.Fig)
-        self.setticks()
 
     def set(self, gridx=False, gridy=False, title="Draw", labelx=None, labely=None, **kwargs):
         ''' set this Draw(ax)
@@ -210,8 +209,6 @@ class Draw:
         self.ax.set_ylabel(labely, fontdict=self.Fig.font_label)
         # title
         self.ax.set_title(title, fontdict=self.Fig.font_title)
-
-    def setticks(self):
         # ticks
         self.ax.tick_params(labelsize=self.Fig.font_label["size"], direction='in')
         labels = self.ax.get_xticklabels() + self.ax.get_yticklabels()
