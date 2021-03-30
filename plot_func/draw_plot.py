@@ -138,19 +138,35 @@ class Figure:
 class BoxDraw(DrawBase):
     ''' box plot draw '''
 
-    def __init__(self, x, **kwargs):
+    def __init__(self, x, violin=False, facecolors=None, **kwargs):
         ''' init function
         input:
             x: Array or a sequence of vectors, such as: [box_1, box_2, box_3, box_4]
-            **kwargs: keyword args, it could contain "labels", "vert", "notch" "zorder" "meanline", "showmeans",
+            violin=False: whether to plot violin draw
+            facecolors: list, ["lightgrey", 'lightgreen', 'lightblue'], set the facecolor of box, it requires
+                        patch_artist==True
+            **kwargs: keyword args, it could contain ["labels"]!!, "vert", "notch" "zorder" "meanline", "showmeans",
                     "showbox", reference ax.boxplot
+                        labels: set the box labels
+                        vert: set the box draw direction
+                        notch: set the box notched
+                        showfliers: whether show the fliers
         '''
         self.x = x
+        self.violin = violin
+        self.facecolors = facecolors
         self.kwargs = kwargs
 
     def plot(self, ax, Fig):
         ''' Implements the DrawBase.plot function '''
-        ax.boxplot(self.x, **self.kwargs)
+        if self.violin == True:
+            bx = ax.violinplot(self.x, **self.kwargs)
+        else:
+            bx = ax.boxplot(self.x, **self.kwargs)
+        # fill with colors
+        if self.facecolors != None and (self.kwargs["patch_artist"] == True):
+            for patch, color in zip(bx['boxes'], self.facecolors):
+                patch.set_facecolor(color)
 
 
 class Draw:
