@@ -58,6 +58,8 @@ class Figure:
                            'size': 12 if isinstance(self.ax, np.ndarray) else 15}
         self.font_title = {'family': 'Times New Roman', 'weight': 'bold',
                            'size': 15 if isinstance(self.ax, np.ndarray) else 18}
+        self.font_legend = {'family': 'Times New Roman', 'weight': 'bold',
+                            'size': 8 if isinstance(self.ax, np.ndarray) else 10}
         self.set(font_label=self.font_label, font_ticks=self.font_ticks)
         if self.add == True:
             self.unview_last()
@@ -147,7 +149,7 @@ class BoxDraw(DrawBase):
                         patch_artist==True
             **kwargs: keyword args, it could contain ["labels"]!!, "vert", "notch" "zorder" "meanline", "showmeans",
                     "showbox", reference ax.boxplot
-                        labels: set the box labels
+                        labels: set the box labels in x axis
                         vert: set the box draw direction
                         notch: set the box notched
                         showfliers: whether show the fliers
@@ -169,10 +171,69 @@ class BoxDraw(DrawBase):
                 patch.set_facecolor(color)
 
 
+class TextDraw(DrawBase):
+    ''' Text Draw '''
+
+    def __init__(self, text: str, extent: list, **kwargs):
+        ''' init function
+        input:
+            text: str, the text to plot
+            extent: list of two elements, [x, y], define the position to plot text
+            **kwargs: keyword args, it could contain "color" "fontdict"(dict) "alpha" "zorder" ...
+        '''
+        self.text = text
+        self.extent = extent
+        self.kwargs = kwargs
+
+    def plot(self, ax, Fig):
+        ''' Implements the DrawBase.plot function '''
+        # define the default fontdict
+        if "fontdict" not in self.kwargs.keys():
+            self.kwargs["fontdict"] = Fig.font_label
+        ax.text(self.extent[0], self.extent[1], self.text, **self.kwargs)
+
+
+class ScatterDraw(DrawBase):
+    ''' Scatter Draw (2D) '''
+
+    def __init__(self, x, y, label=None, cb_label=None, **kwargs):
+        ''' init function
+        input:
+            x/y: values in vector to draw scatter plot
+            label: legend label
+            cb_label: the colorbar label, when cmap is set, draw the colorbar
+            **kwargs: keyword args, it could contain "marker", "c=colors", "s=sizes" [c&s can plot 3D scatter,
+                      color & size represent z axis, when colors is set as z axis, should use the "cmap" params and
+                      plot the color bar], "color", "size" [color & size can only set by on value], "alpha",
+                       "cmap"(such as "viridis")
+
+        '''
+        self.x = x
+        self.y = y
+        self.label = label
+        self.cb_label = cb_label
+        self.kwargs = kwargs
+
+    def plot(self, ax, Fig):
+        pc = ax.scatter(self.x, self.y, label=self.label, **self.kwargs)
+        if "cmap" in self.kwargs.keys():
+            shrinkrate = 1  # 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
+            extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
+            cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', shrink=shrinkrate, pad=0.05, extend=extend)
+            cb.ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
+            if isinstance(Fig.ax, np.ndarray):
+                cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
+            else:
+                cb.set_label(self.cb_label, fontdict=Fig.font_label)
+            for l in cb.ax.yaxis.get_ticklabels():
+                l.set_family('Times New Roman')
+
+
 class Draw:
     ''' Add Draw in one ax, this class is used to represent ax and plot a draw '''
 
-    def __init__(self, ax, Fig: Figure, gridx=False, gridy=False, title="Draw", labelx=None, labely=None, **kwargs):
+    def __init__(self, ax, Fig: Figure, gridx=False, gridy=False, title="Draw", labelx=None, labely=None,
+                 legend_on=False, **kwargs):
         ''' init function
         input:
             ax: a single ax for this map from Figure.ax[i]
@@ -180,6 +241,8 @@ class Draw:
             gridx/y: bool, whether to open the grid lines
             labelx/y: str, default=None, plot the label of x and y
             title: title of this ax
+            legend_on: bool, whether open the legend, it could also be a dict to set legend, such as legend_on={"loc":
+                      "upper right", "framealpha": 0.8}
             **kwargs: keyword args of this ax, it could contain "xlim"[=(0,10)] "ylim" " "xlabel" ...
         '''
         self.ax = ax
@@ -189,6 +252,7 @@ class Draw:
         self.labelx = labelx
         self.labely = labely
         self.title = title
+        self.legend_on = legend_on
         self.kwargs = kwargs
         self.set(gridx=self.gridx, gridy=self.gridy, title=self.title, labelx=self.labelx, labely=self.labely,
                  **self.kwargs)
@@ -199,6 +263,14 @@ class Draw:
             draw: DrawBase class, it can be the sub class of Drawbase: such as BaseMap, RasterMap, ShpMap...
         '''
         draw.plot(self.ax, self.Fig)
+        # legend must after plot
+        if self.legend_on == True:
+            self.set_legend()
+        elif self.legend_on == False:
+            return
+        else:
+            # it can be a dict to set legend
+            self.set_legend(**self.legend_on)
 
     def set(self, gridx=False, gridy=False, title="Draw", labelx=None, labely=None, **kwargs):
         ''' set this Draw(ax)
@@ -230,12 +302,32 @@ class Draw:
         labels = self.ax.get_xticklabels() + self.ax.get_yticklabels()
         [label.set_font(self.Fig.font_ticks) for label in labels]
 
+    def set_legend(self, **kwargs):
+        ''' set the legend
+        input:
+            **kwargs: keyword args of this legend, it could contain
+                "loc"[conbination of upper lower left right]
+                "frameon": bool, whether open the fram
+                "framalpha": 0~1, frame alpha
+                "ncol": int, the col number of the legend
+                "shadow": bool, whether open the shadow
+                "borderpad", "labelspacing"...
+        '''
+        self.ax.legend(prop=self.Fig.font_legend, **kwargs)
+
 
 if __name__ == "__main__":
     # np.random.seed(15)
-    f = Figure(3)
-    for i in range(3):
-        x = np.random.rand(100, 3)
-        d = Draw(f.ax[i], f, gridy=True, labelx="X", labely="Y")
-        box = BoxDraw(x, labels=['x1', 'x2', 'x3'])
-        d.adddraw(box)
+    f = Figure(4)
+    facecolors = ["lightgrey", 'lightgreen', 'lightblue']  # pink
+    x = np.random.rand(1000, 3)
+    d0 = Draw(f.ax[0], f, gridy=True, labelx="X", labely="Y", title="BoxDraw, TextDraw")
+    box = BoxDraw(x, labels=['x1', 'x2', 'x3'], patch_artist=True, facecolors=facecolors)
+    text = TextDraw("text", extent=[3, 0.9], color="r")
+    d0.adddraw(box)
+    d0.adddraw(text)
+    d1 = Draw(f.ax[1], f, gridy=True, labelx="X", labely="Y", legend_on={"loc": "upper right", "framealpha": 0.8},
+              title="ScatterDraw")
+    s = ScatterDraw(x[:, 0], x[:, 1], label="x0-x1-x2", marker="+", c=x[:, 2], s=x[:, 2] * 10, cmap="viridis",
+                    alpha=0.5, cb_label="cb")
+    d1.adddraw(s)
