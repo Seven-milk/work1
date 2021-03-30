@@ -8,7 +8,7 @@ import requests
 # general set
 # root = "E:/"
 # home = os.path.join(root, "GLDAS_Noah_3hourly")
-home = "H:/data_zxd/GLDAS/GLDAS_NOAH"
+home = "G:/GLDAS_NOAH"
 URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
 
 # open url file and read url in urls
@@ -70,13 +70,13 @@ def download(url, filename):
 #     fail_url.append(download(urls[i], file_name[i]))
 
 # download nc file by multiprocessing
-urls = urls[:10]
-file_name = file_name[:10]
+# urls = urls[:10]
+# file_name = file_name[:10]
 from multiprocessing import Pool
 
 
 def mpdownload():
-    po = Pool(3)  # pool
+    po = Pool(8)  # pool
     for i in range(len(urls)):
         res = po.apply_async(download, (urls[i], file_name[i]))
         fail_url.append(res.get())
