@@ -1,41 +1,15 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
-# Set the URL string to point to a specific data URL. Some generic examples are:
-#   https://servername/data/path/file
-#   https://servername/opendap/path/file[.format[?subset]]
-#   https://servername/daac-bin/OTF/HTTP_services.cgi?KEYWORD=value[&KEYWORD=value]
-# URL = 'your_URL_string_goes_here'
-#
-# # Set the FILENAME string to the data file name, the LABEL keyword value, or any customized name.
-# FILENAME = 'your_filename_string_goes_here'
-#
-#
-#
-# result = requests.get(URL)
-# try:
-#     result.raise_for_status()
-#     f = open(FILENAME, 'wb')
-#     f.write(result.content)
-#     f.close()
-#     print('contents of URL written to ' + FILENAME)
-# except:
-#     print('requests.get() returned an error code ' + str(result.status_code))
-
-import requests
 import os
 import re
-import urllib.request
-import urllib
+import requests
 
 # general set
-root = "E:/"
-home = os.path.join(root, "GLDAS_Noah_3hourly")
+# root = "E:/"
+# home = os.path.join(root, "GLDAS_Noah_3hourly")
+home = "H:/data_zxd/GLDAS/GLDAS_NOAH"
 URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
-
-# username & password
-username = "zheng786909151"
-password = "Zheng262404"
 
 # open url file and read url in urls
 with open(URL, 'r') as file:
@@ -51,13 +25,17 @@ file_name = [re.search(r"LABEL.*\d\.nc4", url)[0][6:] for url in urls]
 file_name = [os.path.join(home, file) for file in file_name]
 
 # input start date and find the index in urls/file_name
-start = input("input the start date, such as 19480101.0300")
+# start = input("input the start date, such as 19480101.0300")
+start = ""
+
 if start == "":
     index = 0
     print("start: ", re.search(r"\d{8}\.\d{4}", file_name[0])[0])
 else:
     index = [start in name for name in file_name].index(True)
     print("start: ", start)
+urls = urls[index:]
+file_name = file_name[index:]
 
 # fail download links
 fail_url = []
@@ -65,21 +43,47 @@ fail_url = []
 
 # download function
 def download(url, filename):
+    '''
+    input:
+        url: list
+        filename: list
+    '''
     print(f"start download {filename}")
-    result = urllib.request.urlopen(url)
     try:
-        result.raise_for_status()
+        response = requests.get(url)
         f = open(filename, 'wb')
-        f.write(result.content)
+        f.write(response.content)
         f.close()
         print('contents of URL written to ' + filename)
+        return ""
     except:
-        print('requests.get() returned an error code ' + str(result.status_code))
+        print('Error to connect' + filename)
+        return urls
 
-
-# download nc file
-for i in range(index, len(file_name)):
-    fail_url.append(download(urls[i], file_name[i]))
 
 # download pdf file
 # download(url_pdf, pdf_name)
+
+
+# download nc file
+# for i in range(len(urls)):
+#     fail_url.append(download(urls[i], file_name[i]))
+
+# download nc file by multiprocessing
+urls = urls[:10]
+file_name = file_name[:10]
+from multiprocessing import Pool
+
+
+def mpdownload():
+    po = Pool(3)  # pool
+    for i in range(len(urls)):
+        res = po.apply_async(download, (urls[i], file_name[i]))
+        fail_url.append(res.get())
+
+    po.close()
+    po.join()
+
+
+if __name__ == "__main__":
+    mpdownload()
