@@ -288,7 +288,6 @@ class Figure:
                            'size': 8 if isinstance(self.ax, np.ndarray) else 10}
         self.font_title = {'family': 'Times New Roman', 'weight': 'bold',
                            'size': 10 if isinstance(self.ax, np.ndarray) else 15}
-        self.set(font_label=self.font_label, font_ticks=self.font_ticks)
         if self.add == True:
             self.unview_last()
 
@@ -298,17 +297,11 @@ class Figure:
         if self.figNumber >= 2:
             self.calrowcol()
         self.fig.clf()
-        self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, subplot_kw={"projection": self.proj}, **kwargs)
+        self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, subplot_kw={"projection": self.proj},
+                                    **kwargs)
         self.fig.subplots_adjust(wspace=wspace, hspace=hspace)
         if isinstance(self.ax, np.ndarray):
             self.ax = self.ax.flatten()
-
-    def set(self, font_label, font_ticks, font_family='Times New Roman'):
-        ''' set the fig '''
-        config = {'font.family': font_family, 'font.size': font_label["size"]}
-        plt.rcParams.update(config)
-        plt.xticks(fontproperties=font_ticks)
-        plt.yticks(fontproperties=font_ticks)
 
     def calrowcol(self, rowfirst=True):
         ''' Decomposition factor of self.figNumber to get self.figRow and self.figCol
@@ -448,7 +441,11 @@ class Map:
                 np.arange(int(extent[0]) - 5 * res_grid, int(extent[1]) + 5 * res_grid, res_label))  # set grid label
             gl.ylocator = mticker.FixedLocator(
                 np.arange(int(extent[2]) - 5 * res_grid, int(extent[3]) + 5 * res_grid, res_label))
-        # title and ticks
+            # ticks
+            gl.xlabel_style = {'size': self.Fig.font_ticks["size"]}
+            gl.ylabel_style = {'size': self.Fig.font_ticks["size"]}
+
+        # title
         self.ax.set_title(title, fontdict=self.Fig.font_title)
 
 
