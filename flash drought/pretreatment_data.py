@@ -16,6 +16,8 @@ coord_path = os.path.join(home, "coord.txt")
 coord = pd.read_csv(coord_path, sep=",")
 date = pd.date_range('19480101', '20141230', freq='d').strftime("%Y%m%d").to_numpy(dtype="int")
 sm_rz = np.loadtxt(os.path.join(data_path, "SoilMoist_RZ_tavg.txt"), dtype="float", delimiter=" ")
+sm_rz_Helong = np.loadtxt(os.path.join(home, "sm_rz_Helong.txt"), dtype="float", delimiter=" ")
+sm_rz_noHelong = np.loadtxt(os.path.join(home, "sm_rz_noHelong.txt"), dtype="float", delimiter=" ")
 
 
 # pentad/5days:  sm_rz/date to sm_rz_pentad/date_pentad
@@ -26,7 +28,7 @@ def cal_pentad(date, sm_rz):
     sm_rz = sm_rz[:-1]
     date = date[:-1]
     date_pentad = np.full((num_pentad,), fill_value=-9999, dtype="int")
-    sm_rz_pentad = np.full((num_pentad, len(coord)), fill_value=-9999, dtype="float")
+    sm_rz_pentad = np.full((num_pentad, sm_rz.shape[1]), fill_value=-9999, dtype="float")
     for i in range(num_pentad):
         sm_rz_pentad[i, :] = sm_rz[i * 5: (i + 1) * 5, :].mean(axis=0)
         date_pentad[i] = date[i * 5 + 2]
@@ -34,8 +36,13 @@ def cal_pentad(date, sm_rz):
 
 
 date_pentad, sm_rz_pentad = cal_pentad(date, sm_rz)
-np.savetxt(os.path.join(home, "date_pentad.txt"), date_pentad)
-np.savetxt(os.path.join(home, "sm_rz_pentad.txt"), sm_rz_pentad)
+_, sm_rz_Helong_pentad = cal_pentad(date, sm_rz_Helong)
+_, sm_rz_noHelong_pentad = cal_pentad(date, sm_rz_noHelong)
+
+# np.savetxt(os.path.join(home, "date_pentad.txt"), date_pentad)
+# np.savetxt(os.path.join(home, "sm_rz_pentad.txt"), sm_rz_pentad)
+# np.savetxt(os.path.join(home, "sm_rz_Helong_pentad.txt"), sm_rz_Helong_pentad)
+# np.savetxt(os.path.join(home, "sm_rz_noHelong_pentad.txt"), sm_rz_noHelong_pentad)
 
 
 # pentad SM_moisture percentile: sm_rz_pentad to sm_percentile_rz_pentad
@@ -50,7 +57,7 @@ def cal_sm_percentile_rz_pentad(sm_rz_pentad):
 
 
 sm_percentile_rz_pentad = cal_sm_percentile_rz_pentad(sm_rz_pentad)
-np.savetxt(os.path.join(home, "sm_percentile_rz_pentad.txt"), sm_percentile_rz_pentad)
+# np.savetxt(os.path.join(home, "sm_percentile_rz_pentad.txt"), sm_percentile_rz_pentad)
 
 
 def compare_sm_sm_percentile():
