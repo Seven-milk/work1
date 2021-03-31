@@ -77,6 +77,58 @@ class extract_region(index_coord):
             raise IndexError("too many indices for data_original array: array is 1/2-dimensional, but more were given")
 
 
+def extract_sm_static_params():
+    # original data
+    sm_rz = np.loadtxt(data_path, dtype="float", delimiter=" ")
+    static_params = pd.read_excel(os.path.join(home, "5.Analysis_spatial/static_params.xlsx"), index_col=0)
+    static_params_array = static_params.to_numpy()
+
+    # extract data
+    extract_region_ = extract_region()
+    sm_rz_Helong = extract_region_.extract_data(coord_Helong, coord, sm_rz, axis=1)
+    sm_rz_noHelong = extract_region_.extract_data(coord_noHelong, coord, sm_rz, axis=1)
+    static_params_Helong = extract_region_.extract_data(coord_Helong, coord, static_params_array, axis=0)
+    static_params_noHelong = extract_region_.extract_data(coord_noHelong, coord, static_params_array, axis=0)
+
+    # pd.DataFrame
+    static_params_Helong = pd.DataFrame(static_params_Helong, columns=static_params.columns)
+    static_params_noHelong = pd.DataFrame(static_params_noHelong, columns=static_params.columns)
+
+    # save data
+    np.savetxt(os.path.join(home, "sm_rz_Helong.txt"), sm_rz_Helong)
+    np.savetxt(os.path.join(home, "sm_rz_noHelong.txt"), sm_rz_noHelong)
+    static_params_Helong.to_excel(os.path.join(home, "static_params_Helong.xlsx"))
+    static_params_noHelong.to_excel(os.path.join(home, "static_params_noHelong.xlsx"))
+
+
+def extract_Drought_FD_number():
+    # original data
+    Drought_year_number = pd.read_excel(os.path.join(home, "Drought_year_number.xlsx"), index_col=0)
+    FD_year_number = pd.read_excel(os.path.join(home, "FD_year_number.xlsx"), index_col=0)
+
+    Drought_year_number_array = Drought_year_number.to_numpy()
+    FD_year_number_array = FD_year_number.to_numpy()
+
+    # extract data
+    extract_region_ = extract_region()
+    Drought_year_number_Helong = extract_region_.extract_data(coord_Helong, coord, Drought_year_number_array, axis=0)
+    Drought_year_number_noHelong = extract_region_.extract_data(coord_noHelong, coord, Drought_year_number_array, axis=0)
+    FD_year_number_Helong = extract_region_.extract_data(coord_Helong, coord, FD_year_number_array, axis=0)
+    FD_year_number_noHelong = extract_region_.extract_data(coord_noHelong, coord, FD_year_number_array, axis=0)
+
+    # pd.DataFrame
+    Drought_year_number_Helong = pd.DataFrame(Drought_year_number_Helong, columns=Drought_year_number.columns)
+    Drought_year_number_noHelong = pd.DataFrame(Drought_year_number_noHelong, columns=Drought_year_number.columns)
+    FD_year_number_Helong = pd.DataFrame(FD_year_number_Helong, columns=FD_year_number.columns)
+    FD_year_number_noHelong = pd.DataFrame(FD_year_number_noHelong, columns=FD_year_number.columns)
+
+    # save data
+    Drought_year_number_Helong.to_excel(os.path.join(home, "Drought_year_number_Helong.xlsx"))
+    Drought_year_number_noHelong.to_excel(os.path.join(home, "Drought_year_number_noHelong.xlsx"))
+    FD_year_number_Helong.to_excel(os.path.join(home, "FD_year_number_Helong.xlsx"))
+    FD_year_number_noHelong.to_excel(os.path.join(home, "FD_year_number_noHelong.xlsx"))
+
+
 if __name__ == "__main__":
     # general set
     root = "H"
@@ -95,25 +147,14 @@ if __name__ == "__main__":
     index_Helong = index_coord_.cal_index(coord_Helong, coord)
     index_noHelong = index_coord_.cal_index(coord_noHelong, coord)
 
-    # original data
-    sm_rz = np.loadtxt(data_path, dtype="float", delimiter=" ")
-    static_params = pd.read_excel(os.path.join(home, "5.Analysis_spatial/static_params.xlsx"),
-                                  index_col=0)
-    static_params_array = static_params.to_numpy()
+    # extract_sm_static_params
+    # extract_sm_static_params()
 
-    # extract data
-    extract_region_ = extract_region()
-    sm_rz_Helong = extract_region_.extract_data(coord_Helong, coord, sm_rz, axis=1)
-    sm_rz_noHelong = extract_region_.extract_data(coord_noHelong, coord, sm_rz, axis=1)
-    static_params_Helong = extract_region_.extract_data(coord_Helong, coord, static_params_array, axis=0)
-    static_params_noHelong = extract_region_.extract_data(coord_noHelong, coord, static_params_array, axis=0)
+    # extract_Drought_FD_number
+    extract_Drought_FD_number()
 
-    # pd.DataFrame
-    static_params_Helong = pd.DataFrame(static_params_Helong, columns=static_params.columns)
-    static_params_noHelong = pd.DataFrame(static_params_noHelong, columns=static_params.columns)
 
-    # save data
-    # np.savetxt(os.path.join(home, "sm_rz_Helong.txt"), sm_rz_Helong)
-    # np.savetxt(os.path.join(home, "sm_rz_noHelong.txt"), sm_rz_noHelong)
-    # static_params_Helong.to_excel(os.path.join(home, "static_params_Helong.xlsx"))
-    # static_params_noHelong.to_excel(os.path.join(home, "static_params_noHelong.xlsx"))
+
+
+
+
