@@ -442,8 +442,8 @@ class Map:
             gl.ylocator = mticker.FixedLocator(
                 np.arange(int(extent[2]) - 5 * res_grid, int(extent[3]) + 5 * res_grid, res_label))
             # ticks
-            gl.xlabel_style = {'size': self.Fig.font_ticks["size"]}
-            gl.ylabel_style = {'size': self.Fig.font_ticks["size"]}
+            gl.xlabel_style = {'size': self.Fig.font_ticks["size"], 'family': self.Fig.font_ticks["family"]}
+            gl.ylabel_style = {'size': self.Fig.font_ticks["size"], 'family': self.Fig.font_ticks["family"]}
 
         # title
         self.ax.set_title(title, fontdict=self.Fig.font_title)
