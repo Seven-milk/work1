@@ -19,6 +19,7 @@ date_pentad = np.loadtxt(os.path.join(home, "date_pentad.txt"), dtype="int")
 sm_rz_pentad = np.loadtxt(os.path.join(home, "sm_rz_pentad.txt"))
 sm_percentile_rz_pentad = np.loadtxt(os.path.join(home, "sm_percentile_rz_pentad.txt"), dtype="float", delimiter=" ")
 Num_point = 1166  # grid number
+year = np.arange(1948, 2015)
 
 
 # cal the mean of a list
@@ -45,6 +46,18 @@ def date2month(date: int) -> int:
         ret: int month, like 10 (1~12)
     '''
     ret = int((date % 10000 - date % 100) / 100)
+    return ret
+
+
+# cal the year from a int date (19481019 -> 1948)
+def date2year(date: int) -> int:
+    ''' calculate the year from a int date
+    input
+        date: int date, like 19481019
+    return
+        ret: int year, like 1948
+    '''
+    ret = int((date - date % 10000) / 10000)
     return ret
 
 
@@ -183,9 +196,35 @@ def cal_season_params():
     # season_params.to_excel("season_params.xlsx")
 
 
-# 1036, the grid with 376 drought events and 314 FD events
-FD_ = FDIP.FD(sm_rz_pentad[:, 1036], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
-              pc=0.28,
-              excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-              fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
-FD_.general_out()
+# special point: 1036, the grid with 376 drought events and 314 FD events
+def SpecialPoint():
+    FD_ = FDIP.FD(sm_rz_pentad[:, 1036], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+                  pc=0.28,
+                  excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                  fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+    FD_.general_out()
+
+
+# year drought number and FD number
+def year_number():
+    Drought_year_number = np.zeros((Num_point, len(year)), dtype='int')  # drought events number yearly sum
+    FD_year_number = np.zeros((Num_point, len(year)), dtype='int')  # FD events number yearly sum
+    Drought_year_number = pd.DataFrame(Drought_year_number, index=list(range(Num_point)), columns=year)
+    FD_year_number = pd.DataFrame(FD_year_number, index=list(range(Num_point)), columns=year)
+
+    for i in range(Num_point):
+        # the sm_rz_pentad time series of every point
+        FD_ = FDIP.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+                      pc=0.28,
+                      excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                      fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+        for j in range(len(FD_.dry_flag_start)):
+            Drought_year = date2year(date_pentad[FD_.dry_flag_start[j]])
+            Drought_year_number.loc[i, Drought_year] += 1
+            for k in range(len(FD_.fd_flag_start[j])):
+                FD_year = date2year(date_pentad[FD_.fd_flag_start[j][k]])
+                FD_year_number.loc[i, FD_year] += 1
+
+    # save to excel
+    Drought_year_number.to_excel("Drought_year_number.xlsx")
+    FD_year_number.to_excel("FD_year_number.xlsx")
