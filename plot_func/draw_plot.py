@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 import matplotlib.ticker as mticker
 import matplotlib.colors as mcolors
 import matplotlib
+from scipy import stats
 
 
 # Define MapBase class
@@ -196,7 +197,7 @@ class ScatterDraw(DrawBase):
             cb_label: the colorbar label, when cmap is set, draw the colorbar
             **kwargs: keyword args, it could contain "marker", "c=colors", "s=sizes" [c&s can plot 3D scatter,
                       color & size represent z axis, when colors is set as z axis, should use the "cmap" params and
-                      plot the color bar], "color", "size" [color & size can only set by on value], "alpha",
+                      plot the color bar], "color", "s" [color & s can only set by on value], "alpha",
                        "cmap"(such as "viridis")
 
         '''
@@ -207,6 +208,7 @@ class ScatterDraw(DrawBase):
         self.kwargs = kwargs
 
     def plot(self, ax, Fig):
+        ''' Implements the DrawBase.plot function '''
         pc = ax.scatter(self.x, self.y, label=self.label, **self.kwargs)
         if "cmap" in self.kwargs.keys():
             shrinkrate = 1  # 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
@@ -219,6 +221,61 @@ class ScatterDraw(DrawBase):
                 cb.set_label(self.cb_label, fontdict=Fig.font_label)
             for l in cb.ax.yaxis.get_ticklabels():
                 l.set_family('Times New Roman')
+
+
+class HistDraw(DrawBase):
+    ''' Hist Draw (2D) '''
+
+    def __init__(self, x, label=None, **kwargs):
+        ''' init function
+        input:
+            x: values in vector to draw hist plot
+            label: legend label
+            **kwargs: keyword args, it could contain "bins", "alpha"
+                bins suggest: when use kde, set bins = int(len(x) * kde.covariance_factor())
+        '''
+        self.x = x
+        self.label = label
+        self.kwargs = kwargs
+
+    def plot(self, ax, Fig):
+        ''' Implements the DrawBase.plot function '''
+        ax.hist(self.x, label=self.label, **self.kwargs)
+
+
+class KdeDraw(DrawBase):
+    ''' Hist Draw (2D) '''
+
+    def __init__(self, x, bw_method="scott", inter_num=100, sample_on=True, label=None, **kwargs):
+        ''' init function
+        input:
+            x: values in vector to draw Kde plot
+            bw_method: bandwidth selection method, bw_method='Scott', "silverman"
+            inter_num: interpolation number, much number, smoother line
+            sample_on: whether to plot samples
+            label: legend label
+            **kwargs: keyword args, it could contain "bins", "alpha", reference plot
+
+            note: if want to plot kde on ax_twin, ax_twinx= ax.twinx(), create new Draw, and set ax_twinx into
+                  Draw(ax_twinx, Fig) to draw kde
+        '''
+        self.x = x
+        self.bw_method = bw_method
+        self.sample_on = sample_on
+        self.inter_num = inter_num
+        self.label = label
+        self.kwargs = kwargs
+        self.kde = stats.gaussian_kde(x, bw_method=self.bw_method)
+        self.x_eval = np.linspace(min(x), max(x), num=int((max(x) - min(x)) * inter_num))
+
+    def plot(self, ax, Fig):
+        ''' Implements the DrawBase.plot function '''
+        # plot samples
+        if self.sample_on == True:
+            # ax_twinx = ax.twinx()
+            ax.scatter(self.x, np.zeros(self.x.shape), marker="|", color="r", linewidths=0.3, s=100, label="Samples")
+        # kde plot
+        ax.plot(self.x_eval, self.kde(self.x_eval), label=self.label, **self.kwargs)
 
 
 class Draw:
@@ -310,9 +367,9 @@ class Draw:
 
 if __name__ == "__main__":
     # np.random.seed(15)
-    f = Figure(4)
+    f = Figure(6, wspace=0.5)
     facecolors = ["lightgrey", 'lightgreen', 'lightblue']  # pink
-    x = np.random.rand(1000, 3)
+    x = np.random.rand(500, 3)
     d0 = Draw(f.ax[0], f, gridy=True, labelx="X", labely="Y", title="BoxDraw, TextDraw")
     box = BoxDraw(x, labels=['x1', 'x2', 'x3'], patch_artist=True, facecolors=facecolors)
     text = TextDraw("text", extent=[3, 0.9], color="r")
@@ -323,3 +380,17 @@ if __name__ == "__main__":
     s = ScatterDraw(x[:, 0], x[:, 1], label="x0-x1-x2", marker="+", c=x[:, 2], s=x[:, 2] * 10, cmap="viridis",
                     alpha=0.5, cb_label="cb")
     d1.adddraw(s)
+    d2 = Draw(f.ax[2], f, gridy=True, labelx="X", labely="number", legend_on={"loc": "upper right", "framealpha": 0.8},
+              title="HistDraw")
+    h = HistDraw(x[:, 0], label="hist", bins=100, alpha=0.5)
+    d2.adddraw(h)
+    d3 = Draw(f.ax[3], f, gridy=True, labelx="X", labely="PDF", legend_on={"loc": "upper right", "framealpha": 0.8},
+              title="KdeDraw")
+    k = KdeDraw(x[:, 0], inter_num=500, label="kde", color="b", sample_on=True)
+    d3.adddraw(k)
+    d4 = Draw(f.ax[4], f, gridy=True, labelx="X", labely="number", legend_on={"loc": "upper right", "framealpha": 0.8},
+              title="Hist & Kde")
+    d4.adddraw(h)
+    d5 = Draw(f.ax[4].twinx(), f, gridy=False, labelx=None, labely="PDF", legend_on={"loc": "upper left",
+                                                                                    "framealpha": 0.8}, title=None)
+    d5.adddraw(k)
