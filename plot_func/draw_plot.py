@@ -314,7 +314,7 @@ class Draw:
         draw.plot(self.ax, self.Fig)
         # legend must after plot
         if self.legend_on == True:
-            self.set_legend()
+            self.set_legend(**{"loc": "upper right", "framealpha": 0.8})
         elif self.legend_on == False:
             return
         else:
