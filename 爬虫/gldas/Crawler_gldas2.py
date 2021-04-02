@@ -26,7 +26,7 @@ file_name = [os.path.join(home, file) for file in file_name]
 
 # input start date and find the index in urls/file_name
 # start = input("input the start date, such as 19480101.0300")
-start = ""
+start = "19480425.1500"
 
 if start == "":
     index = 0
@@ -76,7 +76,7 @@ from multiprocessing import Pool
 
 
 def mpdownload():
-    po = Pool(8)  # pool
+    po = Pool(4)  # pool
     for i in range(len(urls)):
         res = po.apply_async(download, (urls[i], file_name[i]))
         fail_url.append(res.get())
