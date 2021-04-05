@@ -1,7 +1,4 @@
 # code: utf-8
-# author: "Xudong Zheng" 
-# email: Z786909151@163.com
-# code: utf-8
 # author: "Xudong Zheng"
 # email: Z786909151@163.com
 import os
