@@ -1,6 +1,9 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
+# code: utf-8
+# author: "Xudong Zheng"
+# email: Z786909151@163.com
 import os
 import re
 import requests
@@ -8,8 +11,18 @@ import requests
 # general set
 # root = "E:/"
 # home = os.path.join(root, "GLDAS_Noah_3hourly")
-home = "G:/GLDAS_NOAH"
-URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
+# home = "G:/GLDAS_NOAH"
+home = "F:/data/GLDAS/GLDAS Noah Land Surface Model L4 3 hourly 0.25 x 0.25 degree V2.1 (GLDAS_NOAH025_3H)"
+URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.1_20210405_032035.txt")
+
+cookie = {
+    "_ce.s": "v11.rlc~1616927269668~v11ls~false~v~061d4664fd91e177c5ccaa33472db193789e60f1~vv~7~ir~1",
+    "_ga": "GA1.4.698647544.1616905533",
+    "_gid": "GA1.4.1749749673.1617592003",
+    "_urs-gui_session": "19b9e61a886bb83dc32f647aa604b87f",
+    "urs_guid_ops": "65cb2506-b9f2-476f-8c8a-2707adcaef94",
+    "urs_user_already_logged": "yes"
+}
 
 # open url file and read url in urls
 with open(URL, 'r') as file:
@@ -26,7 +39,7 @@ file_name = [os.path.join(home, file) for file in file_name]
 
 # input start date and find the index in urls/file_name
 # start = input("input the start date, such as 19480101.0300")
-start = "19480425.1500"
+start = ""  # 19480425.1500
 
 if start == "":
     index = 0
@@ -50,7 +63,7 @@ def download(url, filename):
     '''
     print(f"start download {filename}")
     try:
-        response = requests.get(url)
+        response = requests.get(url, cookies=cookie)
         f = open(filename, 'wb')
         f.write(response.content)
         f.close()
@@ -87,4 +100,5 @@ def mp_download():
 
 
 if __name__ == "__main__":
-    mp_download()
+    # mpdownload()
+    pass
