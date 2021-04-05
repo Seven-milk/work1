@@ -98,4 +98,5 @@ def mp_download():
 
 if __name__ == "__main__":
     # mpdownload()
-    pass
+    serial_download()
+    # pass
