@@ -67,7 +67,10 @@ def download(url, filename):
         print('contents of URL written to ' + filename)
         return ""
     except:
+        # append write fail urls in fail_url.txt
         print('Error to connect' + filename)
+        with open(os.path.join(home, "fail_url.txt"), 'a') as f:
+            f.write(url)
         return urls
 
 
@@ -79,6 +82,7 @@ def download(url, filename):
 def serial_download():
     for i in range(len(urls)):
         fail_url.append(download(urls[i], file_name[i]))
+
 
 # download nc file by multiprocessing
 # urls = urls[:10]

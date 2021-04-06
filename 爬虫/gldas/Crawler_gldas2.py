@@ -26,7 +26,7 @@ file_name = [os.path.join(home, file) for file in file_name]
 
 # input start date and find the index in urls/file_name
 # start = input("input the start date, such as 19480101.0300")
-start = "19480425.1500"
+start = "19611013.0300"
 
 if start == "":
     index = 0
@@ -58,6 +58,9 @@ def download(url, filename):
         return ""
     except:
         print('Error to connect' + filename)
+        # append write fail urls in fail_url.txt
+        with open(os.path.join(home, "fail_url.txt"), 'a') as f:
+            f.write(url)
         return urls
 
 
@@ -65,10 +68,13 @@ def download(url, filename):
 # download(url_pdf, pdf_name)
 
 
+# TODO redownload fail urls
+
 # download nc file
 def serial_download():
     for i in range(len(urls)):
         fail_url.append(download(urls[i], file_name[i]))
+
 
 # download nc file by multiprocessing
 # urls = urls[:10]
