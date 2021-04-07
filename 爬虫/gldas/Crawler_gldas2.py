@@ -26,7 +26,7 @@ file_name = [os.path.join(home, file) for file in file_name]
 
 # input start date and find the index in urls/file_name
 # start = input("input the start date, such as 19480101.0300")
-start = "19611013.0300"
+start = "19620110.0600"
 
 if start == "":
     index = 0
@@ -60,7 +60,7 @@ def download(url, filename):
         print('Error to connect' + filename)
         # append write fail urls in fail_url.txt
         with open(os.path.join(home, "fail_url.txt"), 'a') as f:
-            f.write(url)
+            f.write(url, "\n")
         return urls
 
 
