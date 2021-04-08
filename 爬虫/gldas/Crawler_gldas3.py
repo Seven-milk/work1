@@ -1,9 +1,11 @@
 # code: utf-8
 # author: "Xudong Zheng"
 # email: Z786909151@163.com
+# download GLDAS by cookie request method
 import os
 import re
 import requests
+from multiprocessing import Pool
 
 # general set
 # root = "E:/"
@@ -47,9 +49,6 @@ else:
 urls = urls[index:]
 file_name = file_name[index:]
 
-# fail download links
-fail_url = []
-
 
 # download function
 def download(url, filename):
@@ -65,13 +64,12 @@ def download(url, filename):
         f.write(response.content)
         f.close()
         print('contents of URL written to ' + filename)
-        return ""
+
     except:
         # append write fail urls in fail_url.txt
         print('Error to connect' + filename)
         with open(os.path.join(home, "fail_url.txt"), 'a') as f:
-            f.write(url)
-        return urls
+            f.write(url + "\n")
 
 
 # download pdf file
@@ -81,20 +79,14 @@ def download(url, filename):
 # download nc file
 def serial_download():
     for i in range(len(urls)):
-        fail_url.append(download(urls[i], file_name[i]))
+        download(urls[i], file_name[i])
 
 
 # download nc file by multiprocessing
-# urls = urls[:10]
-# file_name = file_name[:10]
-from multiprocessing import Pool
-
-
 def mp_download():
     po = Pool(4)  # pool
     for i in range(len(urls)):
-        res = po.apply_async(download, (urls[i], file_name[i]))
-        fail_url.append(res.get())
+        po.apply_async(download, (urls[i], file_name[i]))
 
     po.close()
     po.join()
@@ -103,4 +95,3 @@ def mp_download():
 if __name__ == "__main__":
     # mpdownload()
     serial_download()
-    # pass
