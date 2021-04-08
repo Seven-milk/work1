@@ -66,8 +66,6 @@ def download(url, filename):
 # download(url_pdf, pdf_name)
 
 
-# TODO redownload fail urls
-
 # download nc file
 def serial_download():
     for i in range(len(urls)):
