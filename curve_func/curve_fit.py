@@ -74,6 +74,7 @@ class PolyCurve(CurveBase):
         plot_fitcurve = draw_plot.PlotDraw(x_linespace, y_fit, "r", label=f"Fitted Curve")
         draw.adddraw(plot_original)
         draw.adddraw(plot_fitcurve)
+        return fig, draw
 
 
 if __name__ == '__main__':
