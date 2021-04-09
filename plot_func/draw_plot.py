@@ -223,6 +223,31 @@ class ScatterDraw(DrawBase):
                 l.set_family('Times New Roman')
 
 
+class LineDraw(DrawBase):
+    ''' Line Draw (2D) '''
+
+    def __init__(self, x, y, label=None, *args, **kwargs):
+        ''' init function
+        input:
+            x/y: values in vector to draw line plot
+            label: legend label
+            *args: position args, it could contain "fmt" - '[marker][line][color]', when use this,
+                   LineDraw(sorted(x[:, 0]), sorted(x[:, 1]), label="x0-x1", "b--")  ——>
+                   LineDraw(sorted(x[:, 0]), sorted(x[:, 1]), "x0-x1", "b--")
+            **kwargs: keyword args, it could contain "alpha", "color", "visible", "linestyle"
+
+        '''
+        self.x = x
+        self.y = y
+        self.label = label
+        self.args = args
+        self.kwargs = kwargs
+
+    def plot(self, ax, Fig):
+        ''' Implements the DrawBase.plot function '''
+        ax.plot(self.x, self.y, label=self.label, *self.args, **self.kwargs)
+
+
 class HistDraw(DrawBase):
     ''' Hist Draw (2D) '''
 
@@ -257,7 +282,16 @@ class KdeDraw(DrawBase):
             **kwargs: keyword args, it could contain "bins", "alpha", reference plot
 
             note: if want to plot kde on ax_twin, ax_twinx= ax.twinx(), create new Draw, and set ax_twinx into
-                  Draw(ax_twinx, Fig) to draw kde
+                  Draw(ax_twinx, Fig) to draw kde, follow the example
+
+            -------- example -------------------------------------------------------------------------------------
+            d4 = Draw(f.ax[4], f, gridy=True, labelx="X", labely="number", legend_on={"loc": "upper right",
+                    "framealpha": 0.8}, title="Hist & Kde")
+            d4.adddraw(h)
+            d5 = Draw(f.ax[4].twinx(), f, gridy=False, labelx=None, labely="PDF", legend_on={"loc": "upper left",
+                    "framealpha": 0.8}, title=None)
+            d5.adddraw(k)
+            ------------------------------------------------------------------------------------------------------
         '''
         self.x = x
         self.bw_method = bw_method
@@ -370,27 +404,37 @@ if __name__ == "__main__":
     f = Figure(6, wspace=0.5)
     facecolors = ["lightgrey", 'lightgreen', 'lightblue']  # pink
     x = np.random.rand(500, 3)
+    # d0: box and text
     d0 = Draw(f.ax[0], f, gridy=True, labelx="X", labely="Y", title="BoxDraw, TextDraw")
     box = BoxDraw(x, labels=['x1', 'x2', 'x3'], patch_artist=True, facecolors=facecolors)
     text = TextDraw("text", extent=[3, 0.9], color="r")
     d0.adddraw(box)
     d0.adddraw(text)
+    # d1: scatter
     d1 = Draw(f.ax[1], f, gridy=True, labelx="X", labely="Y", legend_on={"loc": "upper right", "framealpha": 0.8},
               title="ScatterDraw")
     s = ScatterDraw(x[:, 0], x[:, 1], label="x0-x1-x2", marker="+", c=x[:, 2], s=x[:, 2] * 10, cmap="viridis",
                     alpha=0.5, cb_label="cb")
     d1.adddraw(s)
+    # d2: hist
     d2 = Draw(f.ax[2], f, gridy=True, labelx="X", labely="number", legend_on={"loc": "upper right", "framealpha": 0.8},
               title="HistDraw")
     h = HistDraw(x[:, 0], label="hist", bins=100, alpha=0.5)
     d2.adddraw(h)
+    # d3: kde
     d3 = Draw(f.ax[3], f, gridy=True, labelx="X", labely="PDF", legend_on={"loc": "upper right", "framealpha": 0.8},
               title="KdeDraw")
     k = KdeDraw(x[:, 0], inter_num=500, label="kde", color="b", sample_on=True)
     d3.adddraw(k)
+    # d4/5: hist and kde
     d4 = Draw(f.ax[4], f, gridy=True, labelx="X", labely="number", legend_on={"loc": "upper right", "framealpha": 0.8},
               title="Hist & Kde")
     d4.adddraw(h)
     d5 = Draw(f.ax[4].twinx(), f, gridy=False, labelx=None, labely="PDF", legend_on={"loc": "upper left",
                                                                                     "framealpha": 0.8}, title=None)
     d5.adddraw(k)
+    # d6: line
+    d6 = Draw(f.ax[5], f, gridy=True, labelx="X", labely="Y", legend_on={"loc": "upper right", "framealpha": 0.8},
+              title="LineDraw")
+    l = LineDraw(sorted(x[:, 0]), sorted(x[:, 1]), "x0-x1", "b--")  # color="b", linestyle="--"
+    d6.adddraw(l)
