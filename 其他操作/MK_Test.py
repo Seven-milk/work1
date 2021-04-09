@@ -46,5 +46,5 @@ def MK_test(x):
     return (slope, zc1)
 
 
-x = np.loadtxt("x.txt")
-(slope, zc1) = MK_test(x)
+# x = np.loadtxt("x.txt")
+# (slope, zc1) = MK_test(x)
