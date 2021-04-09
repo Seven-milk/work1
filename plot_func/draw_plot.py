@@ -192,13 +192,16 @@ class ScatterDraw(DrawBase):
     def __init__(self, *args, cb_label=None, **kwargs):
         ''' init function
         input:
-            *args: position args, it should contain [x]y: values in vector to draw scatter plot
+            *args: position args, it should contain x, y: values in vector to draw scatter plot
             cb_label: the colorbar label, when cmap is set, draw the colorbar, it define specified separaly because it
                       not belong **kwargs in ax.scatter
-            **kwargs: keyword args, it could contain "marker", "c=colors", "s=sizes" [c&s can plot 3D scatter,
-                      color & size represent z axis, when colors is set as z axis, should use the "cmap" params and
-                      plot the color bar], "color", "s" [color & s can only set by on value], "alpha",
-                       "cmap"(such as "viridis"), "label" [legend label]
+            **kwargs: keyword args, it could contain
+                       "marker";
+                       "c"[=colors], "s"[=sizes] [c&s can plot 3D scatter, color & size represent z axis, when colors
+                                     is set as z axis, should use the "cmap" params and plot the color bar];
+                       "color", "s" [color & s can only set by on value], "alpha";
+                       "cmap"(such as "viridis"), "label" [legend label];
+                       "label": legend label;
 
         '''
         self.args = args
@@ -208,6 +211,8 @@ class ScatterDraw(DrawBase):
     def plot(self, ax, Fig):
         ''' Implements the DrawBase.plot function '''
         pc = ax.scatter(*self.args, **self.kwargs)
+
+        # plot colorbar: "cmap" should in self.kwargs.keys()
         if "cmap" in self.kwargs.keys():
             shrinkrate = 1  # 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
             extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
@@ -221,13 +226,13 @@ class ScatterDraw(DrawBase):
                 l.set_family('Times New Roman')
 
 
-class LineDraw(DrawBase):
-    ''' Line Draw (2D) '''
+class PlotDraw(DrawBase):
+    ''' Plot Draw (2D) '''
 
     def __init__(self, *args, **kwargs):
         ''' init function
         input:
-            *args: position args, it should contain [x]y: values in vector to draw line plot, ...
+            *args: position args, it should contain [x]y: values in vector to draw plot plot, ...
                    it could contain "fmt" - '[marker][line][color]'
             **kwargs: keyword args, it could contain "alpha", "color", "visible", "linestyle" "label"(legend label)
 
@@ -423,6 +428,6 @@ if __name__ == "__main__":
     d5 = Draw(f.ax[4].twinx(), f, gridy=False, labelx=None, labely="PDF", legend_on=True, title=None)
     d5.adddraw(k)
     # d6: line
-    d6 = Draw(f.ax[5], f, gridy=True, labelx="X", labely="Y", legend_on=True, title="LineDraw")
-    l = LineDraw(sorted(x[:, 0]), sorted(x[:, 1]), "b--", label="x0-x1")  # color="b", linestyle="--"
+    d6 = Draw(f.ax[5], f, gridy=True, labelx="X", labely="Y", legend_on=True, title="PlotDraw")
+    l = PlotDraw(sorted(x[:, 0]), sorted(x[:, 1]), "b--", label="x0-x1")  # color="b", linestyle="--"
     d6.adddraw(l)
