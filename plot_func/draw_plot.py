@@ -189,27 +189,25 @@ class TextDraw(DrawBase):
 class ScatterDraw(DrawBase):
     ''' Scatter Draw (2D) '''
 
-    def __init__(self, x, y, label=None, cb_label=None, **kwargs):
+    def __init__(self, *args, cb_label=None, **kwargs):
         ''' init function
         input:
-            x/y: values in vector to draw scatter plot
-            label: legend label
-            cb_label: the colorbar label, when cmap is set, draw the colorbar
+            *args: position args, it should contain [x]y: values in vector to draw scatter plot
+            cb_label: the colorbar label, when cmap is set, draw the colorbar, it define specified separaly because it
+                      not belong **kwargs in ax.scatter
             **kwargs: keyword args, it could contain "marker", "c=colors", "s=sizes" [c&s can plot 3D scatter,
                       color & size represent z axis, when colors is set as z axis, should use the "cmap" params and
                       plot the color bar], "color", "s" [color & s can only set by on value], "alpha",
-                       "cmap"(such as "viridis")
+                       "cmap"(such as "viridis"), "label" [legend label]
 
         '''
-        self.x = x
-        self.y = y
-        self.label = label
+        self.args = args
         self.cb_label = cb_label
         self.kwargs = kwargs
 
     def plot(self, ax, Fig):
         ''' Implements the DrawBase.plot function '''
-        pc = ax.scatter(self.x, self.y, label=self.label, **self.kwargs)
+        pc = ax.scatter(*self.args, **self.kwargs)
         if "cmap" in self.kwargs.keys():
             shrinkrate = 1  # 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
             extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
@@ -226,26 +224,20 @@ class ScatterDraw(DrawBase):
 class LineDraw(DrawBase):
     ''' Line Draw (2D) '''
 
-    def __init__(self, x, y, label=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         ''' init function
         input:
-            x/y: values in vector to draw line plot
-            label: legend label
-            *args: position args, it could contain "fmt" - '[marker][line][color]', when use this,
-                   LineDraw(sorted(x[:, 0]), sorted(x[:, 1]), label="x0-x1", "b--")  ——>
-                   LineDraw(sorted(x[:, 0]), sorted(x[:, 1]), "x0-x1", "b--")
-            **kwargs: keyword args, it could contain "alpha", "color", "visible", "linestyle"
+            *args: position args, it should contain [x]y: values in vector to draw line plot, ...
+                   it could contain "fmt" - '[marker][line][color]'
+            **kwargs: keyword args, it could contain "alpha", "color", "visible", "linestyle" "label"(legend label)
 
         '''
-        self.x = x
-        self.y = y
-        self.label = label
         self.args = args
         self.kwargs = kwargs
 
     def plot(self, ax, Fig):
         ''' Implements the DrawBase.plot function '''
-        ax.plot(self.x, self.y, label=self.label, *self.args, **self.kwargs)
+        ax.plot(*self.args, **self.kwargs)
 
 
 class HistDraw(DrawBase):
@@ -325,8 +317,8 @@ class Draw:
             labelx/y: str, default=None, plot the label of x and y
             title: title of this ax
             legend_on: bool, whether open the legend, it could also be a dict to set legend, such as legend_on={"loc":
-                      "upper right", "framealpha": 0.8}
-            **kwargs: keyword args of this ax, it could contain "xlim"[=(0,10)] "ylim" " "xlabel" ...
+                      "upper right", "framealpha": 0.8}, when legend_on=True(it set as default)
+            **kwargs: keyword args of this ax, it could contain "xlim"[=(0,10)] "ylim" ...
         '''
         self.ax = ax
         self.Fig = Fig
@@ -413,28 +405,24 @@ if __name__ == "__main__":
     # d1: scatter
     d1 = Draw(f.ax[1], f, gridy=True, labelx="X", labely="Y", legend_on={"loc": "upper right", "framealpha": 0.8},
               title="ScatterDraw")
-    s = ScatterDraw(x[:, 0], x[:, 1], label="x0-x1-x2", marker="+", c=x[:, 2], s=x[:, 2] * 10, cmap="viridis",
-                    alpha=0.5, cb_label="cb")
+    s = ScatterDraw(x[:, 0], x[:, 1], cb_label="cb", label="x0-x1-x2", marker="+", c=x[:, 2], s=x[:, 2] * 10,
+                    cmap="viridis", alpha=0.5)
     d1.adddraw(s)
     # d2: hist
-    d2 = Draw(f.ax[2], f, gridy=True, labelx="X", labely="number", legend_on={"loc": "upper right", "framealpha": 0.8},
-              title="HistDraw")
+    d2 = Draw(f.ax[2], f, gridy=True, labelx="X", labely="number", legend_on=True, title="HistDraw")  # legend_on=True,
+    # set as default
     h = HistDraw(x[:, 0], label="hist", bins=100, alpha=0.5)
     d2.adddraw(h)
     # d3: kde
-    d3 = Draw(f.ax[3], f, gridy=True, labelx="X", labely="PDF", legend_on={"loc": "upper right", "framealpha": 0.8},
-              title="KdeDraw")
+    d3 = Draw(f.ax[3], f, gridy=True, labelx="X", labely="PDF", legend_on=True, title="KdeDraw")
     k = KdeDraw(x[:, 0], inter_num=500, label="kde", color="b", sample_on=True)
     d3.adddraw(k)
     # d4/5: hist and kde
-    d4 = Draw(f.ax[4], f, gridy=True, labelx="X", labely="number", legend_on={"loc": "upper right", "framealpha": 0.8},
-              title="Hist & Kde")
+    d4 = Draw(f.ax[4], f, gridy=True, labelx="X", labely="number", legend_on=True, title="Hist & Kde")
     d4.adddraw(h)
-    d5 = Draw(f.ax[4].twinx(), f, gridy=False, labelx=None, labely="PDF", legend_on={"loc": "upper left",
-                                                                                    "framealpha": 0.8}, title=None)
+    d5 = Draw(f.ax[4].twinx(), f, gridy=False, labelx=None, labely="PDF", legend_on=True, title=None)
     d5.adddraw(k)
     # d6: line
-    d6 = Draw(f.ax[5], f, gridy=True, labelx="X", labely="Y", legend_on={"loc": "upper right", "framealpha": 0.8},
-              title="LineDraw")
-    l = LineDraw(sorted(x[:, 0]), sorted(x[:, 1]), "x0-x1", "b--")  # color="b", linestyle="--"
+    d6 = Draw(f.ax[5], f, gridy=True, labelx="X", labely="Y", legend_on=True, title="LineDraw")
+    l = LineDraw(sorted(x[:, 0]), sorted(x[:, 1]), "b--", label="x0-x1")  # color="b", linestyle="--"
     d6.adddraw(l)
