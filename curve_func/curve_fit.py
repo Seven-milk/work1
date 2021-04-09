@@ -60,6 +60,12 @@ class PolyCurve(CurveBase):
         '''
         return np.polyval(self.pnm, x)
 
+    def getLinespace(self, num=1000):
+        ''' '''
+        x_linespace = np.linspace(min(self.x), max(self.x), num)
+        y_linespace = self.getValue(x_linespace)
+        return x_linespace, y_linespace
+
     def plot(self, num=1000):
         ''' plot fit curve
         input:
@@ -68,10 +74,9 @@ class PolyCurve(CurveBase):
         fig = draw_plot.Figure()
         draw = draw_plot.Draw(fig.ax, fig, gridx=True, gridy=True, title="Curve Fitting", labelx="X", labely="Y",
                               legend_on=True)
-        plot_original = draw_plot.PlotDraw(self.x, self.y, "b.", alpha=0.3, label="original data")
-        x_linespace = np.linspace(min(self.x), max(self.x), num)
-        y_fit = self.getValue(x_linespace)
-        plot_fitcurve = draw_plot.PlotDraw(x_linespace, y_fit, "r", label=f"Fitted Curve")
+        plot_original = draw_plot.PlotDraw(self.x, self.y, "b.", alpha=0.3, label="Original data")
+        x_linespace, y_linespace = self.getLinespace(num=num)
+        plot_fitcurve = draw_plot.PlotDraw(x_linespace, y_linespace, "r", label=f"Least square fit")
         draw.adddraw(plot_original)
         draw.adddraw(plot_fitcurve)
         return fig, draw
