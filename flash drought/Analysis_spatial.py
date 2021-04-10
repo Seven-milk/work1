@@ -87,6 +87,9 @@ def plot_sm():
     # map_sm.addmap(Helong_shpMap)
     map_sm.addmap(boundry_shpMap)
 
+    # save
+    # fig_sm.save("1.Spatial Distribution of Time-avg Soil Moisture")
+
 
 # spatial plot of Drought params
 def plot_drought_params():
@@ -107,6 +110,9 @@ def plot_drought_params():
                                      cmap_name='BrBG', cb_label=cb_label[i], map_boundry=map_boundry[i])
         map_.addmap(raster_)
 
+    # save
+    # fig_drought_params.save("2.spatial plot of Drought params")
+
 
 # spatial plot of FD params
 def plot_FD_params():
@@ -125,6 +131,9 @@ def plot_FD_params():
                                      cmap_name='BrBG', cb_label=cb_label[i], map_boundry=map_boundry[i])
         map_.addmap(raster_)
 
+    # save
+    # fig_FD_params.save("3.spatial plot of FD params")
+
 
 # boxplot of Helong region / noHelong region / all region
 x_label = ["total", "Helong", "noHelong"]
@@ -140,10 +149,13 @@ def boxplot_sm():
                                labels=x_label, notch=True, sym='r+', patch_artist=True, showfliers=False)
     draw_sm.adddraw(box_sm)
 
+    # save
+    # fig_boxplot_sm.save("4.boxplot_sm")
+
 
 def boxplot_drought_params():
     # drought params
-    fig_boxplot_drought_params = draw_plot.Figure(5, wspace=0.4)
+    fig_boxplot_drought_params = draw_plot.Figure(5)
 
     title = ["Drought FOC", "Drought number", "Mean Drought Duration", "Mean Drought Severity", "Mean SM_min"]
     y_label = ["frequency", "number", "pentad", "pentad*\npercentile", "percentile"]
@@ -164,10 +176,13 @@ def boxplot_drought_params():
                                  labels=x_label, notch=True, sym='k+', patch_artist=True, showfliers=False)
         draw_.adddraw(box_)
 
+    # save
+    # fig_boxplot_drought_params.save("5.fig_boxplot_drought_params")
+
 
 def boxplot_FD_params():
     # drought params
-    fig_boxplot_FD_params = draw_plot.Figure(6, wspace=0.4)
+    fig_boxplot_FD_params = draw_plot.Figure(6)
 
     title = ["FD FOC", "FD number", "Mean FD Duration", "Mean FD Severity", "Mean RI_mean", "Mean RI_max"]
     y_label = ["frequency", "number", "pentad", "pentad*\npercentile", "percentile/pentad", "percentile/pentad"]
@@ -188,6 +203,9 @@ def boxplot_FD_params():
         box_ = draw_plot.BoxDraw([data[i], data_Helong[i], data_noHelong[i]], facecolors=facecolors,
                                  labels=x_label, notch=True, sym='k+', patch_artist=True, showfliers=False)
         draw_.adddraw(box_)
+
+    # save
+    # fig_boxplot_FD_params.save("6.fig_boxplot_FD_params")
 
 
 # scatter plot of Helong region / noHelong region / all region
@@ -219,13 +237,15 @@ def scatterplot_Drought_FD_character():
         draw_.adddraw(scatter_Helong)
         draw_.adddraw(scatter_noHelong)
 
+    # save
+    # fig_sactter_Drought.save("7.scatterplot_Drought_FD_character")
+
 
 # hist plot for sm_rz_pentad in Helong & noHelong
 def histplot_sm_rz_pentad_faltten():
     fig_hist_sm = draw_plot.Figure()
     draw_hist_sm = draw_plot.Draw(fig_hist_sm.ax, fig_hist_sm, title="Soil Moisture Hist", labelx="SM / mm",
-                                  labely="Number"
-                                  , legend_on=True)
+                                  labely="Number", legend_on=True)
     hist_ = draw_plot.HistDraw(sm_rz_pentad_flatten, label="total", alpha=0.5, color="grey", bins=100)
     hist_noHelong = draw_plot.HistDraw(sm_rz_noHelong_pentad_flatten, label="noHelong", alpha=0.5, color="blue",
                                        bins=100)
@@ -233,6 +253,9 @@ def histplot_sm_rz_pentad_faltten():
     draw_hist_sm.adddraw(hist_)
     draw_hist_sm.adddraw(hist_noHelong)
     draw_hist_sm.adddraw(hist_Helong)
+
+    # save
+    # fig_hist_sm.save("8.histplot_sm_rz_pentad_faltten")
 
 
 if __name__ == "__main__":
