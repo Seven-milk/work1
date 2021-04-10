@@ -247,12 +247,13 @@ class TextMap(MapBase):
 class Figure:
     ''' figure set '''
 
-    def __init__(self, addnumber: int = 1, dpi: int = 200, proj: crs.Projection = crs.PlateCarree(), wspace=0.2,
-                 hspace=0.1, **kwargs):
+    def __init__(self, addnumber: int = 1, dpi: int = 300, figsize=(12, 5), proj: crs.Projection = crs.PlateCarree(),
+                 wspace=None, hspace=None, **kwargs):
         ''' init function
         input:
             addnumber: the init add fig number
             dpi: figure dpi, default=300
+            figsize: figure size, default=(12, 5)
             proj: the init proj for each subplots, crs.Projection, it can be crs.: PlateCarree, AlbersEqualArea,
                   AzimuthalEquidistant, EquidistantConic, LambertConformal, LambertCylindrical, Mercator, Miller,
                   Mollweide, Orthographic, Robinson, Sinusoidal, Sinusoidal, TransverseMercator, UTM,
@@ -275,19 +276,20 @@ class Figure:
         self.figRow = 1
         self.figCol = 1
         self.dpi = dpi
+        self.figsize = figsize
         self.kwargs = kwargs
-        self.fig = plt.figure(dpi=self.dpi)
+        self.fig = plt.figure(dpi=self.dpi, figsize=self.figsize)
         self.proj = proj
         self.add = False
         self.wspace = wspace
         self.hspace = hspace
         self.addFig(addnumber, wspace=self.wspace, hspace=self.hspace, **self.kwargs)
-        self.font_label = {'family': 'Times New Roman', 'weight': 'normal',
-                           'size': 8 if isinstance(self.ax, np.ndarray) else 10}
-        self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal',
-                           'size': 8 if isinstance(self.ax, np.ndarray) else 10}
-        self.font_title = {'family': 'Times New Roman', 'weight': 'bold',
-                           'size': 10 if isinstance(self.ax, np.ndarray) else 15}
+        self.font_label = {'family': 'Arial', 'weight': 'normal',
+                           'size': 6 if isinstance(self.ax, np.ndarray) else 8}
+        self.font_ticks = {'family': 'Arial', 'weight': 'normal',
+                           'size': 6 if isinstance(self.ax, np.ndarray) else 8}
+        self.font_title = {'family': 'Arial', 'weight': 'bold',
+                           'size': 6 if isinstance(self.ax, np.ndarray) else 8}
         if self.add == True:
             self.unview_last()
 
@@ -355,7 +357,9 @@ class Figure:
         input:
             title: the title to save figure
         '''
-        plt.savefig('./fig/' + title + '.jpg', dpi=self.dpi, bbox_inches='tight')
+        if not os.path.exists(os.path.join(os.getcwd(), 'fig')):
+            os.mkdir(os.path.join(os.getcwd(), 'fig'))
+        plt.savefig('fig/' + title + '.jpg', dpi=self.dpi, bbox_inches='tight')
 
 
 class Map:

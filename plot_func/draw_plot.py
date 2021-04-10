@@ -24,11 +24,12 @@ class DrawBase(abc.ABC):
 class Figure:
     ''' figure set '''
 
-    def __init__(self, addnumber: int = 1, dpi: int = 200, wspace=0.2, hspace=0.4, **kwargs):
+    def __init__(self, addnumber: int = 1, dpi: int = 300, figsize=(12, 5), wspace=None, hspace=None, **kwargs):
         ''' init function
         input:
             addnumber: the init add fig number
             dpi: figure dpi, default=300
+            figsize: figure size, default=(12, 5)
             wspace/hspace: the space between subfig
             **kwargs: keyword args of subplots, it could contain "sharex" "sharey"
 
@@ -48,23 +49,24 @@ class Figure:
         self.figCol = 1
         self.dpi = dpi
         self.kwargs = kwargs
-        self.fig = plt.figure(dpi=self.dpi)
+        self.figsize = figsize
+        self.fig = plt.figure(dpi=self.dpi, figsize=self.figsize)
         self.add = False
         self.wspace = wspace
         self.hspace = hspace
         self.addFig(addnumber, wspace=self.wspace, hspace=self.hspace, **self.kwargs)
-        self.font_label = {'family': 'Times New Roman', 'weight': 'normal',
-                           'size': 12 if isinstance(self.ax, np.ndarray) else 15}
-        self.font_ticks = {'family': 'Times New Roman', 'weight': 'normal',
-                           'size': 12 if isinstance(self.ax, np.ndarray) else 15}
-        self.font_title = {'family': 'Times New Roman', 'weight': 'bold',
-                           'size': 15 if isinstance(self.ax, np.ndarray) else 18}
-        self.font_legend = {'family': 'Times New Roman', 'weight': 'bold',
-                            'size': 8 if isinstance(self.ax, np.ndarray) else 10}
+        self.font_label = {'family': 'Arial', 'weight': 'normal',
+                           'size': 6 if isinstance(self.ax, np.ndarray) else 8}
+        self.font_ticks = {'family': 'Arial', 'weight': 'normal',
+                           'size': 6 if isinstance(self.ax, np.ndarray) else 8}
+        self.font_title = {'family': 'Arial', 'weight': 'bold',
+                           'size': 6 if isinstance(self.ax, np.ndarray) else 8}
+        self.font_legend = {'family': 'Arial', 'weight': 'bold',
+                            'size': 4 if isinstance(self.ax, np.ndarray) else 5}
         if self.add == True:
             self.unview_last()
 
-    def addFig(self, AddNumber=1, wspace=0.2, hspace=0.4, **kwargs):
+    def addFig(self, AddNumber=1, wspace=None, hspace=None, **kwargs):
         ''' add blank figure and return ax '''
         self.figNumber += AddNumber
         if self.figNumber >= 2:
@@ -127,7 +129,9 @@ class Figure:
         input:
             title: the title to save figure
         '''
-        plt.savefig('./fig/' + title + '.jpg', dpi=self.dpi, bbox_inches='tight')
+        if not os.path.exists(os.path.join(os.getcwd(), 'fig')):
+            os.mkdir(os.path.join(os.getcwd(), 'fig'))
+        plt.savefig('fig/' + title + '.jpg', dpi=self.dpi, bbox_inches='tight')
 
 
 class BoxDraw(DrawBase):
@@ -398,7 +402,7 @@ class Draw:
 
 if __name__ == "__main__":
     # np.random.seed(15)
-    f = Figure(6, wspace=0.5)
+    f = Figure(6)
     facecolors = ["lightgrey", 'lightgreen', 'lightblue']  # pink
     x = np.random.rand(500, 3)
     # d0: box and text
