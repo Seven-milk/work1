@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import FDIP
 import os
+import mannkendall_test
 
 # general set
 root = "H"
@@ -18,6 +19,8 @@ sm_rz = np.loadtxt(data_path, dtype="float", delimiter=" ")
 date_pentad = np.loadtxt(os.path.join(home, "date_pentad.txt"), dtype="int")
 sm_rz_pentad = np.loadtxt(os.path.join(home, "sm_rz_pentad.txt"))
 sm_percentile_rz_pentad = np.loadtxt(os.path.join(home, "sm_percentile_rz_pentad.txt"), dtype="float", delimiter=" ")
+Drought_year_number = pd.read_excel(os.path.join(home, "Drought_year_number.xlsx"), index_col=0)
+FD_year_number = pd.read_excel(os.path.join(home, "FD_year_number.xlsx"), index_col=0)
 Num_point = 1166  # grid number
 year = np.arange(1948, 2015)
 
@@ -228,3 +231,43 @@ def year_number():
     # save to excel
     Drought_year_number.to_excel("Drought_year_number.xlsx")
     FD_year_number.to_excel("FD_year_number.xlsx")
+
+
+# MK test for each grid: drought/FD year number
+def mk_test_drought_FD_number():
+    mk_drought = np.zeros((Num_point,), dtype=int)
+    slope_drought = np.zeros((Num_point,), dtype=float)
+    mk_FD = np.zeros((Num_point,), dtype=int)
+    slope_FD = np.zeros((Num_point,), dtype=float)
+
+    # drought year number
+    for i in range(Num_point):
+        Drought_number_ = Drought_year_number.iloc[i, :].values
+        mk = mannkendall_test.MkTest(Drought_number_, x=year)
+        if mk.mkret["trend"] == 1:
+            mk_drought[i] = 1
+            slope_drought[i] = mk.senret["slope"]
+        elif mk.mkret["trend"] == -1:
+            mk_drought[i] = -1
+            slope_drought[i] = mk.senret["slope"]
+        else:
+            continue
+
+    # FD year number
+    for i in range(Num_point):
+        FD_number_ = FD_year_number.iloc[i, :].values
+        mk = mannkendall_test.MkTest(FD_number_, x=year)
+        if mk.mkret["trend"] == 1:
+            mk_FD[i] = 1
+            slope_FD[i] = mk.senret["slope"]
+        elif mk.mkret["trend"] == -1:
+            mk_FD[i] = -1
+            slope_FD[i] = mk.senret["slope"]
+        else:
+            continue
+
+    # save to txt
+    np.savetxt("mk_drought.txt", mk_drought)
+    np.savetxt("mk_FD.txt", mk_FD)
+    np.savetxt("slope_drought.txt", slope_drought)
+    np.savetxt("slope_FD.txt", slope_FD)
