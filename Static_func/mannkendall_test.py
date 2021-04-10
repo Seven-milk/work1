@@ -126,7 +126,7 @@ class MkTest:
 
         return senret
 
-    def showRet(self, figure_on=True, num=1000):
+    def showRet(self, figure_on=True, num=1000, labelx="X", labely="Y", title="MannKendall Test"):
         ''' show the Result '''
         # print results
         print("\nMannKendall Test\n")
@@ -145,11 +145,7 @@ class MkTest:
 
             fit_line = curve_fit.PolyCurve(x, self.vals, deg=1)
             fig, draw = fit_line.plot(num=num)
-            draw.set(title="MannKendall Test", labelx="X", labely="Y", gridy=True, gridx=True)
-            fit_line.pnm[1] = self.senret["slope"]
-            x_linespace, y_linespace = fit_line.getLinespace(num=num)
-            Senslope_plot = draw_plot.PlotDraw(x_linespace, y_linespace, "b--", label="Sen's Slope")
-            draw.adddraw(Senslope_plot)
+            draw.set(title=title, labelx=labelx, labely=labely, gridy=True, gridx=True)
             return fig, draw
 
 
