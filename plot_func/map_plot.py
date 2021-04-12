@@ -182,6 +182,7 @@ class RasterMap(MeshgridArray, MapBase):
         else:
             pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
                                vmin=self.map_boundry[0], vmax=self.map_boundry[1], norm=mcolors.Normalize(clip=True))
+
         shrinkrate = 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
         extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
         cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', shrink=shrinkrate, pad=0.01, extend=extend)
@@ -191,7 +192,83 @@ class RasterMap(MeshgridArray, MapBase):
         else:
             cb.set_label(self.cb_label, fontdict=Fig.font_label)
         for l in cb.ax.yaxis.get_ticklabels():
-            l.set_family('Times New Roman')
+            l.set_family('Arial')
+
+
+class RasterMap_cb2(RasterMap):
+    ''' raster map with cb2 '''
+
+    def plot(self, ax, Fig):
+        ''' Implements the MapBase.plot function '''
+        # cb
+        colorlevel = [0, 1.5, 2.5, 3.5, 4.5]
+        colordict = ['lightgreen', 'forestgreen', 'wheat', 'lightblue']
+        tick = ["Spring", "Summber", "Autumn", "Winter"]
+        cmap = mcolors.ListedColormap(colordict)
+        norm = mcolors.BoundaryNorm(colorlevel, cmap.N)
+
+        ax.set_extent(self.extent_plot)
+        cMap = cmap
+        # plot raster
+        if self.map_boundry == None:
+            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
+                               norm=norm)
+        else:
+            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
+                               vmin=self.map_boundry[0], vmax=self.map_boundry[1], norm=norm)
+
+        # shrinkrate = 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
+        extend = 'neither'
+
+        cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', pad=0.01, extend=extend)
+        cb.ax.yaxis.set_major_locator(plt.NullLocator())
+
+        cb2_ax = cb.ax.secondary_yaxis('right')
+        cb2_ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
+        cb2_ax.set_yticks([0.7, 1.7, 2.8, 3.9])
+        cb2_ax.set_yticklabels(tick)
+        cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
+
+        for l in cb2_ax.yaxis.get_ticklabels():
+            l.set_family('Arial')
+
+
+class RasterMap_cb3(RasterMap):
+    ''' raster map with cb2 '''
+
+    def plot(self, ax, Fig):
+        ''' Implements the MapBase.plot function '''
+        # cb
+        colorlevel = [-1.5, -0.5, 0.5, 1.5]
+        colordict = ['green', 'lightgrey', 'red']
+        tick = ["downtrend", "no trend", "uptrend"]
+        cmap = mcolors.ListedColormap(colordict)
+        norm = mcolors.BoundaryNorm(colorlevel, cmap.N)
+
+        ax.set_extent(self.extent_plot)
+        cMap = cmap
+        # plot raster
+        if self.map_boundry == None:
+            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
+                               norm=norm)
+        else:
+            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
+                               vmin=self.map_boundry[0], vmax=self.map_boundry[1], norm=norm)
+
+        # shrinkrate = 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
+        extend = 'neither'
+
+        cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', pad=0.01, extend=extend)
+        cb.ax.yaxis.set_major_locator(plt.NullLocator())
+
+        cb2_ax = cb.ax.secondary_yaxis('right')
+        cb2_ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
+        cb2_ax.set_yticks([-1, 0, 1])
+        cb2_ax.set_yticklabels(tick)
+        cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
+
+        for l in cb2_ax.yaxis.get_ticklabels():
+            l.set_family('Arial')
 
 
 class ShpMap(MapBase):
