@@ -5,25 +5,36 @@ import pandas as pd
 import numpy as np
 import os
 
-home = "F:/work/jianglong/jianglong_work2"
+home = "H:/work/jianglong/jianglong_work2"
 stand_path = "stander.xlsx"
-data_path = "2001-2005_max.csv"
-
+data_paths = os.listdir(os.path.join(home, "csv"))
 stand = pd.read_excel(os.path.join(home, stand_path))
-data = np.loadtxt(os.path.join(home, data_path), dtype=float)
 
-filename = []
-for year in range(2001, 2006):
-    for month in range(1, 13):
-        if month < 10:
-            filename.append(f"{year}_0{month}_max.csv")
-        else:
-            filename.append(f"{year}_{month}_max.csv")
 
-filename = [os.path.join(home, filename_) for filename_ in filename]
+def fun(start, end, suffix, dir):
+    filename = []
+    for year in range(start, end + 1):
+        for month in range(1, 13):
+            if month < 10:
+                filename.append(f"{year}_0{month}{suffix}")
+            else:
+                filename.append(f"{year}_{month}{suffix}")
 
-for i in range(data.shape[1]):
-    data_ = data[:, i] * 100
-    stand["Value"] = data_
-    stand["Value"] = stand["Value"].astype(int)
-    stand.to_csv(filename[i], index=False)
+    filename = [os.path.join(dir, filename_) for filename_ in filename]
+
+    for i in range(data.shape[1]):
+        data_ = data[:, i] * 100
+        stand["Value"] = data_
+        stand["Value"] = stand["Value"].astype(int)
+        stand.to_csv(filename[i], index=False)
+
+
+for data_path in data_paths:
+    data = np.loadtxt(os.path.join(home, "csv/" + data_path), dtype=float, delimiter=",")
+    data = data.T
+    start, end = int(data_path[:4]), int(data_path[5:9])
+    suffix = data_path[9:]
+    dir = os.path.join(home, data_path[:-4])
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+    fun(start, end, suffix, dir)
