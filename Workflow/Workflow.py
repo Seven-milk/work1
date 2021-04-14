@@ -82,6 +82,13 @@ class WorkFlow:
         del self._works[key]
         return None
 
+    def __setitem__(self, key, value: WorkBase):
+        if isinstance(value, WorkBase):
+            self._works[key] = value
+        else:
+            raise TypeError("Input should be a instance of WorkBase")
+        return None
+
     def runflow(self):
         ''' run WorkFlow: run works in this flow '''
         print("Start running WorkFlow\n")
