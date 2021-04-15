@@ -134,6 +134,32 @@ class Figure:
         plt.savefig('fig/' + title + '.jpg', dpi=self.dpi, bbox_inches='tight')
 
 
+class FigureVert(Figure):
+    ''' figure set in vertical direction '''
+
+    def addFig(self, AddNumber=1, wspace=None, hspace=None, **kwargs):
+        ''' add blank figure and return ax, overwrite Figure.addFig() '''
+        self.figNumber += AddNumber
+        self.fig.clf()
+        self.ax = self.fig.subplots(nrows=self.figNumber, ncols=1, **kwargs)
+        self.fig.subplots_adjust(wspace=wspace, hspace=hspace)
+        if isinstance(self.ax, np.ndarray):
+            self.ax = self.ax.flatten()
+
+
+class FigureHorizon(Figure):
+    ''' figure set in Horizon direction, overwrite Figure.addFig() '''
+
+    def addFig(self, AddNumber=1, wspace=None, hspace=None, **kwargs):
+        ''' add blank figure and return ax '''
+        self.figNumber += AddNumber
+        self.fig.clf()
+        self.ax = self.fig.subplots(nrows=1, ncols=self.figNumber, **kwargs)
+        self.fig.subplots_adjust(wspace=wspace, hspace=hspace)
+        if isinstance(self.ax, np.ndarray):
+            self.ax = self.ax.flatten()
+
+
 class BoxDraw(DrawBase):
     ''' box plot draw '''
 
