@@ -82,14 +82,32 @@ class BGVD(VDBase):
             slice_ = slice(sorted_bp[i], sorted_bp[i + 1])
             sub_mean[slice_] = np.mean(self._data[slice_])
 
-        # plot data and mean lines
-        fig = draw_plot.FigureVert(len(self.passRet) + 1)
-        draw_data = draw_plot.Draw(fig.ax[0], fig, gridy=True, title="BG Variation detect", labelx="t", labely=labely)
-        line_data = draw_plot.PlotDraw(self._data, alpha=0.6, color="gray")
-        line_mean = draw_plot.PlotDraw(sub_mean, color="k")
+        # plot
+        n = len(self.passRet) if len(self.passRet) <= 6 else 6  # define max fig number = 6
+        if n > 0:
+            # plot data and mean lines
+            fig = draw_plot.FigureVert(n + 1)
+            draw_data = draw_plot.Draw(fig.ax[0], fig, gridy=True, title="BG Variation detect", labelx="t",
+                                       labely=labely)
+            line_data = draw_plot.PlotDraw(self._data, alpha=0.6, color="gray", linewidth=2)
+            line_mean = draw_plot.PlotDraw(sub_mean, color="k", linewidth=0.6)
 
-        draw_data.adddraw(line_data)
-        draw_data.adddraw(line_mean)
+            draw_data.adddraw(line_data)
+            draw_data.adddraw(line_mean)
+
+            # plot T series for each split which can be split, namely self.passRet
+
+        # len(passRet)==0: namely, self._data could not be split, there is no breakpoint
+        else:
+            # plot data and mean lines
+            fig = draw_plot.FigureVert(n + 1)
+            draw_data = draw_plot.Draw(fig.ax, fig, gridy=True, title="BG Variation detect", labelx="t",
+                                       labely=labely)
+            line_data = draw_plot.PlotDraw(self._data, alpha=0.6, color="gray", linewidth=2)
+            line_mean = draw_plot.PlotDraw(sub_mean, color="k", linewidth=0.6)
+
+            draw_data.adddraw(line_data)
+            draw_data.adddraw(line_mean)
 
         # set ticks while time_ticks!=None
 
@@ -179,11 +197,12 @@ class BGVD(VDBase):
 
 
 if __name__ == '__main__':
-    # x = sorted(np.random.rand(100, ))
-    x = np.random.rand(100, )
+    x = sorted(np.random.rand(1000, ))
+    # x = np.random.rand(1000, )
     # x = np.arange(100)
-    # x = np.hstack((np.arange(100), np.arange(200, 100, -1)))
+    # x = np.hstack((np.arange(1000), np.arange(2000, 1000, -1)))
     bgvd = BGVD(x)
     ret = bgvd.passRet
     bp = bgvd.bp
     bgvd.plot()
+    # TODO 剔除不合理断点
