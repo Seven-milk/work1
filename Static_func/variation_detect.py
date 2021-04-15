@@ -49,8 +49,8 @@ class BGVD(VDBase):
         self.confidence = confidence
         self.l = l
         self.allRet = self.detect()
-        self.passRet = [ret for ret in self.ret if ret["pass_"] == True]
-        self.bp = [ret["indexMax"] for ret in self.ret if ret["pass_"] == True]
+        self.passRet = [ret for ret in self.allRet if ret["pass_"] == True]
+        self.bp = [ret["indexMax"] for ret in self.allRet if ret["pass_"] == True]
 
     def detect(self):
         ''' Implement VDBase.detect
@@ -71,14 +71,27 @@ class BGVD(VDBase):
 
         return ret
 
-    def plot(self):
+    def plot(self, time_ticks=None, labely="data"):
         ''' Implement VDBase.plot '''
+        # define sub mean series
+        sub_mean = np.zeros((len(self._data),))
+        sorted_bp = sorted(self.bp)
+        sorted_bp.insert(0, int(0))
+        sorted_bp.append(int(-1))
+        for i in range(len(sorted_bp) - 1):
+            slice_ = slice(sorted_bp[i], sorted_bp[i + 1])
+            sub_mean[slice_] = np.mean(self._data[slice_])
+
+        # plot data and mean lines
         fig = draw_plot.FigureVert(len(self.passRet) + 1)
+        draw_data = draw_plot.Draw(fig.ax[0], fig, gridy=True, title="BG Variation detect", labelx="t", labely=labely)
+        line_data = draw_plot.PlotDraw(self._data, alpha=0.6, color="gray")
+        line_mean = draw_plot.PlotDraw(sub_mean, color="k")
 
+        draw_data.adddraw(line_data)
+        draw_data.adddraw(line_mean)
 
-
-
-
+        # set ticks while time_ticks!=None
 
     @staticmethod
     def split(data, confidence: float = 0.95, l=25):
@@ -166,9 +179,11 @@ class BGVD(VDBase):
 
 
 if __name__ == '__main__':
+    # x = sorted(np.random.rand(100, ))
     x = np.random.rand(100, )
     # x = np.arange(100)
     # x = np.hstack((np.arange(100), np.arange(200, 100, -1)))
     bgvd = BGVD(x)
-    ret = bgvd.ret
+    ret = bgvd.passRet
     bp = bgvd.bp
+    bgvd.plot()
