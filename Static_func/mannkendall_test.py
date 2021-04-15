@@ -17,6 +17,7 @@ class MkTest:
             vals: variable, 1D np.ndarray
             confidence: static confidence level
             **kwargs: keyword args, it could contain "x" [for plot]
+
         output:
             self.mkret = {"z": z, "p": p, "trend": tr_type, "se": se}, z: z statistic value, p: p value, trend: trend
                         under confidence test[0: No significant; 1: Significant upward trend; -1: Significant downward
