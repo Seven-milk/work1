@@ -19,11 +19,12 @@ class CurveBase(abc.ABC):
 class PolyCurve(CurveBase):
     ''' Poly Curve fit based on np '''
 
-    def __init__(self, x, y, *args, **kwargs):
+    def __init__(self, x, y, show=True, *args, **kwargs):
         ''' init function
         input:
             x: x value for fit, 1D array (M, )
             y: y value for fit curve, 1D/2D array (M, ) or (M, K)[fit multiple curves which share x]
+            show: bool, whether excute show()
             *args: position args
             **kwargs: keyword args, it could contain:
                     "deg": degree of the fitting polynomial
@@ -41,7 +42,8 @@ class PolyCurve(CurveBase):
         self.args = args
         self.kwargs = kwargs
         self.fit()
-        self.show()
+        if show == True:
+            self.show()
 
     def fit(self):
         ''' Implement CurveBase.fit function '''
