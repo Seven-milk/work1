@@ -10,7 +10,6 @@ import math
 from scipy.special import betainc
 from matplotlib import pyplot as plt
 import curve_fit
-from scipy import signal
 
 
 class VDBase(abc.ABC):
@@ -76,36 +75,39 @@ class BGVD(VDBase):
 
         return ret
 
-    def plot(self, time_ticks=None, labely="Data", **kwargs):
+    def plot(self, time_ticks=None, labely="Data", maxplotnumber=6, **kwargs):
         ''' Implement VDBase.plot
         input:
             time_ticks: dict {"ticks": ticks, "interval": interval}, the ticks of time, namely axis x
                         note: for ticks: len=len(data), for interval: dtype=int
             labely: the labely of the first ax
+            maxplotnumber: max number of plot breakpoint(ax)
             **kwargs: keyword args of subplots, keyword args in Figure init function
         '''
-        # define sub mean series
-        sub_mean = np.zeros((len(self._data),))
-        sorted_bp = sorted(self.bp)
-        sorted_bp.insert(0, int(0))
-        sorted_bp.append(len(self._data) + 1)
-        for i in range(len(sorted_bp) - 1):
-            slice_ = slice(sorted_bp[i], sorted_bp[i + 1], 1)
-            sub_mean[slice_] = np.mean(self._data[slice_])
 
         # define time
         time = np.arange(len(self._data))
 
+        # define sub mean lines
+        sorted_bp = sorted(self.bp)
+        sorted_bp.insert(0, int(0))
+        sorted_bp.append(len(self._data))
+        sub_mean = np.zeros((len(self._data),))
+        sub_time = np.arange(len(self._data))
+
+        for i in range(len(sorted_bp) - 1):
+            slice_ = slice(sorted_bp[i], sorted_bp[i + 1], 1)
+            sub_mean[slice_] = np.mean(self._data[slice_])
+
         # plot
-        n = len(self.passRet) if len(self.passRet) <= 6 else 6  # define max fig number = 6
+        n = len(self.passRet) if len(self.passRet) <= maxplotnumber else maxplotnumber  # define max fig number = 6
         if n > 0:
-            # plot data and mean lines
+            # plot data
             fig = draw_plot.FigureVert(n + 1, sharex=True, **kwargs)
             draw_data = draw_plot.Draw(fig.ax[0], fig, gridy=True, title="BG Variation Detect", labely=labely,
                                        xlim=[0, time[-1]])
             line_data = draw_plot.PlotDraw(time, self._data, alpha=0.6, color="gray", linewidth=2)
-            line_mean = draw_plot.PlotDraw(time, sub_mean, color="k", linewidth=0.6)
-
+            line_mean = draw_plot.PlotDraw(sub_time, sub_mean, color="k", linewidth=0.6)
             draw_data.adddraw(line_data)
             draw_data.adddraw(line_mean)
 
@@ -150,9 +152,9 @@ class BGVD(VDBase):
             # plot data and mean lines
             fig = draw_plot.FigureVert(n + 1)
             draw_data = draw_plot.Draw(fig.ax, fig, gridy=True, title="BG Variation detect", labelx="Time",
-                                       labely=labely)
-            line_data = draw_plot.PlotDraw(self._data, alpha=0.6, color="gray", linewidth=2)
-            line_mean = draw_plot.PlotDraw(sub_mean, color="k", linewidth=0.6)
+                                       labely=labely, xlim=[0, time[-1]])
+            line_data = draw_plot.PlotDraw(time, self._data, alpha=0.6, color="gray", linewidth=2)
+            line_mean = draw_plot.PlotDraw(sub_time, sub_mean, color="k", linewidth=0.6)
 
             draw_data.adddraw(line_data)
             draw_data.adddraw(line_mean)
@@ -185,8 +187,8 @@ class BGVD(VDBase):
 
         for i in range(1, len(data) - 1):
             ''' loop to cal T[i], which does not contain the first/last point '''
-            left = data[:i + 1]
-            right = data[i:]
+            left = data[:i + 1]  # left contains point at i
+            right = data[i:]  # right also contains point at i
             s1 = np.std(left, ddof=1)
             s2 = np.std(right, ddof=1)
             u1 = np.mean(left)
@@ -245,28 +247,33 @@ class BGVD(VDBase):
 
                 # if pass_ == True, namely subSplit can be split, split it to two subs which then append into subSplits
                 if pass_ == True:
-                    subSplits.append(
-                        {"absIndex": absIndex[: relativeIndexMax + 1], "subSplit": subSplit[: relativeIndexMax + 1]})
+                    subSplits.append({"absIndex": absIndex[: relativeIndexMax + 1], "subSplit": subSplit[: relativeIndexMax + 1]})
+                    # left contains point at i, right also contains point at i
                     subSplits.append({"absIndex": absIndex[relativeIndexMax:], "subSplit": subSplit[relativeIndexMax:]})
 
 
-class CCVD(VDBase):
-    ''' CCVD, the Cumulative Curve method to detect variation '''
+class SCCVD(VDBase):
+    ''' SCCVD, the Single Cumulative Curve method to detect variation, which depend on the variation between increase
+     rate of sub-series '''
 
     def __init__(self, data, filter=None):
         ''' init function
         input:
             data: 1D array, time series
             filter: filter to filtering cum data
+
+        output:
+
         '''
         self._data = data
         self.cumdata = self.cum(self._data)
         self.filter = filter
 
+        # flitering
         if self.filter != None:
-            self.cumdata = self.filtering(self.cumdata)
+            self.cumdata = self.filtering(self.cumdata, self.filter)
 
-        self.slope = self.slope(self.cumdata)
+        self.slope_ret = self.slope(self.cumdata)
         self.ret = self.detect()
 
     def detect(self):
@@ -274,19 +281,21 @@ class CCVD(VDBase):
         how to detect:
             data -> cum() [-> filtering()] -> slope() -> sort slope and its index
         '''
+        # sort slope and index based on abs
         index_ = np.arange(len(self._data))
-        slope = self.slope()
-        sortedindex = sorted(index_, key=lambda index: slope[index], reverse=True)
-        sortedslope = sorted(slope, reverse=True)
-        ret = {"index": sortedindex, "slope": sortedslope}
+        slope_ret_ = self.slope_ret
+        sortedindex = sorted(index_, key=lambda index: abs(slope_ret_[index]["slope_diff_"]), reverse=True)
+        sortedslope_ret = sorted(slope_ret_, key=lambda slope_ret: abs(slope_ret["slope_diff_"]), reverse=True)
+        ret = {"index": sortedindex, "slope_ret": sortedslope_ret}
         return ret
 
-    def plot(self, time_ticks=None, labely="Cumulative Value", **kwargs):
+    def plot(self, time_ticks=None, labely="Cumulative Value", maxplotnumber=3, **kwargs):
         ''' Implement VDBase.plot
         input:
             time_ticks: dict {"ticks": ticks, "interval": interval}, the ticks of time, namely axis x
                         note: for ticks: len=len(data), for interval: dtype=int
             labely: the labely
+            maxplotnumber: max number of plot breakpoint
             **kwargs: keyword args of subplots, keyword args in Figure init function
         '''
         # define time
@@ -295,24 +304,70 @@ class CCVD(VDBase):
         # plot
         fig = draw_plot.Figure(**kwargs)
         draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="Cumulative Curve Variation Detect", labely=labely,
-                              xlim=[0, time[-1]])
+                              labelx="Time", xlim=[0, time[-1]], ylim=[0, self.cumdata[-1] * 1.1], legend_on=True)
 
         # original and filter line
         if self.filter != None:
             # plot original data
             line_original_cumdata = draw_plot.PlotDraw(time, self.cum(self._data), alpha=0.6, color="gray", linewidth=2,
-                                                    label="Cum Data")
+                                                       label="Cum Data")
             # plot filter
-            line_filter_cumdata = draw_plot.PlotDraw(time, self.cumdata, alpha=0.6, color="gray", linewidth=2,
-                                                    label="Filter Cum Data")
+            line_filter_cumdata = draw_plot.PlotDraw(time, self.cumdata, color="k", linewidth=0.6,
+                                                     label="Filter Cum Data")
+            draw.adddraw(line_original_cumdata)
+            draw.adddraw(line_filter_cumdata)
 
         else:
             # plot original data
-            line_original_cumdata = draw_plot.PlotDraw(time, self.cumdata, color="k", linewidth=1, label="Cum Data")
+            line_original_cumdata = draw_plot.PlotDraw(time, self.cumdata, color="k", linewidth=0.6, label="Cum Data")
+            draw.adddraw(line_original_cumdata)
 
-        #
+        # plot breakpoint
+        n = maxplotnumber
+        for i in range(n):
+            # extract variable
+            index_bp = self.ret["index"][i]
+            slope_diff = self.ret["slope_ret"][i]["slope_diff_"]
+            cum_bp = self.cumdata[index_bp]
+            pcf_left = self.ret["slope_ret"][i]["pcf_left"]
+            pcf_right = self.ret["slope_ret"][i]["pcf_right"]
 
+            # position
+            if time[-1] * 0.1 <= index_bp <= time[-1] * 0.9:
+                x_bp = index_bp
+            elif index_bp > time[-1] * 0.9:
+                x_bp = index_bp - time[-1] * 0.1
+            else:
+                x_bp = index_bp + time[-1] * 0.1
 
+            y_bp = cum_bp * 0.6
+
+            # alpha
+            alpha_ = 1 - i / n
+
+            # plot bp
+            Text_bp = draw_plot.TextDraw(f"Slope_diff: " + '%.2f' % slope_diff + f"\nin {index_bp}", [x_bp, y_bp],
+                                         color="r")
+            line_bp = draw_plot.PlotDraw([index_bp, index_bp], [0, cum_bp], alpha=alpha_, linestyle="--", color="r",
+                                         linewidth=0.6)
+            draw.adddraw(Text_bp)
+            draw.adddraw(line_bp)
+
+            # plot left/right line
+            time_left = time[:index_bp + 1]  # left contains point at i
+            time_right = time[index_bp:]  # right also contains point at i
+            cumfit_left = np.polyval(np.poly1d(pcf_left), time_left)
+            cumfit_right = np.polyval(np.poly1d(pcf_right), time_right)
+
+            line_left = draw_plot.PlotDraw(time_left, cumfit_left, alpha=alpha_, color="royalblue", linewidth=0.3,
+                                           label="left fit line" if i == 0 else None, linestyle="--")
+            line_right = draw_plot.PlotDraw(time_right, cumfit_right, alpha=alpha_, color="darkblue", linewidth=0.3,
+                                            label="right fit line" if i == 0 else None, linestyle="--")
+
+            draw.adddraw(line_left)
+            draw.adddraw(line_right)
+
+        # set ticks while time_ticks!=None
         if time_ticks != None:
             plt.xticks(time[::time_ticks["interval"]], time_ticks["ticks"][::time_ticks["interval"]])
 
@@ -330,29 +385,54 @@ class CCVD(VDBase):
     def slope(data):
         ''' Calculate slope series based on data
             note: it isn't a instantaneous slope, it is also a split process
+
+            output:
+                slope_ret: list, which contain [{"slope_diff_": slope_diff_, "pcf_left": pcf_left, "pcf_right":
+                                                pcf_right}...] for each point except the first/last point
+                           slope_diff: slope_left - slope_right, >0: downtrend, <0: uptrend, abs(slope_diff) determine
+                                       rank of breakpoint
         '''
 
-        slope = np.zeros_like(data, dtype=float)
+        # define slope_ret
+        slope_ret = []
+
+        # first point
+        slope_ret.append({"slope_diff_": 0, "pcf_left": None, "pcf_right": None})
 
         for i in range(1, len(data) - 1):
             ''' loop to cal slope[i], which does not contain the first/last point '''
-            left = data[:i + 1]
-            right = data[i:]
-            polycurve_left = curve_fit.PolyCurve(np.arange(i+1), left, deg=1)
-            polycurve_right = curve_fit.PolyCurve(np.arange(i, len(data)+1), right, deg=1)
+            left = data[:i + 1]  # left contains point at i
+            right = data[i:]  # right also contains point at i
+            pcf_left = curve_fit.PolyCurve(np.arange(i + 1), left, show=False, deg=1).pcf
+            pcf_right = curve_fit.PolyCurve(np.arange(i, len(data)), right, show=False, deg=1).pcf
+            slope_diff_ = pcf_left[0] - pcf_right[0]
+            slope_ret.append({"slope_diff_": slope_diff_, "pcf_left": pcf_left, "pcf_right": pcf_right})
+
+        # last point
+        slope_ret.append({"slope_diff_": 0, "pcf_left": None, "pcf_right": None})
+
+        return slope_ret
 
 
-
-        return
-
+# TODO DCCVD双累积曲线，去除不正常的断点（合并剔除），filter实现
 
 if __name__ == '__main__':
-    x = np.hstack((np.random.rand(100, ) * 50, np.random.rand(100, ) * 100))
+    # set sample x
+    x = np.hstack((np.random.rand(100, ) * 20, np.random.rand(100, ) * 100))
     # x = np.random.rand(1000, )
     # x = sorted(np.random.rand(1000, ))
     # x = np.arange(100)
     # x = np.hstack((np.arange(1000), np.arange(2000, 1000, -1)))
+
+    # bgvd
     bgvd = BGVD(x)
-    ret = bgvd.passRet
-    bp = bgvd.bp
-    bgvd.plot()  # time_ticks={"ticks": np.arange(10, 1010), "interval": 100}
+    ret_bgvd = bgvd.passRet
+    bp_bgvd = bgvd.bp
+    # bgvd.plot()  # time_ticks={"ticks": np.arange(10, 1010), "interval": 100}
+
+    # sccvd
+    # x = np.hstack((np.arange(100), np.arange(100, 300, 2)))
+    # sccvd = SCCVD(x)
+    # ret_sccvd = sccvd.ret
+    # slope_ret_sccvd = sccvd.slope_ret
+    # sccvd.plot(maxplotnumber=2)
