@@ -138,7 +138,7 @@ class FigureVert(Figure):
     ''' figure set in vertical direction '''
 
     def addFig(self, AddNumber=1, wspace=None, hspace=None, **kwargs):
-        ''' add blank figure and return ax, overwrite Figure.addFig() '''
+        ''' add blank figure and return ax, override Figure.addFig() '''
         self.figNumber += AddNumber
         self.fig.clf()
         self.ax = self.fig.subplots(nrows=self.figNumber, ncols=1, **kwargs)
@@ -148,7 +148,7 @@ class FigureVert(Figure):
 
 
 class FigureHorizon(Figure):
-    ''' figure set in Horizon direction, overwrite Figure.addFig() '''
+    ''' figure set in Horizon direction, override Figure.addFig() '''
 
     def addFig(self, AddNumber=1, wspace=None, hspace=None, **kwargs):
         ''' add blank figure and return ax '''
