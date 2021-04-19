@@ -3,7 +3,7 @@
 # email: Z786909151@163.com
 # define basical math function
 import numpy as np
-
+import draw_plot
 
 def slope(data):
     ''' cal slope of data, unit = data unit /interval unit
@@ -28,7 +28,7 @@ def sortWithIndex(data, p=False, **kwargs):
 
     return sortedindex, sorteddata
 
-def intersection(line1, line2):
+def intersection(line1, line2, plot_=False):
     ''' calculate intersection point from two lines
     x21, y21             x12, y12
 
@@ -46,6 +46,7 @@ def intersection(line1, line2):
     input:
         line1/2: list, [x11, y11, x12, y12], [x21, y21, x22, y22], that two lines have four points will be calculated
                 intersection
+        plot_: whether to plot
 
     output:
         r: np.array[x, y], x = r[0], y = r[1]
@@ -62,13 +63,35 @@ def intersection(line1, line2):
 
     r = np.linalg.solve(A, b)
 
+    if plot_ == True:
+        fig = draw_plot.Figure()
+        draw = draw_plot.Draw(fig.ax, fig, gridx=True, gridy=True, title="Find Intersection Point", labelx="X",
+                              labely="Y", legend_on=True)
+        line1_plot = draw_plot.PlotDraw([line1[0], line1[2]], [line1[1], line1[3]], color="k", alpha=0.5, label="line1")
+        line2_plot = draw_plot.PlotDraw([line2[0], line2[2]], [line2[1], line2[3]], color="k", alpha=0.5, label="line2")
+
+        intersection_plot = draw_plot.PlotDraw(r[0], r[1], "ro", markersize=3, label="intersection point")
+        intersection_Text = draw_plot.TextDraw(f"({r[0]}, {r[1]})", [r[0], r[1]], color="r")
+
+        line11_Text = draw_plot.TextDraw(f"({line1[0]}, {line1[1]})", [line1[0], line1[1]], color="r")
+        line12_Text = draw_plot.TextDraw(f"({line1[2]}, {line1[3]})", [line1[2], line1[3]], color="r")
+        line21_Text = draw_plot.TextDraw(f"({line2[0]}, {line2[1]})", [line2[0], line2[1]], color="r")
+        line22_Text = draw_plot.TextDraw(f"({line2[2]}, {line2[3]})", [line2[2], line2[3]], color="r")
+
+        draw.adddraw(line1_plot)
+        draw.adddraw(line2_plot)
+        draw.adddraw(intersection_plot)
+        draw.adddraw(intersection_Text)
+        draw.adddraw(line11_Text)
+        draw.adddraw(line12_Text)
+        draw.adddraw(line21_Text)
+        draw.adddraw(line22_Text)
+
     return r
-
-
 
 if __name__ == '__main__':
     data = np.arange(10)
     slope_ = slope(data)
     data = [1, 3, 2, 0]
     sortedindex, sorteddata = sortWithIndex(data, p=True)
-    r = intersection([1, 2, 2, 1], [1, 1, 2, 2])
+    r = intersection([1, 1, 2, 2], [1, 2, 2, 1], plot_=True)
