@@ -3,6 +3,7 @@
 # email: Z786909151@163.com
 # variation detect
 # note: each vd method have its own limits and application scopes, choice method based on your data characteristics
+# TODO 去除不正常的断点（合并剔除），filter实现
 
 import numpy as np
 import abc
@@ -11,6 +12,8 @@ import math
 from scipy.special import betainc
 from matplotlib import pyplot as plt
 import curve_fit
+from scipy import stats
+import math_func
 
 
 class VDBase(abc.ABC):
@@ -123,7 +126,7 @@ class BGVD(VDBase):
                 T_[absIndex] = self.passRet[i]["T"]
                 Tmax_ = T_[absIndexMax_]
 
-                # position
+                # text position
                 x_PTmax = time[-1] * 0.9
                 y_PTmax = Tmax_ * 0.8
                 if time[-1] * 0.1 <= absIndexMax_ <= time[-1] * 0.9:
@@ -357,7 +360,7 @@ class SCCVD(VDBase):
             pcf_left = self.ret["slope_ret"][i]["pcf_left"]
             pcf_right = self.ret["slope_ret"][i]["pcf_right"]
 
-            # position
+            # text position
             if time[-1] * 0.1 <= index_bp <= time[-1] * 0.9:
                 x_bp = index_bp
             elif index_bp > time[-1] * 0.9:
@@ -399,7 +402,7 @@ class SCCVD(VDBase):
         if time_ticks != None:
             plt.xticks(time[::time_ticks["interval"]], time_ticks["ticks"][::time_ticks["interval"]])
 
-    def plotcumdata(self, time_ticks=None, labelx="Time", labely="Cumulative Value", **kwargs):
+    def plotCumdata(self, time_ticks=None, labelx="Time", labely="Cumulative Value", **kwargs):
         ''' only plot cum data '''
         # define time
         time = np.arange(len(self._data))
@@ -580,7 +583,7 @@ class DCCVD(SCCVD):
             pcf_left = self.ret["slope_ret"][i]["pcf_left"]
             pcf_right = self.ret["slope_ret"][i]["pcf_right"]
 
-            # position
+            # text position
             if x[-1] * 0.1 <= index_bp <= x[-1] * 0.9:
                 x_bp = cumx_bp
             elif index_bp > x[-1] * 0.9:
@@ -618,7 +621,7 @@ class DCCVD(SCCVD):
             draw.adddraw(line_bp)
             draw.adddraw(Text_bp)
 
-    def plotcumdata(self, labelx="Time", labely="Cumulative Value", **kwargs):
+    def plotCumdata(self, labelx="Time", labely="Cumulative Value", **kwargs):
         ''' only plot cum data '''
         # define time
         x = self.cumdata1
@@ -690,16 +693,184 @@ class DCCVD(SCCVD):
         return slope_ret
 
 
-# TODO 去除不正常的断点（合并剔除），filter实现
+class MKVD(VDBase):
+    ''' MKVD, the MK method to detect variation, which depend on the variation between mean of sub-series
+    '''
+
+    def __init__(self, data, confidence: float = 0.95):
+        ''' init function
+        input:
+            data: 1D array, time series
+            confidence: statistic confidence, default=0.95
+
+        output:
+            self.interP: list, [{"index", "U"}...], All points where UF cross UB
+            self.bp: list, [{"index", "U"}...], points where UB cross UB and passed the significance test
+
+        '''
+        self._data = data
+        self.confidence = confidence
+        self.alpha = 1 - self.confidence
+        self.u0 = abs(stats.norm.ppf(self.alpha / 2))
+        self.UF, self.UB, self.interP, self.bp = self.detect()
+
+    def detect(self):
+        ''' Implement VDBase.detect
+        how to detect:
+            data -> calStatisticsU -> UF/UK -> intersectionPoint -> interp -> significant test -> bp
+        '''
+        UF = self.calStatisticsU(self._data)
+        UB = [ub * -1 for ub in self.calStatisticsU(self._data[::-1])[::-1]]
+        interP = self.intersectionPoint(UF, UB)
+        bp = [ip for ip in interP if abs(ip["U"]) < self.u0]
+        return UF, UB, interP, bp
+
+    def plot(self, time_ticks=None, labelx="Time", labely="UF/UB", **kwargs):
+        ''' Implement VDBase.plot
+        input:
+            time_ticks: dict {"ticks": ticks, "interval": interval}, the ticks of time, namely axis x
+                        note: for ticks: len=len(data), for interval: dtype=int
+            labely: the labely of the first ax
+
+            **kwargs: keyword args of subplots, keyword args in Figure init function
+        '''
+        # define time
+        time = np.arange(len(self._data))
+
+        # plot
+        expand = (max(max(self.UF), max(self.UB)) - min(min(self.UF), min(self.UB))) * 0.05
+        ylim = [min(min(self.UF), min(self.UB)) - expand, max(max(self.UF), max(self.UB)) + expand]
+        fig = draw_plot.Figure(**kwargs)
+        draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="MK Variation Detect", labely=labely,
+                              labelx=labelx, xlim=[0, time[-1]], ylim=ylim, legend_on={"loc": "upper left", "framealpha": 0.8})
+
+        # UF UB line
+        line_UF = draw_plot.PlotDraw(time, self.UF, color="k", linewidth=0.6, label="UF")
+        line_UB = draw_plot.PlotDraw(time, self.UB, color="gray", linewidth=0.6, label="UB")
+
+        # adddraw
+        draw.adddraw(line_UF)
+        draw.adddraw(line_UB)
+
+        # u0
+        line_u0plus = draw_plot.PlotDraw(time, np.full((len(time), ), fill_value=self.u0), "b-", label=f"u0: "+ "%.2f" % self.u0,
+                                         linewidth=0.6)
+        line_u0minus = draw_plot.PlotDraw(time, np.full((len(time),), fill_value=-self.u0), "b-", linewidth=0.6)
+
+        # adddraw
+        draw.adddraw(line_u0plus)
+        draw.adddraw(line_u0minus)
+
+        # bp
+        if len(self.bp) > 0:
+            for i in range(len(self.bp)):
+                # extract
+                index_bp = self.bp[i]["index"]
+                U_bp = self.bp[i]["U"]
+
+                # text position
+                if time[-1] * 0.1 <= index_bp <= time[-1] * 0.9:
+                    x_bp = index_bp
+                elif index_bp > time[-1] * 0.9:
+                    x_bp = index_bp - time[-1] * 0.1
+                else:
+                    x_bp = index_bp + time[-1] * 0.1
+
+                y_bp = U_bp
+
+                # plot bp
+                line_bp = draw_plot.PlotDraw([index_bp, index_bp], [ylim[0], U_bp], linestyle="--", color="r", linewidth=0.6)
+                Text_bp = draw_plot.TextDraw("%.1f" % index_bp, [x_bp, y_bp], color="r")
+
+                # adddraw
+                draw.adddraw(line_bp)
+                draw.adddraw(Text_bp)
+
+        # set ticks while time_ticks!=None
+        if time_ticks != None:
+            plt.xticks(time[::time_ticks["interval"]], time_ticks["ticks"][::time_ticks["interval"]])
+
+    def plotdata(self, labelx="Time", labely="Data", **kwargs):
+        ''' only plot cum data '''
+        # define time
+        time = np.arange(len(self._data))
+        y = self._data
+
+        # plot
+        fig = draw_plot.Figure(**kwargs)
+        draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="Data time series", labely=labely,
+                              labelx=labelx, xlim=[0, time[-1]], legend_on=False)
+        line_original_cumdata = draw_plot.ScatterDraw(time, y, marker='o', c="gray", edgecolor="gray", s=2)
+        draw.adddraw(line_original_cumdata)
+
+
+    @staticmethod
+    def calStatisticsU(vals):
+        ''' calculate statistics U
+        input:
+            vals: data series to do MKVD, there is used to calculate U series
+
+        output:
+            U: list, U statistics
+        '''
+
+        valslen = len(vals)
+        s = []
+
+        # cal s
+        for k in range(1, valslen + 1):
+            sumval = 0
+
+            for i in range(k):
+                for j in range(i):
+                    if vals[i] > vals[j]:
+                        sumval += 1
+
+            s.append(sumval)
+
+        # cal E(s) and Sde(s) (Standard deviation)
+        E = [k * (k + 1) / 4 for k in range(1, valslen + 1)]
+        Sde = [(k * (k - 1) * (2 * k + 5) / 72) ** 0.5 for k in range(1, valslen + 1)]
+
+        Sde[0] = 1  # init point 0 to avoid Error in division
+
+        # cal U
+        U = [(s[k] - E[k]) / Sde[k] for k in range(valslen)]  # del abs()
+        U[0] = 0  # init point 0
+
+        return U
+
+    @staticmethod
+    def intersectionPoint(UF, UB):
+        ''' Find intersection Point between UF and UB series
+        input:
+            UF/UB: list, UF & UB series
+
+        output:
+            interP: list, [{"index", "U"}...] contains index and U of intersection Points
+
+        '''
+        diff = [UF[i] - UB[i] for i in range(len(UF))]
+        interP = []
+        for i in range(len(diff) - 1):
+            if diff[i] * diff[i + 1] == 0:
+                interP.append({"index": i, "U": UF[i]})
+            elif diff[i] * diff[i + 1] < 0:
+                r = math_func.intersection([i, UF[i], i + 1, UF[i + 1]], [i, UB[i], i + 1, UB[i + 1]])
+                interP.append({"index": r[0], "U": r[1]})
+
+        return interP
+
 
 if __name__ == '__main__':
     # set sample x
-    x = np.hstack((np.random.rand(100, ) * 20, np.random.rand(100, ) * 100))
-    y = np.hstack((np.random.rand(100, ) * 20, np.random.rand(100, ) * 300))
+    x = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 900))
+    # y = np.hstack((np.random.rand(100, ) * 20, np.random.rand(100, ) * 300))
     # x = np.random.rand(1000, )
     # x = sorted(np.random.rand(1000, ))
     # x = np.arange(100)
-    # x = np.hstack((np.arange(1000), np.arange(2000, 1000, -1)))
+    # x = np.hstack((np.arange(100), np.arange(200, 100, -1)))
+    # x = np.hstack((np.random.rand(100, ) * 10, np.arange(200, 100, -1)))
 
     # bgvd
     # bgvd = BGVD(x)
@@ -715,9 +886,16 @@ if __name__ == '__main__':
     # sccvd.plot(5)  # time_ticks={"ticks": np.arange(190), "interval": 10}
 
     # dccvd
-    dccvd = DCCVD(x, y)
-    ret_dccvd = dccvd.ret
-    bp_dccvd = dccvd.bp
-    bp_diff_dccvd = dccvd.slope_bp_diff
-    dccvd.plot(5)  # time_ticks={"ticks": np.arange(190), "interval": 10}
-    dccvd.plotcumdata()
+    # dccvd = DCCVD(x, y)
+    # ret_dccvd = dccvd.ret
+    # bp_dccvd = dccvd.bp
+    # bp_diff_dccvd = dccvd.slope_bp_diff
+    # dccvd.plot(5)  # time_ticks={"ticks": np.arange(190), "interval": 10}
+    # dccvd.plotCumdata()
+
+    # mkvd
+    mkvd = MKVD(x)
+    interP_mkvd = mkvd.interP
+    bp_mkvd = mkvd.bp
+    mkvd.plot()
+    # mkvd.plotdata()
