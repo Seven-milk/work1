@@ -3,7 +3,7 @@
 # email: Z786909151@163.com
 # variation detect
 # note: each vd method have its own limits and application scopes, choice method based on your data characteristics
-# TODO 去除不正常的断点（合并剔除），filter实现
+# future work: delete some wrong bp, combine some bps which closed to each other too much.
 
 import numpy as np
 import abc
@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 import curve_fit
 from scipy import stats
 import math_func
+import filter
 
 
 class VDBase(abc.ABC):
@@ -34,7 +35,6 @@ class BGVD(VDBase):
         reference: [1] Bernaola-Galván P., Ivanov P.C., Amaral L.A.N. et al. Scale invariance in the nonstationarity of
         human heart rate[J]. Physical review letters, 2001, 87(16): 168105.
 
-    # TODO 剔除不合理断点, 相邻断点
     '''
 
     def __init__(self, data, confidence: float = 0.95, l: int = 25):
@@ -261,7 +261,7 @@ class SCCVD(VDBase):
     ''' SCCVD, the Single Cumulative Curve method to detect variation, which depend on the variation between increase
      rate of sub-series '''
 
-    def __init__(self, data, filter=None, constraint=1, l=5):
+    def __init__(self, data, filter=None, constraint=1, l=5, **kwargs):
         ''' init function
         input:
             data: 1D array, time series
@@ -269,7 +269,9 @@ class SCCVD(VDBase):
                         normalization), default=0.5, 1 means no limit residual diff
             l: length limit that do not calculate slope(set 0), the left [:l] and right [-l:] set 0, default=25, it can
                help us exclude some impossible bp in left and right
-            filter: filter to filtering cum data
+            filter: FilterBase' subclass, filter to filtering cum data, "filter" is a class rather than a objection
+
+            **kwargs: keyword args used in filtering()
 
         output:
             self.ret: dict, {"index", "slope_diff_"}, contains the index and slope_diff_ of each breakpoint, sorted by
@@ -286,7 +288,7 @@ class SCCVD(VDBase):
 
         # flitering
         if self.filter != None:
-            self.cumdata = self.filtering(self.cumdata, self.filter)
+            self.cumdata = self.filtering(self.cumdata, self.filter, **kwargs)
 
         self.slope_ret = self.slope(self.cumdata, self.constraint, self.l)  # slope_ret before sort
 
@@ -336,8 +338,8 @@ class SCCVD(VDBase):
         # original and filter line
         if self.filter != None:
             # plot original data
-            line_original_cumdata = draw_plot.ScatterDraw(time, self.cum(self._data), marker='o', c="lightgray",
-                                                          edgecolor="lightgray", s=3, label="Cum Data")
+            line_original_cumdata = draw_plot.ScatterDraw(time, self.cum(self._data), marker='o', c="gray",
+                                                          edgecolor="gray", s=3, label="Cum Data")
             # plot filter
             line_filter_cumdata = draw_plot.PlotDraw(time, self.cumdata, color="k", linewidth=2,
                                                      label="Filter Cum Data", alpha=0.6)
@@ -380,9 +382,9 @@ class SCCVD(VDBase):
             cumfit_left = np.polyval(np.poly1d(pcf_left), time_left)
             cumfit_right = np.polyval(np.poly1d(pcf_right), time_right)
 
-            line_left = draw_plot.PlotDraw(time_left, cumfit_left, alpha=alpha_, color="dodgerblue", linewidth=0.6,
+            line_left = draw_plot.PlotDraw(time_left, cumfit_left, alpha=alpha_, color="b", linewidth=0.6,
                                            label="left fit line" if i == 0 else None, linestyle="-")
-            line_right = draw_plot.PlotDraw(time_right, cumfit_right, alpha=alpha_, color="lightseagreen",
+            line_right = draw_plot.PlotDraw(time_right, cumfit_right, alpha=alpha_, color="r",
                                             linewidth=0.6,
                                             label="right fit line" if i == 0 else None, linestyle="-")
 
@@ -426,9 +428,10 @@ class SCCVD(VDBase):
         return np.cumsum(data)
 
     @staticmethod
-    def filtering(self, data, filter):
+    def filtering(data, filter, **kwargs):
         ''' filter to smooth data '''
-        pass
+        flt = filter(data, **kwargs)
+        return flt.filtered_data
 
     @staticmethod
     def slope(data, constraint, l):
@@ -499,7 +502,7 @@ class DCCVD(SCCVD):
     ''' DCCVD, the Double Cumulative Curve method to detect variation, which depend on the variation between increase
          rate of sub-series '''
 
-    def __init__(self, data1, data2, filter=None, constraint=1, l=5):
+    def __init__(self, data1, data2, filter=None, constraint=1, l=5, **kwargs):
         ''' init function
         input:
             similar with SCCVD, but introduce data2
@@ -519,7 +522,7 @@ class DCCVD(SCCVD):
 
         # flitering
         if self.filter != None:
-            self.cumdata1, self.cumdata2 = self.filtering(self.cumdata1, self.cumdata2, self.filter)
+            self.cumdata1, self.cumdata2 = self.filtering(self.cumdata1, self.cumdata2, self.filter, **kwargs)
 
         self.slope_ret = self.slope(self.cumdata1, self.cumdata2, self.constraint, self.l)  # slope_ret before sort
 
@@ -560,7 +563,7 @@ class DCCVD(SCCVD):
         if self.filter != None:
             # plot original data
             line_original_cumdata = draw_plot.ScatterDraw(self.cum(self._data1), self.cum(self._data2), marker='o',
-                                                          c="lightgray", edgecolor="lightgray", s=3, label="Cum Data")
+                                                          c="gray", edgecolor="gray", s=3, label="Cum Data")
             # plot filter
             line_filter_cumdata = draw_plot.PlotDraw(x, y, color="k", linewidth=2, label="Filter Cum Data", alpha=0.6)
             draw.adddraw(line_original_cumdata)
@@ -603,9 +606,9 @@ class DCCVD(SCCVD):
             cumfit_left = np.polyval(np.poly1d(pcf_left), leftx)
             cumfit_right = np.polyval(np.poly1d(pcf_right), rightx)
 
-            line_left = draw_plot.PlotDraw(leftx, cumfit_left, alpha=alpha_, color="dodgerblue", linewidth=0.6,
+            line_left = draw_plot.PlotDraw(leftx, cumfit_left, alpha=alpha_, color="b", linewidth=0.6,
                                            label="left fit line" if i == 0 else None, linestyle="-")
-            line_right = draw_plot.PlotDraw(rightx, cumfit_right, alpha=alpha_, color="lightseagreen",
+            line_right = draw_plot.PlotDraw(rightx, cumfit_right, alpha=alpha_, color="r",
                                             linewidth=0.6,
                                             label="right fit line" if i == 0 else None, linestyle="-")
 
@@ -636,9 +639,11 @@ class DCCVD(SCCVD):
         draw.adddraw(line_original_cumdata)
 
     @staticmethod
-    def filtering(data1, data2, filter):
+    def filtering(data1, data2, filter, **kwargs):
         ''' filter to smooth data '''
-        pass
+        data = np.vstack((data1, data2))
+        flt = filter(data, **kwargs)
+        return flt.filtered_data[0, :], flt.filtered_data[1, :]
 
     @staticmethod
     def slope(data1, data2, constraint, l):
@@ -864,8 +869,8 @@ class MKVD(VDBase):
 
 if __name__ == '__main__':
     # set sample x
-    x = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 900))
-    # y = np.hstack((np.random.rand(100, ) * 20, np.random.rand(100, ) * 300))
+    x = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 100))
+    y = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 600))
     # x = np.random.rand(1000, )
     # x = sorted(np.random.rand(1000, ))
     # x = np.arange(100)
@@ -885,6 +890,14 @@ if __name__ == '__main__':
     # bp_diff_sccvd = sccvd.slope_bp_diff
     # sccvd.plot(5)  # time_ticks={"ticks": np.arange(190), "interval": 10}
 
+    # sccvd with filter
+    # flt = filter.ButterFilter
+    # sccvdf = SCCVD(x, filter=flt, N=2, Wn=0.3)
+    # ret_sccvdf = sccvdf.ret
+    # bp_sccvdf = sccvdf.bp
+    # bp_diff_sccvdf = sccvdf.slope_bp_diff
+    # sccvdf.plot(5)
+
     # dccvd
     # dccvd = DCCVD(x, y)
     # ret_dccvd = dccvd.ret
@@ -893,9 +906,17 @@ if __name__ == '__main__':
     # dccvd.plot(5)  # time_ticks={"ticks": np.arange(190), "interval": 10}
     # dccvd.plotCumdata()
 
+    # dccvd with filter
+    # flt = filter.ButterFilter
+    # dccvdf = DCCVD(x, y, filter=flt, N=2, Wn=0.3)
+    # ret_dccvdf = dccvdf.ret
+    # bp_dccvdf = dccvdf.bp
+    # bp_diff_dccvdf = dccvdf.slope_bp_diff
+    # dccvdf.plot(5)
+
     # mkvd
-    mkvd = MKVD(x)
-    interP_mkvd = mkvd.interP
-    bp_mkvd = mkvd.bp
-    mkvd.plot()
+    # mkvd = MKVD(x)
+    # interP_mkvd = mkvd.interP
+    # bp_mkvd = mkvd.bp
+    # mkvd.plot()
     # mkvd.plotdata()
