@@ -78,13 +78,13 @@ class BGVD(VDBase):
 
         return ret
 
-    def plot(self, maxplotnumber=6, time_ticks=None, labely="Data", **kwargs):
+    def plot(self, maxplotnumber=6, time_ticks=None, labelx="Time", labely="Data", **kwargs):
         ''' Implement VDBase.plot
         input:
             maxplotnumber: max number of plot breakpoint(ax)
             time_ticks: dict {"ticks": ticks, "interval": interval}, the ticks of time, namely axis x
                         note: for ticks: len=len(data), for interval: dtype=int
-            labely: the labely of the first ax
+            labelx/y: the labelx/y of the first ax
 
             **kwargs: keyword args of subplots, keyword args in Figure init function
         '''
@@ -139,7 +139,7 @@ class BGVD(VDBase):
 
                 # plot
                 draw_T = draw_plot.Draw(fig.ax[i + 1], fig, gridy=True, title=None,
-                                        labelx="Time" if (i == n - 1) else None,
+                                        labelx=labelx if (i == n - 1) else None,
                                         labely="T", ylim=[0, Tmax_ * 1.1], xlim=[0, time[-1]])
                 line_T = draw_plot.PlotDraw(time, T_, color="k", linewidth=0.6)
                 Text_PTmax = draw_plot.TextDraw("PTmax: " + '%.2f' % PTmax_, [x_PTmax, y_PTmax])
@@ -155,7 +155,7 @@ class BGVD(VDBase):
         else:
             # plot data and mean lines
             fig = draw_plot.FigureVert(n + 1)
-            draw_data = draw_plot.Draw(fig.ax, fig, gridy=True, title="BG Variation detect", labelx="Time",
+            draw_data = draw_plot.Draw(fig.ax, fig, gridy=True, title="BG Variation detect", labelx=labelx,
                                        labely=labely, xlim=[0, time[-1]])
             line_data = draw_plot.PlotDraw(time, self._data, alpha=0.6, color="gray", linewidth=2)
             line_mean = draw_plot.PlotDraw(sub_time, sub_mean, color="k", linewidth=0.6)
@@ -735,7 +735,7 @@ class MKVD(VDBase):
         input:
             time_ticks: dict {"ticks": ticks, "interval": interval}, the ticks of time, namely axis x
                         note: for ticks: len=len(data), for interval: dtype=int
-            labely: the labely of the first ax
+            labelx/y: the labelx/y of the first ax
 
             **kwargs: keyword args of subplots, keyword args in Figure init function
         '''
@@ -867,10 +867,119 @@ class MKVD(VDBase):
         return interP
 
 
+class OCVD(VDBase):
+    ''' OCVD, the Ordered Clustering method to detect variation the min value of sum of squares of deviations between
+        sub-series, which breaked by bp
+    '''
+
+    def __init__(self, data):
+        ''' init function
+        input:
+            data: 1D array, time series
+
+        output:
+
+        '''
+
+        self._data = data
+        self.S, self.sortedindex, self.sortedS = self.detect()
+        self.bp = self.sortedindex
+
+    def detect(self):
+        ''' Implement VDBase.detect
+        how to detect:
+            data -> calStatisticS() -> S -> sort, sortWithIndex -> sortedindex, sortedS
+        '''
+
+        S = self.calStatisticS(self._data)
+        sortedindex, sortedS = math_func.sortWithIndex(S)
+
+        return S, sortedindex, sortedS
+
+    def plot(self, time_ticks=None, labelx="Time", labely="S", **kwargs):
+        ''' Implement VDBase.plot
+        input:
+            time_ticks: dict {"ticks": ticks, "interval": interval}, the ticks of time, namely axis x
+                        note: for ticks: len=len(data), for interval: dtype=int
+            labely: the labely of the first ax
+
+            **kwargs: keyword args of subplots, keyword args in Figure init function
+        '''
+
+        # define time
+        time = np.arange(len(self._data))
+
+        # plot
+        ylim = [min(self.S) * 0.9,  max(self.S) * 1.1]
+        fig = draw_plot.Figure(**kwargs)
+        draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="Ordered Clustering Variation Detect", labely=labely,
+                              labelx=labelx, xlim=[0, time[-1]], ylim=ylim, legend_on=False)
+
+        # S line
+        line_S = draw_plot.PlotDraw(time, self.S, color="k", linewidth=0.6)
+        draw.adddraw(line_S)
+
+        # bp
+        # extract
+        index_bp = self.sortedindex[0]
+        S_bp = self.sortedS[0]
+
+        # text position
+        if time[-1] * 0.1 <= index_bp <= time[-1] * 0.9:
+            x_bp = index_bp
+        elif index_bp > time[-1] * 0.9:
+            x_bp = index_bp - time[-1] * 0.1
+        else:
+            x_bp = index_bp + time[-1] * 0.1
+
+        y_bp = S_bp
+
+        # plot bp
+        line_bp = draw_plot.PlotDraw([index_bp, index_bp], [ylim[0], S_bp], linestyle="--", color="r", linewidth=0.6)
+        Text_bp = draw_plot.TextDraw(f"S = " + "%.d" % S_bp + f" in {index_bp}", [x_bp, y_bp], color="r")
+
+        # adddraw
+        draw.adddraw(line_bp)
+        draw.adddraw(Text_bp)
+
+        # set ticks while time_ticks!=None
+        if time_ticks != None:
+            plt.xticks(time[::time_ticks["interval"]], time_ticks["ticks"][::time_ticks["interval"]])
+
+    @staticmethod
+    def calStatisticS(data):
+        ''' calculate statistics S
+        input:
+            data: vals: data series to do OCVD, there is used to calculate S series
+
+        output:
+            S: np.array, S statistics
+        '''
+
+        n = len(data)
+        S = np.zeros((n, ))
+
+        # set the S in first & last point
+        AllV = sum([(x - sum(data) / n) ** 2 for x in data])
+        S[0] = AllV
+        S[-1] = AllV
+
+        # loop to calculate S in tau between [1, n - 1]
+        for i in range(1, n - 1):
+            left = data[: i + 1]
+            right = data[i:]
+            leftV = sum([(x - sum(left) / len(left)) ** 2 for x in left])
+            rightV = sum([(x - sum(right) / len(right)) ** 2 for x in right])
+            S[i] = leftV + rightV
+
+        return S
+
+
+
 if __name__ == '__main__':
     # set sample x
     x = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 100))
-    y = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 600))
+    # y = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 600))
     # x = np.random.rand(1000, )
     # x = sorted(np.random.rand(1000, ))
     # x = np.arange(100)
@@ -920,3 +1029,8 @@ if __name__ == '__main__':
     # bp_mkvd = mkvd.bp
     # mkvd.plot()
     # mkvd.plotdata()
+
+    # ocvd
+    ocvd = OCVD(x)
+    bp_ocvd = ocvd.bp
+    ocvd.plot()
