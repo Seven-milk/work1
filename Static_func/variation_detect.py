@@ -13,7 +13,7 @@ from scipy.special import betainc
 from matplotlib import pyplot as plt
 import curve_fit
 from scipy import stats
-import math_func
+import useful_func
 import filter
 
 
@@ -861,7 +861,7 @@ class MKVD(VDBase):
             if diff[i] * diff[i + 1] == 0:
                 interP.append({"index": i, "U": UF[i]})
             elif diff[i] * diff[i + 1] < 0:
-                r = math_func.intersection([i, UF[i], i + 1, UF[i + 1]], [i, UB[i], i + 1, UB[i + 1]])
+                r = useful_func.intersection([i, UF[i], i + 1, UF[i + 1]], [i, UB[i], i + 1, UB[i + 1]])
                 interP.append({"index": r[0], "U": r[1]})
 
         return interP
@@ -892,7 +892,7 @@ class OCVD(VDBase):
         '''
 
         S = self.calStatisticS(self._data)
-        sortedindex, sortedS = math_func.sortWithIndex(S)
+        sortedindex, sortedS = useful_func.sortWithIndex(S)
 
         return S, sortedindex, sortedS
 
@@ -973,7 +973,6 @@ class OCVD(VDBase):
             S[i] = leftV + rightV
 
         return S
-
 
 
 if __name__ == '__main__':

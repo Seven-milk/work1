@@ -5,6 +5,7 @@
 import numpy as np
 import draw_plot
 
+
 def slope(data):
     ''' cal slope of data, unit = data unit /interval unit
         note: slope[0]=0
@@ -27,6 +28,7 @@ def sortWithIndex(data, p=False, **kwargs):
                   f"{sorteddata[i]}")
 
     return sortedindex, sorteddata
+
 
 def intersection(line1, line2, plot_=False):
     ''' calculate intersection point from two lines
@@ -57,7 +59,7 @@ def intersection(line1, line2, plot_=False):
     x21, y21, x22, y22 = line2
 
     A = [[y22 - y21, x21 - x22],
-        [y12 - y11, x11 - x12]]
+         [y12 - y11, x11 - x12]]
 
     b = [x21 * y22 - x22 * y21, x11 * y12 - x12 * y11]
 
@@ -88,6 +90,7 @@ def intersection(line1, line2, plot_=False):
         draw.adddraw(line22_Text)
 
     return r
+
 
 if __name__ == '__main__':
     data = np.arange(10)
