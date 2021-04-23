@@ -28,7 +28,7 @@ file_name = [os.path.join(home, file) for file in file_name]
 
 # input start date and find the index in urls/file_name
 # start = input("input the start date, such as 19480101.0300")
-start = "19980903.1200"
+start = "20001021.0600"
 
 if start == "":
     index = 0

@@ -8,7 +8,8 @@ import re
 import requests
 
 home = "G:/GLDAS_NOAH"
-URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
+# URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
+URL = os.path.join(home, "url_notdownload.txt")
 
 # open url file and read url in urls
 with open(URL, 'r') as file:
@@ -46,5 +47,5 @@ for file_name_nd in file_name_notdownloaded:
 url_notdownload = "\n".join(url_notdownload)
 
 # save
-with open(os.path.join(home, 'url_notdownload.txt'), 'w', encoding='utf-8') as f:
+with open(os.path.join(home, 'url_notdownload2.txt'), 'w', encoding='utf-8') as f:
     f.write(url_notdownload)

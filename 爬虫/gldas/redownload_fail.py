@@ -7,7 +7,9 @@ import requests
 from multiprocessing import Pool
 
 home = "G:/GLDAS_NOAH"
-URL = os.path.join(home, "url_notdownload.txt")
+# URL = os.path.join(home, "url_notdownload.txt")
+# URL = os.path.join(home, "fail_url.txt")
+URL = os.path.join(home, "url_notdownload2.txt")
 
 # open url file and read url in urls
 with open(URL, 'r') as file:
