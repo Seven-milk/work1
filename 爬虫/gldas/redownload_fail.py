@@ -1,11 +1,13 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
+# redownload file based on a url file
 import os
 import re
 import requests
 from multiprocessing import Pool
 
+# general set
 home = "G:/GLDAS_NOAH"
 # URL = os.path.join(home, "url_notdownload.txt")
 # URL = os.path.join(home, "fail_url.txt")

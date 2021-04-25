@@ -1,15 +1,17 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
-# check whether the file is downloaded completely
-#　思路：还原ｕｒｌ或将其转为ｎａｍｅ＋集合差集
+# check whether the file is downloaded completely: url file(URL) -> file name -> set1, download file(file in home) ->
+# file name -> set2, set1 - set2 -> file name not download -> search index in url file -> url not download (url
+# notdownload2.txt)
 import os
 import re
 import requests
 
-home = "G:/GLDAS_NOAH"
-# URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
-URL = os.path.join(home, "url_notdownload.txt")
+# general set
+home = "D:/GLDAS_NOAH"
+URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
+# URL = os.path.join(home, "url_notdownload.txt")
 
 # open url file and read url in urls
 with open(URL, 'r') as file:
