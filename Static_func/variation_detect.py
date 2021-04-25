@@ -143,7 +143,8 @@ class BGVD(VDBase):
                                         labely="T", ylim=[0, Tmax_ * 1.1], xlim=[0, time[-1]])
                 line_T = draw_plot.PlotDraw(time, T_, color="k", linewidth=0.6)
                 Text_PTmax = draw_plot.TextDraw("PTmax: " + '%.2f' % PTmax_, [x_PTmax, y_PTmax])
-                Text_Tmax = draw_plot.TextDraw("Tmax in " + str(absIndexMax_), [x_Tmax, y_Tmax], color="r")
+                index_bp_text = (str(absIndexMax_) if time_ticks == None else str(time_ticks["ticks"][absIndexMax_]))
+                Text_Tmax = draw_plot.TextDraw("Tmax in " + index_bp_text, [x_Tmax, y_Tmax], color="r")
                 line_Tmax = draw_plot.PlotDraw([absIndexMax_, absIndexMax_], [0, Tmax_], linestyle="--", color="r",
                                                linewidth=0.6)
                 draw_T.adddraw(line_T)
@@ -392,31 +393,13 @@ class SCCVD(VDBase):
             draw.adddraw(line_right)
 
             # plot bp
+            index_bp_text = str(index_bp) if time_ticks == None else str(time_ticks["ticks"][index_bp])
             line_bp = draw_plot.PlotDraw([index_bp, index_bp], [0, cum_bp], alpha=alpha_, linestyle="--", color="r",
-                                         linewidth=0.6,
-                                         label=f"bp{i}:(slope diff={'%.2f' % slope_diff}, index={index_bp})")
+                                         linewidth=0.6, label=f"bp{i}:(slope diff={'%.2f' % slope_diff}, index={index_bp_text})")
             Text_bp = draw_plot.TextDraw(f"bp{i}", [x_bp, y_bp], color="k", fontdict=fontdict, zorder=20)
 
             draw.adddraw(line_bp)
             draw.adddraw(Text_bp)
-
-        # set ticks while time_ticks!=None
-        if time_ticks != None:
-            plt.xticks(time[::time_ticks["interval"]], time_ticks["ticks"][::time_ticks["interval"]])
-
-    def plotCumdata(self, time_ticks=None, labelx="Time", labely="Cumulative Value", **kwargs):
-        ''' only plot cum data '''
-        # define time
-        time = np.arange(len(self._data))
-
-        # plot
-        fig = draw_plot.Figure(**kwargs)
-        draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="Cumulative Curve Variation Detect", labely=labely,
-                              labelx=labelx, xlim=[0, time[-1]], ylim=[0, self.cumdata[-1] * 1.1], legend_on=
-                              {"loc": "upper left", "framealpha": 0.8})
-        line_original_cumdata = draw_plot.ScatterDraw(time, self.cumdata, marker='o', c="gray",
-                                                      edgecolor="gray", s=2, label="Cum Data")
-        draw.adddraw(line_original_cumdata)
 
         # set ticks while time_ticks!=None
         if time_ticks != None:
@@ -624,20 +607,6 @@ class DCCVD(SCCVD):
             draw.adddraw(line_bp)
             draw.adddraw(Text_bp)
 
-    def plotCumdata(self, labelx="Time", labely="Cumulative Value", **kwargs):
-        ''' only plot cum data '''
-        # define time
-        x = self.cumdata1
-        y = self.cumdata2
-
-        # plot
-        fig = draw_plot.Figure(**kwargs)
-        draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="Cumulative Curve Variation Detect", labely=labely,
-                              labelx=labelx, xlim=[0, x[-1]], ylim=[0, y[-1] * 1.1], legend_on=
-                              {"loc": "upper left", "framealpha": 0.8})
-        line_original_cumdata = draw_plot.ScatterDraw(x, y, marker='o', c="gray", edgecolor="gray", s=2, label="Cum Data")
-        draw.adddraw(line_original_cumdata)
-
     @staticmethod
     def filtering(data1, data2, filter, **kwargs):
         ''' filter to smooth data '''
@@ -784,8 +753,10 @@ class MKVD(VDBase):
                 y_bp = U_bp
 
                 # plot bp
+                index_bp_text = "%.1f" % index_bp if time_ticks == None else "%.1f" % index_bp + " between " +\
+                                str(time_ticks["ticks"][int(index_bp)]) + " and " + str(time_ticks["ticks"][int(index_bp) + 1])
                 line_bp = draw_plot.PlotDraw([index_bp, index_bp], [ylim[0], U_bp], linestyle="--", color="r", linewidth=0.6)
-                Text_bp = draw_plot.TextDraw("%.1f" % index_bp, [x_bp, y_bp], color="r")
+                Text_bp = draw_plot.TextDraw(index_bp_text, [x_bp, y_bp], color="r")
 
                 # adddraw
                 draw.adddraw(line_bp)
@@ -935,8 +906,9 @@ class OCVD(VDBase):
         y_bp = S_bp
 
         # plot bp
+        index_bp_text = index_bp if time_ticks == None else time_ticks["ticks"][index_bp]
         line_bp = draw_plot.PlotDraw([index_bp, index_bp], [ylim[0], S_bp], linestyle="--", color="r", linewidth=0.6)
-        Text_bp = draw_plot.TextDraw(f"S = " + "%.d" % S_bp + f" in {index_bp}", [x_bp, y_bp], color="r")
+        Text_bp = draw_plot.TextDraw(f"S = " + "%.d" % S_bp + f" in {index_bp_text}", [x_bp, y_bp], color="r")
 
         # adddraw
         draw.adddraw(line_bp)
@@ -978,7 +950,7 @@ class OCVD(VDBase):
 if __name__ == '__main__':
     # set sample x
     x = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 100))
-    # y = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 600))
+    y = np.hstack((np.random.rand(100, ) * 10, np.random.rand(100, ) * 600))
     # x = np.random.rand(1000, )
     # x = sorted(np.random.rand(1000, ))
     # x = np.arange(100)
@@ -989,14 +961,14 @@ if __name__ == '__main__':
     # bgvd = BGVD(x)
     # ret_bgvd = bgvd.passRet
     # bp_bgvd = bgvd.bp
-    # bgvd.plot()  # time_ticks={"ticks": np.arange(10, 1010), "interval": 100}
+    # bgvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
 
     # sccvd
     # sccvd = SCCVD(x)
     # ret_sccvd = sccvd.ret
     # bp_sccvd = sccvd.bp
     # bp_diff_sccvd = sccvd.slope_bp_diff
-    # sccvd.plot(5)  # time_ticks={"ticks": np.arange(190), "interval": 10}
+    # sccvd.plot(5, time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
 
     # sccvd with filter
     # flt = filter.ButterFilter
@@ -1004,7 +976,7 @@ if __name__ == '__main__':
     # ret_sccvdf = sccvdf.ret
     # bp_sccvdf = sccvdf.bp
     # bp_diff_sccvdf = sccvdf.slope_bp_diff
-    # sccvdf.plot(5)
+    # sccvdf.plot(5, time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
 
     # dccvd
     # dccvd = DCCVD(x, y)
@@ -1012,7 +984,6 @@ if __name__ == '__main__':
     # bp_dccvd = dccvd.bp
     # bp_diff_dccvd = dccvd.slope_bp_diff
     # dccvd.plot(5)  # time_ticks={"ticks": np.arange(190), "interval": 10}
-    # dccvd.plotCumdata()
 
     # dccvd with filter
     # flt = filter.ButterFilter
@@ -1026,10 +997,10 @@ if __name__ == '__main__':
     # mkvd = MKVD(x)
     # interP_mkvd = mkvd.interP
     # bp_mkvd = mkvd.bp
-    # mkvd.plot()
+    # mkvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
     # mkvd.plotdata()
 
     # ocvd
     ocvd = OCVD(x)
     bp_ocvd = ocvd.bp
-    ocvd.plot()
+    ocvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
