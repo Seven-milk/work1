@@ -931,7 +931,7 @@ class OCVD(VDBase):
 
         return S, sortedindex, sortedS
 
-    def plot(self, maxplotnumber=6, time_ticks=None, labelx="Time", labely="S", **kwargs):
+    def plot(self, maxplotnumber=1, time_ticks=None, labelx="Time", labely="S", **kwargs):
         ''' Implement VDBase.plot
         input:
             maxplotnumber: max number of plot breakpoint(ax)
