@@ -753,7 +753,7 @@ class MKVD(VDBase):
                 y_bp = U_bp
 
                 # plot bp
-                index_bp_text = "%.1f" % index_bp if time_ticks == None else "%.1f" % index_bp + " between " +\
+                index_bp_text = "%.1f" % index_bp if time_ticks == None else "%.1f" % index_bp + " between\n" +\
                                 str(time_ticks["ticks"][int(index_bp)]) + " and " + str(time_ticks["ticks"][int(index_bp) + 1])
                 line_bp = draw_plot.PlotDraw([index_bp, index_bp], [ylim[0], U_bp], linestyle="--", color="r", linewidth=0.6)
                 Text_bp = draw_plot.TextDraw(index_bp_text, [x_bp, y_bp], color="r")
