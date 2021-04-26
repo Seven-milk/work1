@@ -11,6 +11,7 @@ import draw_plot, map_plot
 from importlib import reload
 from matplotlib import pyplot as plt
 import mannkendall_test
+import variation_detect
 
 # general set
 root = "H"
@@ -185,6 +186,34 @@ def mktest_slope_FD_number_map():
     map_mk_slope_FD.addmap(boundry_shpMap)
 
 
+# time_ticks set
+time_ticks = {"ticks": year, "interval": 10}
+
+
+# variation detect for Drought number - time series, point avg
+def vd_detect_Drought_number():
+    bgvd_drought_number = variation_detect.BGVD(Drought_year_number_mean.to_list())
+    sccvd_drought_number = variation_detect.SCCVD(Drought_year_number_mean.to_list())
+    mkvd_drought_number = variation_detect.MKVD(Drought_year_number_mean.to_list())
+    ocvd_drought_number = variation_detect.OCVD(Drought_year_number_mean.to_list())
+    bgvd_drought_number.plot(time_ticks=time_ticks)
+    sccvd_drought_number.plot(time_ticks=time_ticks)
+    mkvd_drought_number.plot(time_ticks=time_ticks)
+    ocvd_drought_number.plot(time_ticks=time_ticks)
+
+
+# variation detect for FD number - time series, point avg
+def vd_detect_FD_number():
+    bgvd_FD_number = variation_detect.BGVD(FD_year_number_mean.to_list())
+    sccvd_FD_number = variation_detect.SCCVD(FD_year_number_mean.to_list())
+    mkvd_FD_number = variation_detect.MKVD(FD_year_number_mean.to_list())
+    ocvd_drought_number = variation_detect.OCVD(FD_year_number_mean.to_list())
+    bgvd_FD_number.plot(time_ticks=time_ticks)
+    sccvd_FD_number.plot(time_ticks=time_ticks)
+    mkvd_FD_number.plot(time_ticks=time_ticks)
+    ocvd_drought_number.plot(time_ticks=time_ticks)
+
+
 if __name__ == '__main__':
     boxplot_drought_season()
     boxplot_FD_season()
@@ -194,3 +223,5 @@ if __name__ == '__main__':
     mktest_Drought_number_map()
     mktest_FD_number_map()
     mktest_slope_FD_number_map()
+    vd_detect_Drought_number()
+    vd_detect_FD_number()
