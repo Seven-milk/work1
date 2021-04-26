@@ -28,6 +28,78 @@ class VDBase(abc.ABC):
     def plot(self):
         ''' define plot abstarct method '''
 
+    def plotdata(self, maxplotnumber=1, time_ticks=None, labelx="Time", labely="Data", **kwargs):
+        ''' plot original data '''
+        # define time
+        time = np.arange(len(self._data))
+
+        # plot original data
+        fig = draw_plot.Figure(**kwargs)
+        draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="Data time series", labely=labely,
+                              labelx=labelx, xlim=[0, time[-1]], legend_on=False)
+        scatter_original_data = draw_plot.ScatterDraw(time, y, marker='o', c="lightgray", edgecolor="gray", s=2)
+        draw.adddraw(scatter_original_data)
+
+        # plot bp
+        n = maxplotnumber
+
+        for i in range(n):
+
+            if isinstance(self, MKVD):
+                # extract
+                index_bp = self.bp[i]
+                r = useful_func.intersection([int(index_bp), self._data[int(index_bp)], int(index_bp) + 1,
+                                              self._data[int(index_bp) + 1]],
+                                             [index_bp, self._data[int(index_bp)], index_bp,
+                                              self._data[int(index_bp) + 1]])
+                y_bp = r[1]
+
+                # text position
+                if time[-1] * 0.1 <= index_bp <= time[-1] * 0.9:
+                    x_bp = int(index_bp)
+                elif index_bp > time[-1] * 0.9:
+                    x_bp = int(index_bp) - time[-1] * 0.1
+                else:
+                    x_bp = int(index_bp) + time[-1] * 0.1
+
+                y_bp = y_bp
+
+                # plot bp
+                index_bp_text = "bp in " + ("%.1f" % index_bp if time_ticks == None else "%.1f" % index_bp +
+                                " between\n" + str(time_ticks["ticks"][int(index_bp)]) + " and " +
+                                str(time_ticks["ticks"][int(index_bp) + 1]))
+
+                scatter_bp = draw_plot.ScatterDraw(index_bp, y_bp, marker='o', c="r", edgecolor="r", s=2)
+                Text_bp = draw_plot.TextDraw(index_bp_text, [index_bp, y_bp], color="r")
+
+            else:
+                # extract
+                index_bp = self.bp[i]
+                y_bp = self._data[index_bp]
+
+                # text position
+                if time[-1] * 0.1 <= index_bp <= time[-1] * 0.9:
+                    x_bp = index_bp
+                elif index_bp > time[-1] * 0.9:
+                    x_bp = index_bp - time[-1] * 0.1
+                else:
+                    x_bp = index_bp + time[-1] * 0.1
+
+                y_bp = y_bp
+
+                # plot bp
+                index_bp_text = "bp in " + (
+                    str(index_bp) if time_ticks == None else str(time_ticks["ticks"][int(index_bp)]))
+                scatter_bp = draw_plot.ScatterDraw(index_bp, y_bp, marker='o', c="r", edgecolor="r", s=2)
+                Text_bp = draw_plot.TextDraw(index_bp_text, [x_bp, y_bp], color="r")
+
+            draw.adddraw(scatter_bp)
+            draw.adddraw(Text_bp)
+
+        # set ticks while time_ticks!=None
+        if time_ticks != None:
+            plt.xticks(time[::time_ticks["interval"]], time_ticks["ticks"][::time_ticks["interval"]])
+
 
 class BGVD(VDBase):
     ''' BGVD, the BG method to detect variation, which depend on the variation between mean of sub-series
@@ -395,7 +467,8 @@ class SCCVD(VDBase):
             # plot bp
             index_bp_text = str(index_bp) if time_ticks == None else str(time_ticks["ticks"][index_bp])
             line_bp = draw_plot.PlotDraw([index_bp, index_bp], [0, cum_bp], alpha=alpha_, linestyle="--", color="r",
-                                         linewidth=0.6, label=f"bp{i}:(slope diff={'%.2f' % slope_diff}, index={index_bp_text})")
+                                         linewidth=0.6,
+                                         label=f"bp{i}:(slope diff={'%.2f' % slope_diff}, index={index_bp_text})")
             Text_bp = draw_plot.TextDraw(f"bp{i}", [x_bp, y_bp], color="k", fontdict=fontdict, zorder=20)
 
             draw.adddraw(line_bp)
@@ -686,7 +759,8 @@ class MKVD(VDBase):
         self.confidence = confidence
         self.alpha = 1 - self.confidence
         self.u0 = abs(stats.norm.ppf(self.alpha / 2))
-        self.UF, self.UB, self.interP, self.bp = self.detect()
+        self.UF, self.UB, self.interP, self.bp_all = self.detect()
+        self.bp = [bp["index"] for bp in self.bp_all]
 
     def detect(self):
         ''' Implement VDBase.detect
@@ -716,7 +790,8 @@ class MKVD(VDBase):
         ylim = [min(min(self.UF), min(self.UB)) - expand, max(max(self.UF), max(self.UB)) + expand]
         fig = draw_plot.Figure(**kwargs)
         draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="MK Variation Detect", labely=labely,
-                              labelx=labelx, xlim=[0, time[-1]], ylim=ylim, legend_on={"loc": "upper left", "framealpha": 0.8})
+                              labelx=labelx, xlim=[0, time[-1]], ylim=ylim,
+                              legend_on={"loc": "upper left", "framealpha": 0.8})
 
         # UF UB line
         line_UF = draw_plot.PlotDraw(time, self.UF, color="k", linewidth=0.6, label="UF")
@@ -727,7 +802,8 @@ class MKVD(VDBase):
         draw.adddraw(line_UB)
 
         # u0
-        line_u0plus = draw_plot.PlotDraw(time, np.full((len(time), ), fill_value=self.u0), "b-", label=f"u0: "+ "%.2f" % self.u0,
+        line_u0plus = draw_plot.PlotDraw(time, np.full((len(time),), fill_value=self.u0), "b-",
+                                         label=f"u0: " + "%.2f" % self.u0,
                                          linewidth=0.6)
         line_u0minus = draw_plot.PlotDraw(time, np.full((len(time),), fill_value=-self.u0), "b-", linewidth=0.6)
 
@@ -736,11 +812,11 @@ class MKVD(VDBase):
         draw.adddraw(line_u0minus)
 
         # bp
-        if len(self.bp) > 0:
-            for i in range(len(self.bp)):
+        if len(self.bp_all) > 0:
+            for i in range(len(self.bp_all)):
                 # extract
-                index_bp = self.bp[i]["index"]
-                U_bp = self.bp[i]["U"]
+                index_bp = self.bp_all[i]["index"]
+                U_bp = self.bp_all[i]["U"]
 
                 # text position
                 if time[-1] * 0.1 <= index_bp <= time[-1] * 0.9:
@@ -753,9 +829,11 @@ class MKVD(VDBase):
                 y_bp = U_bp
 
                 # plot bp
-                index_bp_text = "%.1f" % index_bp if time_ticks == None else "%.1f" % index_bp + " between\n" +\
-                                str(time_ticks["ticks"][int(index_bp)]) + " and " + str(time_ticks["ticks"][int(index_bp) + 1])
-                line_bp = draw_plot.PlotDraw([index_bp, index_bp], [ylim[0], U_bp], linestyle="--", color="r", linewidth=0.6)
+                index_bp_text = "%.1f" % index_bp if time_ticks == None else "%.1f" % index_bp + " between\n" + \
+                                str(time_ticks["ticks"][int(index_bp)]) + " and " +\
+                                str(time_ticks["ticks"][int(index_bp) + 1])
+                line_bp = draw_plot.PlotDraw([index_bp, index_bp], [ylim[0], U_bp], linestyle="--", color="r",
+                                             linewidth=0.6)
                 Text_bp = draw_plot.TextDraw(index_bp_text, [x_bp, y_bp], color="r")
 
                 # adddraw
@@ -765,20 +843,6 @@ class MKVD(VDBase):
         # set ticks while time_ticks!=None
         if time_ticks != None:
             plt.xticks(time[::time_ticks["interval"]], time_ticks["ticks"][::time_ticks["interval"]])
-
-    def plotdata(self, labelx="Time", labely="Data", **kwargs):
-        ''' only plot cum data '''
-        # define time
-        time = np.arange(len(self._data))
-        y = self._data
-
-        # plot
-        fig = draw_plot.Figure(**kwargs)
-        draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="Data time series", labely=labely,
-                              labelx=labelx, xlim=[0, time[-1]], legend_on=False)
-        line_original_cumdata = draw_plot.ScatterDraw(time, y, marker='o', c="gray", edgecolor="gray", s=2)
-        draw.adddraw(line_original_cumdata)
-
 
     @staticmethod
     def calStatisticsU(vals):
@@ -867,9 +931,10 @@ class OCVD(VDBase):
 
         return S, sortedindex, sortedS
 
-    def plot(self, time_ticks=None, labelx="Time", labely="S", **kwargs):
+    def plot(self, maxplotnumber=6, time_ticks=None, labelx="Time", labely="S", **kwargs):
         ''' Implement VDBase.plot
         input:
+            maxplotnumber: max number of plot breakpoint(ax)
             time_ticks: dict {"ticks": ticks, "interval": interval}, the ticks of time, namely axis x
                         note: for ticks: len=len(data), for interval: dtype=int
             labely: the labely of the first ax
@@ -881,7 +946,7 @@ class OCVD(VDBase):
         time = np.arange(len(self._data))
 
         # plot
-        ylim = [min(self.S) * 0.9,  max(self.S) * 1.1]
+        ylim = [min(self.S) * 0.9, max(self.S) * 1.1]
         fig = draw_plot.Figure(**kwargs)
         draw = draw_plot.Draw(fig.ax, fig, gridy=True, title="Ordered Clustering Variation Detect", labely=labely,
                               labelx=labelx, xlim=[0, time[-1]], ylim=ylim, legend_on=False)
@@ -890,29 +955,33 @@ class OCVD(VDBase):
         line_S = draw_plot.PlotDraw(time, self.S, color="k", linewidth=0.6)
         draw.adddraw(line_S)
 
-        # bp
-        # extract
-        index_bp = self.sortedindex[0]
-        S_bp = self.sortedS[0]
+        # bp plot
+        n = maxplotnumber
 
-        # text position
-        if time[-1] * 0.1 <= index_bp <= time[-1] * 0.9:
-            x_bp = index_bp
-        elif index_bp > time[-1] * 0.9:
-            x_bp = index_bp - time[-1] * 0.1
-        else:
-            x_bp = index_bp + time[-1] * 0.1
+        for i in range(n):
+            # extract
+            index_bp = self.sortedindex[i]
+            S_bp = self.sortedS[i]
 
-        y_bp = S_bp
+            # text position
+            if time[-1] * 0.1 <= index_bp <= time[-1] * 0.9:
+                x_bp = index_bp
+            elif index_bp > time[-1] * 0.9:
+                x_bp = index_bp - time[-1] * 0.1
+            else:
+                x_bp = index_bp + time[-1] * 0.1
 
-        # plot bp
-        index_bp_text = index_bp if time_ticks == None else time_ticks["ticks"][index_bp]
-        line_bp = draw_plot.PlotDraw([index_bp, index_bp], [ylim[0], S_bp], linestyle="--", color="r", linewidth=0.6)
-        Text_bp = draw_plot.TextDraw(f"S = " + "%.d" % S_bp + f" in {index_bp_text}", [x_bp, y_bp], color="r")
+            y_bp = S_bp
 
-        # adddraw
-        draw.adddraw(line_bp)
-        draw.adddraw(Text_bp)
+            # plot bp
+            index_bp_text = index_bp if time_ticks == None else time_ticks["ticks"][index_bp]
+            line_bp = draw_plot.PlotDraw([index_bp, index_bp], [ylim[0], S_bp], linestyle="--", color="r",
+                                         linewidth=0.6)
+            Text_bp = draw_plot.TextDraw(f"S = " + "%.d" % S_bp + f" in {index_bp_text}", [x_bp, y_bp], color="r")
+
+            # adddraw
+            draw.adddraw(line_bp)
+            draw.adddraw(Text_bp)
 
         # set ticks while time_ticks!=None
         if time_ticks != None:
@@ -929,7 +998,7 @@ class OCVD(VDBase):
         '''
 
         n = len(data)
-        S = np.zeros((n, ))
+        S = np.zeros((n,))
 
         # set the S in first & last point
         AllV = sum([(x - sum(data) / n) ** 2 for x in data])
@@ -958,15 +1027,15 @@ if __name__ == '__main__':
     # x = np.hstack((np.random.rand(100, ) * 10, np.arange(200, 100, -1)))
 
     # bgvd
-    # bgvd = BGVD(x)
-    # ret_bgvd = bgvd.passRet
-    # bp_bgvd = bgvd.bp
+    bgvd = BGVD(x)
+    ret_bgvd = bgvd.passRet
+    bp_bgvd = bgvd.bp
     # bgvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
 
     # sccvd
-    # sccvd = SCCVD(x)
-    # ret_sccvd = sccvd.ret
-    # bp_sccvd = sccvd.bp
+    sccvd = SCCVD(x)
+    ret_sccvd = sccvd.ret
+    bp_sccvd = sccvd.bp
     # bp_diff_sccvd = sccvd.slope_bp_diff
     # sccvd.plot(5, time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
 
@@ -994,13 +1063,13 @@ if __name__ == '__main__':
     # dccvdf.plot(5)
 
     # mkvd
-    # mkvd = MKVD(x)
-    # interP_mkvd = mkvd.interP
-    # bp_mkvd = mkvd.bp
+    mkvd = MKVD(x)
+    interP_mkvd = mkvd.interP
+    bp_mkvd = mkvd.bp
     # mkvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
     # mkvd.plotdata()
 
     # ocvd
     ocvd = OCVD(x)
     bp_ocvd = ocvd.bp
-    ocvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
+    # ocvd.plot(maxplotnumber=1, time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
