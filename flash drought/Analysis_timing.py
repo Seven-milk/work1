@@ -116,7 +116,14 @@ def plot_drought_season_flag():
                                            grid=True,
                                            res_grid=res_grid, res_label=res_label,
                                            title="Spatial Distribution of Drought Hot Season")
-    raster_drought_season_flag = map_plot.RasterMap_cb2(det=det, data_lat=lat, data_lon=lon,
+    # raster_drought_season_flag = map_plot.RasterMap_cb2(det=det, data_lat=lat, data_lon=lon,
+    #                                                     data=season_params["Drought_season_Flag"].values,
+    #                                                     expand=5, cb_label="Hot season")
+    raster_drought_season_flag = map_plot.RasterMap_segmented_cb(colorlevel=[0, 1.5, 2.5, 3.5, 4.5],
+                                            colordict=['lightgreen', 'forestgreen', 'wheat', 'lightblue'],
+                                            cbticks=["Spring", "Summber", "Autumn", "Winter"],
+                                                                 cbticks_position=[0.7, 1.7, 2.8, 3.9],
+                                                                 det=det, data_lat=lat, data_lon=lon,
                                                         data=season_params["Drought_season_Flag"].values,
                                                         expand=5, cb_label="Hot season")
     map_drought_season_flag.addmap(raster_drought_season_flag)
@@ -215,13 +222,13 @@ def vd_detect_FD_number():
 
 
 if __name__ == '__main__':
-    boxplot_drought_season()
-    boxplot_FD_season()
+    # boxplot_drought_season()
+    # boxplot_FD_season()
     plot_drought_season_flag()
-    plot_FD_season_flag()
-    mktest_Drought_FD_number_mean()
-    mktest_Drought_number_map()
-    mktest_FD_number_map()
-    mktest_slope_FD_number_map()
-    vd_detect_Drought_number()
-    vd_detect_FD_number()
+    # plot_FD_season_flag()
+    # mktest_Drought_FD_number_mean()
+    # mktest_Drought_number_map()
+    # mktest_FD_number_map()
+    # mktest_slope_FD_number_map()
+    # vd_detect_Drought_number()
+    # vd_detect_FD_number()

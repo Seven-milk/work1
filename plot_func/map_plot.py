@@ -195,6 +195,75 @@ class RasterMap(MeshgridArray, MapBase):
             l.set_family('Arial')
 
 
+class RasterMap_segmented_cb(RasterMap):
+    ''' raster map with segmented colorbar '''
+
+    def __init__(self, colorlevel, colordict, cbticks, cbticks_position, det: float, data_lat: np.ndarray,
+                 data_lon: np.ndarray, data: np.ndarray, maskvalue=-9999, expand: int = 0, cmap_name='RdBu',
+                 map_boundry=None, cb_label="cb"):
+        ''' init function
+        input:
+            similar to RasterMap
+            colorlevel: list, colorlevel for colorbar
+            colordict: list, contains color string
+            cbticks: list, contains colorbar ticks
+            cbticks_position: list, the ticks position, need to adjust by your self, default = middle numbers in
+                              colorlevel
+
+            i.e.
+            colorlevel: [0, 1.5, 2.5, 3.5, 4.5]
+            colordict: ['lightgreen', 'forestgreen', 'wheat', 'lightblue']
+            cbticks: ["Spring", "Summber", "Autumn", "Winter"]
+            cbticks_position: [0.5, 2.0, 3.0, 4.0] -> [0.7, 1.7, 2.8, 3.9]
+
+        '''
+
+        super(RasterMap_segmented_cb, self).__init__(det, data_lat, data_lon, data, maskvalue, expand, cmap_name,
+                                                     map_boundry, cb_label)
+        self.colorlevel = colorlevel
+        self.colordict = colordict
+        self.cbticks = cbticks
+        self.cbticks_position = cbticks_position
+
+    def plot(self, ax, Fig):
+        ''' Implements the MapBase.plot function '''
+        # cb set
+        colorlevel = self.colorlevel
+        colordict = self.colordict
+        ticks = self.cbticks
+        ticks_position = self.cbticks_position
+
+        cmap = mcolors.ListedColormap(colordict)
+        norm = mcolors.BoundaryNorm(colorlevel, cmap.N)
+
+        # other set
+        ax.set_extent(self.extent_plot)
+
+        # plot raster
+        cMap = cmap
+        if self.map_boundry == None:
+            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
+                               norm=norm)
+        else:
+            pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
+                               vmin=self.map_boundry[0], vmax=self.map_boundry[1], norm=norm)
+
+        # cb
+        extend = "neither"
+
+        cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', pad=0.01, extend=extend)
+        cb.ax.yaxis.set_major_locator(plt.NullLocator())
+
+        cb2_ax = cb.ax.secondary_yaxis('right')
+        cb2_ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
+        cb2_ax.set_yticks(ticks_position)
+        cb2_ax.set_yticklabels(ticks)
+        cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
+
+        for l in cb2_ax.yaxis.get_ticklabels():
+            l.set_family('Arial')
+
+
 class RasterMap_cb2(RasterMap):
     ''' raster map with cb2 '''
 
