@@ -68,7 +68,7 @@ for i in range(pagenumber - 1):
         _ = os.system("cls")
         print(f"All page enumber: {pagenumber}")
         print(f'page{i + 1} is downloading: which contains {len(page_download_buttons)} files, and'
-              f' {len(nobutton_index)} files have not been downloaded')
+              f' {len(nobutton_index)} files have not been click, {len(downloading_file)} is downloading')
         print(f'{int((1 - (len(downloading_file) + len(nobutton_index)) / len(page_files_name)) * 100)} %...')
 
         # download nobutton file
