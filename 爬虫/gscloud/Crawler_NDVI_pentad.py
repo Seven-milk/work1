@@ -92,4 +92,4 @@ for i in range(pagenumber - 1):
             break
         else:
             # wait 10 sec for download
-            time.sleep(10)
+            time.sleep(20)
