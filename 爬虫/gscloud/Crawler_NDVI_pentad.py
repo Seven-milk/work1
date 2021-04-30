@@ -8,7 +8,7 @@ import os
 
 option = ChromeOptions()
 option.add_experimental_option('excludeSwitches', ['enable-automation'])
-wd = webdriver.Chrome('D:/chromedriver.exe', options=option)
+wd = webdriver.Chrome('G:/chromedriver.exe', options=option)
 wd.implicitly_wait(10)
 
 # login
@@ -37,29 +37,41 @@ time.sleep(5)
 # download
 download_path = "G:/NDVI"
 pagenumber = 116
+# TODO 找没下的下载
 print(f"page enumber: {pagenumber}")
 for i in range(pagenumber - 1):
+    time.sleep(3)
     downloads = wd.find_elements_by_class_name("download-img")
     print('------------------------------')
     print(f'page{i + 1} is downloading, which contains {len(downloads)} files')
 
+    # check this page whether has been downloaded
+    time.sleep(1)
+    page_file_name = set([e.text for e in wd.find_elements_by_xpath(
+        "//tr[starts-with(@class, 'dlv-row')]/td[2]//div[@style='text-align: center;']")])  # text
+    downloaded_file = set([file[:-4] for file in os.listdir(download_path) if file[-4:] == '.TIF'])
+    if page_file_name <= downloaded_file:
+        # paging
+        print(f'page{i + 1} is downloaded')
+        wd.find_element_by_xpath("//*[@class='l-btn-empty pagination-next']").click()
+        continue
+
     # download click
     for download in downloads:
         download.click()
-        time.sleep(1)
+        time.sleep(3)
 
     # waiting for download: check downloadfile
-    page_file_name = set([e.text for e in wd.find_elements_by_xpath(
-        "//tr[starts-with(@class, 'dlv-row')]/td[2]//div[@style='text-align: center;']")])  # text
     while True:
-        downloaded_file = set([file[:-4] for file in os.listdir(download_path) if file[-4:] == 'TIF'])
+        downloaded_file = set([file[:-4] for file in os.listdir(download_path) if file[-4:] == '.TIF'])
         # if downloaded all
         if page_file_name <= downloaded_file:
             break
         else:
-            print(f"downloading {int(len(downloaded_file) / len(page_file_name) * 100)} %...")
+            print(f"downloading {int((len(downloaded_file) - i*10) / len(page_file_name) * 100)} %...")
         # wait 10 sec
         time.sleep(10)
 
     # paging
-    wd.find_element_by_xpath("//*[@class='l-btn-empty pagination-next']")
+    print(f'page{i + 1} is downloaded')
+    wd.find_element_by_xpath("//*[@class='l-btn-empty pagination-next']").click()
