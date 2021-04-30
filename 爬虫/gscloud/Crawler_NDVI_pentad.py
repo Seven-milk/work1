@@ -6,10 +6,17 @@ from selenium.webdriver import ChromeOptions
 import time
 import os
 
+# download set
+download_path = "G:/NDVI"  # set download path here
+pagenumber = 116
+print(f"page enumber: {pagenumber}")
+
+# WebDriver
 option = ChromeOptions()
 option.add_experimental_option('excludeSwitches', ['enable-automation'])
-wd = webdriver.Chrome('G:/chromedriver.exe', options=option)
+wd = webdriver.Chrome('D:/chromedriver.exe', options=option)
 wd.implicitly_wait(10)
+mainWindow = wd.current_window_handle
 
 # login
 wd.get('http://www.gscloud.cn/sources/accessdata/344?pid=333')
@@ -35,43 +42,51 @@ wd.back()
 time.sleep(5)
 
 # download
-download_path = "G:/NDVI"
-pagenumber = 116
-# TODO 找没下的下载
-print(f"page enumber: {pagenumber}")
 for i in range(pagenumber - 1):
-    time.sleep(3)
-    downloads = wd.find_elements_by_class_name("download-img")
-    print('------------------------------')
-    print(f'page{i + 1} is downloading, which contains {len(downloads)} files')
+    # page file
+    page_files_name = [e.text for e in wd.find_elements_by_xpath\
+        ("//tr[starts-with(@class, 'dlv-row')]/td[2]//div[@style='text-align: center;']")]
+    page_download_buttons = wd.find_elements_by_xpath\
+        ("//tr[starts-with(@class, 'dlv-row')]/td[2]/following-sibling::*/div/div/p[2]/img")
+    paging_button = wd.find_element_by_xpath("//*[@class='l-btn-empty pagination-next']")
 
-    # check this page whether has been downloaded
-    time.sleep(1)
-    page_file_name = set([e.text for e in wd.find_elements_by_xpath(
-        "//tr[starts-with(@class, 'dlv-row')]/td[2]//div[@style='text-align: center;']")])  # text
-    downloaded_file = set([file[:-4] for file in os.listdir(download_path) if file[-4:] == '.TIF'])
-    if page_file_name <= downloaded_file:
-        # paging
-        print(f'page{i + 1} is downloaded')
-        wd.find_element_by_xpath("//*[@class='l-btn-empty pagination-next']").click()
-        continue
-
-    # download click
-    for download in downloads:
-        download.click()
-        time.sleep(3)
-
-    # waiting for download: check downloadfile
+    # check the file have not been download
     while True:
         downloaded_file = set([file[:-4] for file in os.listdir(download_path) if file[-4:] == '.TIF'])
-        # if downloaded all
-        if page_file_name <= downloaded_file:
+        downloading_file = set([file[:-11] for file in os.listdir(download_path) if file[-11:] == '.crdownload'])
+        nobutton_index = []
+        i = 0
+        for page_file_name in page_files_name:
+            if not (page_file_name in downloaded_file or page_file_name in downloading_file):
+                nobutton_index.append(i)
+                i += 1
+
+        # print start downloads
+        _ = os.system("cls")
+        print(f"All page enumber: {pagenumber}")
+        print(f'page{i + 1} is downloading: which contains {len(page_download_buttons)} files, and'
+              f'{len(nobutton_index)} files have not been downloaded')
+        print(f'{int((1 - (len(downloading_file) + len(nobutton_index)) / len(page_files_name)) * 100)} %...')
+
+        # download nobutton file
+        if len(nobutton_index) != 0:
+            for nobutton in nobutton_index:
+                page_download_buttons[nobutton].click()
+                time.sleep(5)  # wait for response
+                handles = wd.window_handles
+                if len(handles) > 1:
+                    for i in range(1, len(handles)):
+                        wd.switch_to.window(handles[1])
+                        wd.close()
+                        wd.switch_to.window(mainWindow)
+
+        # if this page is downloaded
+        if set(page_files_name) <= downloaded_file:
+            # paging
+            print(f'page{i + 1} is downloaded')
+            paging_button.click()
+            time.sleep(5)
             break
         else:
-            print(f"downloading {int((len(downloaded_file) - i*10) / len(page_file_name) * 100)} %...")
-        # wait 10 sec
-        time.sleep(10)
-
-    # paging
-    print(f'page{i + 1} is downloaded')
-    wd.find_element_by_xpath("//*[@class='l-btn-empty pagination-next']").click()
+            # wait 10 sec for download
+            time.sleep(10)
