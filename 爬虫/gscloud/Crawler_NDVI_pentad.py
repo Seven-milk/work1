@@ -14,7 +14,7 @@ print(f"page enumber: {pagenumber}")
 # WebDriver
 option = ChromeOptions()
 option.add_experimental_option('excludeSwitches', ['enable-automation'])
-wd = webdriver.Chrome('D:/chromedriver.exe', options=option)
+wd = webdriver.Chrome('G:/chromedriver.exe', options=option)
 wd.implicitly_wait(10)
 mainWindow = wd.current_window_handle
 
@@ -41,6 +41,10 @@ time.sleep(3)
 wd.back()
 time.sleep(5)
 
+# delete files_downloading before
+downloading_before = [os.remove(os.path.join(download_path, file)) for file in os.listdir(download_path)
+                      if file[-11:] == '.crdownload']
+
 # download
 for i in range(pagenumber - 1):
     # page file
@@ -53,19 +57,18 @@ for i in range(pagenumber - 1):
     # check the file have not been download
     while True:
         downloaded_file = set([file[:-4] for file in os.listdir(download_path) if file[-4:] == '.TIF'])
-        downloading_file = set([file[:-11] for file in os.listdir(download_path) if file[-11:] == '.crdownload'])
+        downloading_file = set([file[:-15] for file in os.listdir(download_path) if file[-11:] == '.crdownload'])
         nobutton_index = []
-        i = 0
-        for page_file_name in page_files_name:
+        for index in range(len(page_files_name)):
+            page_file_name = page_files_name[index]
             if not (page_file_name in downloaded_file or page_file_name in downloading_file):
-                nobutton_index.append(i)
-                i += 1
+                nobutton_index.append(index)
 
         # print start downloads
         _ = os.system("cls")
         print(f"All page enumber: {pagenumber}")
         print(f'page{i + 1} is downloading: which contains {len(page_download_buttons)} files, and'
-              f'{len(nobutton_index)} files have not been downloaded')
+              f' {len(nobutton_index)} files have not been downloaded')
         print(f'{int((1 - (len(downloading_file) + len(nobutton_index)) / len(page_files_name)) * 100)} %...')
 
         # download nobutton file
@@ -75,7 +78,7 @@ for i in range(pagenumber - 1):
                 time.sleep(5)  # wait for response
                 handles = wd.window_handles
                 if len(handles) > 1:
-                    for i in range(1, len(handles)):
+                    for j in range(1, len(handles)):
                         wd.switch_to.window(handles[1])
                         wd.close()
                         wd.switch_to.window(mainWindow)
