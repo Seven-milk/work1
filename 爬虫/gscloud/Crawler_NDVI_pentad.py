@@ -45,6 +45,9 @@ time.sleep(5)
 downloading_before = [os.remove(os.path.join(download_path, file)) for file in os.listdir(download_path)
                       if file[-11:] == '.crdownload']
 
+# skip set
+skip = 0
+
 # download
 for i in range(pagenumber - 1):
     # page file
@@ -53,6 +56,16 @@ for i in range(pagenumber - 1):
     page_download_buttons = wd.find_elements_by_xpath\
         ("//tr[starts-with(@class, 'dlv-row')]/td[2]/following-sibling::*/div/div/p[2]/img")
     paging_button = wd.find_element_by_xpath("//*[@class='l-btn-empty pagination-next']")
+
+    # skip
+    if skip > 0:
+        for skip_i in range(skip):
+            # paging
+            _ = os.system("cls")
+            print(f"skip page{skip_i}")
+            paging_button.click()
+            time.sleep(5)
+            continue
 
     # check the file have not been download
     while True:
