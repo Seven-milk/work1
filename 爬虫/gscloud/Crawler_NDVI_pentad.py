@@ -5,6 +5,7 @@ from selenium import webdriver
 from selenium.webdriver import ChromeOptions
 import time
 import os
+import random
 
 # download set
 download_path = "G:/NDVI"  # set download path here
@@ -14,6 +15,29 @@ print(f"page enumber: {pagenumber}")
 # WebDriver
 option = ChromeOptions()
 option.add_experimental_option('excludeSwitches', ['enable-automation'])
+
+# proxy
+proxy_arr = [
+     '--proxy-server=http://220.181.111.37:80',
+     # '--proxy-server=http://49.70.99.163:9999',
+     # '--proxy-server=http://160.19.232.85:3128',
+     # '--proxy-server=http://183.166.123.112:9999',
+     # '--proxy-server=http://117.94.140.3:9999',
+     # '--proxy-server=http://114.233.169.40:8073',
+     # '--proxy-server=http://124.94.254.134:9999',
+     # '--proxy-server=http://113.194.131.151:9999',
+     # '--proxy-server=36.248.132.196:9999',
+     # '--proxy-server=http://125.46.0.62:53281',
+     # '--proxy-server=http://219.239.142.253:3128',
+     # '--proxy-server=http://119.57.156.90:53281',
+     # '--proxy-server=http://60.205.132.71:80',
+     # '--proxy-server=https://139.217.110.76:3128',
+     # '--proxy-server=https://116.196.85.150:3128'
+ ]
+proxy = random.choice(proxy_arr)
+print(proxy)
+option.add_argument(proxy)
+
 wd = webdriver.Chrome('G:/chromedriver.exe', options=option)
 wd.implicitly_wait(10)
 mainWindow = wd.current_window_handle
@@ -46,7 +70,8 @@ downloading_before = [os.remove(os.path.join(download_path, file)) for file in o
                       if file[-11:] == '.crdownload']
 
 # skip set
-skip = 0
+skip = 27
+skip_i = 0
 
 # download
 for i in range(pagenumber - 1):
@@ -58,14 +83,14 @@ for i in range(pagenumber - 1):
     paging_button = wd.find_element_by_xpath("//*[@class='l-btn-empty pagination-next']")
 
     # skip
-    if skip > 0:
-        for skip_i in range(skip):
-            # paging
-            _ = os.system("cls")
-            print(f"skip page{skip_i}")
-            paging_button.click()
-            time.sleep(5)
-            continue
+    if skip > i + 1:
+        # paging
+        _ = os.system("cls")
+        print(f"skip page{skip_i + 1}")
+        paging_button.click()
+        time.sleep(5)
+        skip_i += 1
+        continue
 
     # check the file have not been download
     while True:
