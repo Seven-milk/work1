@@ -34,9 +34,9 @@ proxy_arr = [
      # '--proxy-server=https://139.217.110.76:3128',
      # '--proxy-server=https://116.196.85.150:3128'
  ]
-proxy = random.choice(proxy_arr)
-print(proxy)
-option.add_argument(proxy)
+# proxy = random.choice(proxy_arr)
+# print(proxy)
+# option.add_argument(proxy)
 
 wd = webdriver.Chrome('G:/chromedriver.exe', options=option)
 wd.implicitly_wait(10)
@@ -113,7 +113,7 @@ for i in range(pagenumber - 1):
         if len(nobutton_index) != 0:
             for nobutton in nobutton_index:
                 page_download_buttons[nobutton].click()
-                time.sleep(5)  # wait for response
+                time.sleep(6)  # wait for response
                 handles = wd.window_handles
                 if len(handles) > 1:
                     for j in range(1, len(handles)):
@@ -130,4 +130,4 @@ for i in range(pagenumber - 1):
             break
         else:
             # wait 10 sec for download
-            time.sleep(20)
+            time.sleep(60)
