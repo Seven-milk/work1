@@ -92,10 +92,14 @@ class WorkFlow:
     def runflow(self):
         ''' run WorkFlow: run works in this flow '''
         print("Start running WorkFlow\n")
+        i = 0
         for work in self._works:
-            print(f"Start running work: {str(work)}")
-            self._ret.append(work.run())
-            print(f"Complete wrok: {str(work)}")
+            print(f"Start running work{i}: {str(work)}")
+            # append work.run() results in self._ret
+            ret_ = work.run()
+            self._ret.append({f"work{i}_ret": ret_})
+            i += 1
+            print(f"Complete wrok{i}: {str(work)}")
         print("\nComplete WorkFlow")
 
 
