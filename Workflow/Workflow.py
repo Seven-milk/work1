@@ -45,7 +45,7 @@ class WorkFlow:
         self._works: a list contains subclasses of WorkBase to manager work
         '''
         self._works = [work for work in args]
-        self._ret = []
+        self.ret = []
 
     def __getitem__(self, item):
         return self._works[item]
@@ -91,16 +91,16 @@ class WorkFlow:
 
     def runflow(self):
         ''' run WorkFlow: run works in this flow '''
-        print("Start running WorkFlow\n")
+        print(f"Start running WorkFlow\n")
         i = 0
         for work in self._works:
             print(f"Start running work{i}: {str(work)}")
             # append work.run() results in self._ret
             ret_ = work.run()
-            self._ret.append({f"work{i}_ret": ret_})
+            self.ret.append({f"work{i}_ret": ret_})
             i += 1
-            print(f"Complete wrok{i}: {str(work)}")
-        print("\nComplete WorkFlow")
+            print(f"Complete wrok{i}: {str(work)}\n")
+        print(f"\nComplete WorkFlow")
 
 
 if __name__ == '__main__':
