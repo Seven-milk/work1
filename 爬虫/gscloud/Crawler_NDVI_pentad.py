@@ -70,7 +70,7 @@ downloading_before = [os.remove(os.path.join(download_path, file)) for file in o
                       if file[-11:] == '.crdownload']
 
 # skip set
-skip = 27
+skip = 0
 skip_i = 0
 
 # download
@@ -131,3 +131,6 @@ for i in range(pagenumber - 1):
         else:
             # wait 10 sec for download
             time.sleep(60)
+
+# TODO 删除()，即重复内容
+# TODO 增加skip便利的方式：找到页数跳转的地方，send_keys，然后点击，然后for (skip, pagenumber - 1)
