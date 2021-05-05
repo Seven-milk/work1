@@ -162,7 +162,7 @@ if __name__ == '__main__':
     _, sm_rz_noHelong_pentad = sm_rz_noHelong_CP.run()
 
     # CalSmPercentile
-    sm_rz_pentad_CSP = CalSmPercentile(sm_rz_pentad, timestep=73, info="sm_rz_pentad")
+    sm_rz_pentad_CSP = CalSmPercentile(sm_rz_pentad, timestep=73, info="sm_rz_pentad_CSP")
 
     sm_percentile_rz_pentad = sm_rz_pentad_CSP.run()
 
