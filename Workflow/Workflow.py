@@ -89,11 +89,24 @@ class WorkFlow:
             raise TypeError("Input should be a instance of WorkBase")
         return None
 
-    def runflow(self):
-        ''' run WorkFlow: run works in this flow '''
+    def runflow(self, key: list = None, skip: list = None):
+        ''' run WorkFlow: run works in this flow
+        input:
+            key: list, work to do
+            skip: list, work to skip
+        '''
+        # default set
+        if key == None:
+            key = list(range(len(self._works)))
+        if skip == None:
+            skip = []
+
         print(f"Start running WorkFlow\n")
         i = 0
         for work in self._works:
+            if i not in key or i in skip:
+                i += 1
+                continue
             print(f"Start running work{i}: {str(work)}")
             # append work.run() results in self._ret
             ret_ = work.run()
