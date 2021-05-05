@@ -9,6 +9,8 @@ from cartopy.io.shapereader import Reader, natural_earth
 import matplotlib.ticker as mticker
 import matplotlib.colors as mcolors
 import matplotlib
+from importlib import reload
+import cv2
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import numpy as np
 import os
@@ -141,7 +143,7 @@ class BaseMap(MapBase):
     ''' base map '''
 
     def plot(self, ax, Fig):
-        ''' Implements the MapBase.plot function '''
+        ''' Implement the MapBase.plot function '''
         # add coastline with resolution = 50m
         ax.add_feature(feature.COASTLINE.with_scale('50m'), linewidth=0.6, zorder=10)
         # add River and lakes with resolution = 50m
@@ -172,7 +174,7 @@ class RasterMap(MeshgridArray, MapBase):
                             min(self.array_data_lat) - self.det / 2, max(self.array_data_lat) + self.det / 2]
 
     def plot(self, ax, Fig):
-        ''' Implements the MapBase.plot function '''
+        ''' Implement the MapBase.plot function '''
         ax.set_extent(self.extent_plot)
         cMap = plt.get_cmap(self.cmap_name)
         # plot raster
@@ -226,7 +228,7 @@ class RasterMap_segmented_cb(RasterMap):
         self.cbticks_position = cbticks_position
 
     def plot(self, ax, Fig):
-        ''' Implements the MapBase.plot function '''
+        ''' Implement the MapBase.plot function '''
         # cb set
         colorlevel = self.colorlevel
         colordict = self.colordict
@@ -268,7 +270,7 @@ class RasterMap_cb2(RasterMap):
     ''' raster map with cb2 '''
 
     def plot(self, ax, Fig):
-        ''' Implements the MapBase.plot function '''
+        ''' Implement the MapBase.plot function '''
         # cb
         colorlevel = [0, 1.5, 2.5, 3.5, 4.5]
         colordict = ['lightgreen', 'forestgreen', 'wheat', 'lightblue']
@@ -306,7 +308,7 @@ class RasterMap_cb3(RasterMap):
     ''' raster map with cb2 '''
 
     def plot(self, ax, Fig):
-        ''' Implements the MapBase.plot function '''
+        ''' Implement the MapBase.plot function '''
         # cb
         colorlevel = [-1.5, -0.5, 0.5, 1.5]
         colordict = ['green', 'lightgrey', 'red']
@@ -361,12 +363,62 @@ class ShpMap(MapBase):
         self.kwargs = kwargs
 
     def plot(self, ax, Fig):
-        ''' Implements the MapBase.plot function '''
+        ''' Implement the MapBase.plot function '''
         # add shape file of users'
         for shape_path in self.shape_file:
             ax.add_feature(feature.ShapelyFeature(Reader(shape_path).geometries(), crs=self.proj,
                                                   edgecolor=self.edgecolor, facecolor=self.facecolor), **self.kwargs)
 
+
+class ImgMap(MapBase):
+    ''' Img Map '''
+    def __init__(self, img_file: list = None, proj: crs.Projection = crs.PlateCarree(), flags=-1,
+                 **kwargs):
+        ''' init function 
+        input:
+            img_file: list of str, which save the img_file path（.tiff, ） to plot in the map, default = none(not plot)
+            proj: crs.Projection, projection
+            flags: flags in cv2.imread
+                IMREAD_UNCHANGED = -1
+                IMREAD_GRAYSCALE = 0
+                IMREAD_COLOR = 1
+                IMREAD_ANYDEPTH = 2
+                IMREAD_ANYCOLOR = 4
+
+            support:
+            .   -   Windows bitmaps - \*.bmp, \*.dib (always supported)
+            .   -   JPEG files - \*.jpeg, \*.jpg, \*.jpe (see the *Note* section)
+            .   -   JPEG 2000 files - \*.jp2 (see the *Note* section)
+            .   -   Portable Network Graphics - \*.png (see the *Note* section)
+            .   -   WebP - \*.webp (see the *Note* section)
+            .   -   Portable image format - \*.pbm, \*.pgm, \*.ppm \*.pxm, \*.pnm (always supported)
+            .   -   PFM files - \*.pfm (see the *Note* section)
+            .   -   Sun rasters - \*.sr, \*.ras (always supported)
+            .   -   TIFF files - \*.tiff, \*.tif (see the *Note* section)
+            .   -   OpenEXR Image files - \*.exr (see the *Note* section)
+            .   -   Radiance HDR - \*.hdr, \*.pic (always supported)
+            .   -   Raster and Vector geospatial data supported by GDAL (see the *Note* section)
+
+            **kwargs: keyword args in ax.imshow, it could contain "origin", "regrid_shape", "extent"
+                    extend: list, The corner coordinates of the image in the form ``(left, right, bottom, top)``.
+                    The coordinates should be in the coordinate system passed to the transform keyword.
+        '''
+        self._img_file = img_file
+        self._proj = proj
+        self._kwargs = kwargs
+        self._flags = flags
+        
+    def plot(self, ax, Fig):
+        ''' Implement the MapBase.plot function '''
+        for img_path in self._img_file:
+            img_ = cv2.imread(img_path, self._flags)  # read as bgr
+            trans_img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)  # trans into rgb plotting in ax.imshow()
+            ax.imshow(
+                trans_img,
+                transform=self._proj,
+                **self._kwargs
+            )
+        
 
 class TextMap(MapBase):
     ''' Text Map '''
@@ -383,7 +435,7 @@ class TextMap(MapBase):
         self.kwargs = kwargs
 
     def plot(self, ax, Fig):
-        ''' Implements the MapBase.plot function '''
+        ''' Implement the MapBase.plot function '''
         # define the default fontdict
         if "fontdict" not in self.kwargs.keys():
             self.kwargs["fontdict"] = Fig.font_label
@@ -629,6 +681,8 @@ if __name__ == "__main__":
     shape_file = [f"{root}:/GIS/Flash_drought/f'r_project.shp"]
     s = ShpMap(shape_file, facecolor="g", alpha=0.5)
     t = TextMap("Text", [lon[0], lat[0]], color="r")
+    img = ImgMap(img_file=['D:/NDVI/MODND1F.20000226.CN.NDVI.MAX.V2.TIF'], extent=[73.396, 134.8032, 3.7996, 53.6015])
     m.addmap(r)
     m.addmap(s)
     m.addmap(t)
+    m.addmap(img)
