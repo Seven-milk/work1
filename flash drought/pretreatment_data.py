@@ -126,12 +126,28 @@ class CalSmPercentile(Workflow.WorkBase):
         return f"This is CalSmPercentile, info: {self._info}, calculate SmPercentile series from SM series"
 
 
-def compare_sm_sm_percentile():
-    """ compare sm_rz_pentad and sm_percentile_rz_pentad: differences result from the fit and section calculation """
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-    ax1.plot(sm_rz_pentad[:, 1], "b", alpha=0.5)
-    ax2.plot(sm_percentile_rz_pentad[:, 1], "r.", markersize=1)
+class CompareSmPercentile(Workflow.WorkBase):
+    ''' Work, compare sm_rz_pentad and sm_percentile_rz_pentad: differences result from the fit and section
+     calculation '''
+    def __init__(self, sm_rz_pentad, sm_percentile_rz_pentad, info=""):
+        ''' init function '''
+
+        self.sm_rz_pentad = sm_rz_pentad
+        self.sm_percentile_rz_pentad = sm_percentile_rz_pentad
+        self._info = info
+
+    def run(self):
+        """ implement WorkBase.run """
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        ax1.plot(self.sm_rz_pentad[:, 1], "b", alpha=0.5)
+        ax2.plot(self.sm_percentile_rz_pentad[:, 1], "r.", markersize=1)
+
+    def __repr__(self):
+        return f"This is CompareSmPercentile, info: {self._info}, compare sm_rz_pentad and sm_percentile_rz_pentad"
+
+    def __str__(self):
+        return f"This is CompareSmPercentile, info: {self._info}, compare sm_rz_pentad and sm_percentile_rz_pentad"
 
 
 if __name__ == '__main__':
@@ -150,10 +166,12 @@ if __name__ == '__main__':
 
     sm_percentile_rz_pentad = sm_rz_pentad_CSP.run()
 
+    # compare sm and sm_percentile
+    CompareSP = CompareSmPercentile(sm_rz_pentad, sm_percentile_rz_pentad, info="sm_rz_pentadVSsm_percentile_rz_pentad")
+
     # Pretreatment_data WF
     PDWF = Workflow.WorkFlow()
     PDWF += WF_CP
     PDWF += sm_rz_pentad_CSP
-
-    # compare sm and sm_percentile
-    compare_sm_sm_percentile()
+    PDWF += CompareSP
+    PDWF.runflow(key=[4])
