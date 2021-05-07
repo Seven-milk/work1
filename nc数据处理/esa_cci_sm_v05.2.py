@@ -10,9 +10,10 @@ import numpy.testing as nptest
 from datetime import timedelta
 import matplotlib.pyplot as plt
 import pandas as pd
+import map_plot
 
 # general set
-home = 'H:/data_zxd/ESA_CCI_SM_v05.2'
+home = 'H:/data_zxd/ESA_CCI_SM_v06.1'
 
 
 def test():
@@ -30,15 +31,13 @@ def test():
 
     plt.pcolormesh(image.lon, image.lat, image.data["sm"])
 
-
+# sm
 parameter = 'sm'
-img = CCI_SM_025Ds(data_path=os.path.join(home, '3_alldata_7zip_compressed/combined'), parameter=parameter)
-date_period = pd.date_range('19790101', '19791231', freq='D')
-day1 = timedelta(days=1)
+img = CCI_SM_025Ds(data_path=os.path.join(home, '_down/2_daily_images/combined'), parameter=parameter)
 fig, ax = plt.subplots()
 # range(len(date_period))
 
-for i in range(50):
-    image = img.read(datetime(1979, 1, 1, 0) + day1 * i)
-    ax.pcolormesh(image.lon, image.lat, image.data["sm"])
+
+image = img.read(datetime(2020, 1, 29, 0))
+ax.pcolormesh(image.lon, image.lat, image.data["sm"])
 
