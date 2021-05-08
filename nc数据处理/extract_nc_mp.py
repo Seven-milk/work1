@@ -11,7 +11,7 @@ import re
 import time
 
 
-def extract_nc(path, coord_path, variable_name, precision=3, num_pool=4):
+def extract_nc(path, coord_path, variable_name, r, precision=3, num_pool=4):
     """extract variable(given region by coord) from .nc file
     input:
         path: path of the source nc file
@@ -19,6 +19,9 @@ def extract_nc(path, coord_path, variable_name, precision=3, num_pool=4):
         variable_name: name of the variable need to read
         precision: the minimum precision of lat/lon, to match the lat/lon of source nc file
         num_pool: the number of processes
+        r: <class 're.Pattern'>, regular experssion to identify time, use re.compile(r"...") to build it
+            e.g. 19980101 - r = re.compile(r"\d{8}")
+            e.g. 19980101.0300 - r = re.compile(r"\d{8}\.\d{4}")
 
     output:
         {variable_name}.txt [i, j]: i(file number) j(grid point number)
@@ -50,7 +53,8 @@ def extract_nc(path, coord_path, variable_name, precision=3, num_pool=4):
         """read variable from nc file(i), used in pool"""
         vb = []
         f = Dataset(result[i], 'r')
-        vb.append(float(re.search(r"\d{6}", result[i])[0]))
+        # vb.append(float(re.search(r"\d{8}\.\d{4}", result[i])[0]))  # !! make sure it's right here
+        vb.append(float(r.search(result[i])[0]))
         # re: the number depend on the nc file name(daily=8, month=6)
         # Dataset.set_auto_mask(f, False) # if there no mask value, open to improve speed
         for j in range(len(coord)):
@@ -101,19 +105,29 @@ def overview(path):
 
 
 if __name__ == "__main__":
-    """example"""
+    # example
     # start = time.time()
     # path = "F:/Yanxiang/Python/gldas"
-    path = "D:/GLADS/daily_data"
+    # path = "D:/GLADS/daily_data"
     # coord_path = "F:/Yanxiang/Python/coord.txt"
-    coord_path = "H:/research/flash_drough/coord.txt"
+    # coord_path = "H:/research/flash_drough/coord.txt"
     # overview(path)
-    extract_nc(path, coord_path, "Wind_f_tavg", precision=3)
+    # r = re.compile(r'\d{8}')
+    # extract_nc(path, coord_path, "Wind_f_tavg", r=r, precision=3)
     # end = time.time()
     # print("extract_nc_mp time：", end - start)
-    # """Execute  code, extract variable from GLDAS nc file"""
+
+    # Execute  code, extract variable from GLDAS nc file
     # path = "D:\GLADS\daily_data"
     # coord_path = "H:\GIS\Flash_drought\coord.txt"
     # coord = pd.read_csv(coord_path, sep=",")
     # overview(path)
     # extract_nc(path, coord_path, 'SoilMoist_RZ_tavg', precision=3, num_pool=8)
+
+    # Execute  code, extract variable from GLDAS_Noah nc file
+    path = "D:/GLDAS_NOAH"
+    coord_path = "H:/GIS/Flash_drought/coord.txt"
+    coord = pd.read_csv(coord_path, sep=",")
+    overview(path)
+    r = re.compile(r'\d{8}\.\d{4}')
+    extract_nc(path, coord_path, 'SoilMoi0_10cm_inst', r=r, precision=3, num_pool=8)

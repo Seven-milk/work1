@@ -10,13 +10,15 @@ import time
 import re
 
 
-def extract_nc(path, coord_path, variable_name, precision=3):
+def extract_nc(path, coord_path, variable_name, r, precision=3):
     """extract variable(given region by coord) from .nc file
     input:
         path: path of the source nc file
         coord_path: path of the coord extracted by fishnet: OID_, lon, lat
         variable_name: name of the variable need to read
         precision: the minimum precision of lat/lon, to match the lat/lon of source nc file
+        r: <class 're.Pattern'>, regular experssion to identify time, use re.compile(r"...") to build it
+            e.g. 19980101 - r = re.compile(r"\d{8}")
 
     output:
         {variable_name}.txt [i, j]: i(file number) j(grid point number)
@@ -47,7 +49,8 @@ def extract_nc(path, coord_path, variable_name, precision=3):
     for i in range(len(result)):
         f = Dataset(result[i], 'r')
         # Dataset.set_auto_mask(f, False) # if there no mask value, open to improve speed
-        variable[i, 0] = float(re.search(r"\d{6}", result[i])[0])
+        # variable[i, 0] = float(re.search(r"\d{6}", result[i])[0])
+        variable[i, 0] = float(r.search(result[i])[0])
         # re: the number depend on the nc file name(daily=8, month=6)
         for j in range(len(coord)):
             variable[i, j + 1] = f.variables[variable_name][0, lat_index[j], lon_index[j]]
@@ -95,6 +98,7 @@ if __name__ == "__main__":
     path = "F:/Yanxiang/Python/yanxiang_1_2/gldas"
     # path = "G:/GLADS/daily_data"
     coord_path = "F:/Yanxiang/Python/yanxiang_1_2/coord.txt"
-    extract_nc(path, coord_path, "Snowf_tavg", precision=3)
+    r = re.compile(r"\d{6}")
+    extract_nc(path, coord_path, "Snowf_tavg", r=r, precision=3)
     end = time.time()
     print("extract_nc time：", end - start)
