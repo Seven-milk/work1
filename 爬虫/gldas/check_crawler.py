@@ -22,7 +22,7 @@ def check_crawler(home, URL, r):
     input:
         home: home path, where downloaded files exist
         URL: url path, a text file includes all urls
-        r: <class 're.Pattern'>, regular experssion to identify unique file/url, use re.compilr(r"...") to build it
+        r: <class 're.Pattern'>, regular experssion to identify unique file/url, use re.compile(r"...") to build it
 
         note:
         1) this function focus on .nc4 file, you can change it in file_name
