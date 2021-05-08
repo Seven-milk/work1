@@ -11,7 +11,7 @@ import re
 import time
 
 
-def extract_nc(path, coord_path, variable_name, r, precision=3, num_pool=4):
+def extract_nc(path, coord_path, variable_name, r, precision=3, num_pool=4, coordsave=False):
     """extract variable(given region by coord) from .nc file
     input:
         path: path of the source nc file
@@ -22,6 +22,7 @@ def extract_nc(path, coord_path, variable_name, r, precision=3, num_pool=4):
         r: <class 're.Pattern'>, regular experssion to identify time, use re.compile(r"...") to build it
             e.g. 19980101 - r = re.compile(r"\d{8}")
             e.g. 19980101.0300 - r = re.compile(r"\d{8}\.\d{4}")
+        coordsave: whether save the lat_index/ lon_index/ coord
 
     output:
         {variable_name}.txt [i, j]: i(file number) j(grid point number)
@@ -49,6 +50,7 @@ def extract_nc(path, coord_path, variable_name, r, precision=3, num_pool=4):
     f1.close()
 
     # read variable based on the lat_index/lon_index, based on multiprocessing
+    # Process Safety: don't need lock, because each processing calculates unique vb, there is no sharing memory
     def read(i):
         """read variable from nc file(i), used in pool"""
         vb = []
@@ -63,6 +65,7 @@ def extract_nc(path, coord_path, variable_name, r, precision=3, num_pool=4):
             # f.variables['Rainf_f_tavg'][0, lat_index_lp, lon_index_lp]is a mistake, we only need the file
             # that lat/lon corssed (1057) rather than meshgrid(lat, lon) (1057*1057)
         print(f"complete read file:{i}")
+        f.close()
         return vb
 
     po = Pool(num_pool)  # pool
@@ -75,9 +78,10 @@ def extract_nc(path, coord_path, variable_name, r, precision=3, num_pool=4):
     variable = variable[variable[:, 0].argsort()]
     # save
     np.savetxt(f'{variable_name}.txt', variable, delimiter=' ')
-    np.savetxt('lat_index.txt', lat_index, delimiter=' ')
-    np.savetxt('lon_index.txt', lon_index, delimiter=' ')
-    coord.to_csv("coord.txt")
+    if coordsave == True:
+        np.savetxt('lat_index.txt', lat_index, delimiter=' ')
+        np.savetxt('lon_index.txt', lon_index, delimiter=' ')
+        coord.to_csv("coord.txt")
 
 
 def overview(path):
@@ -125,9 +129,7 @@ if __name__ == "__main__":
     # extract_nc(path, coord_path, 'SoilMoist_RZ_tavg', precision=3, num_pool=8)
 
     # Execute  code, extract variable from GLDAS_Noah nc file
-    path = "D:/GLDAS_NOAH"
+    path = "H:/data_zxd/GLDAS_test"
     coord_path = "H:/GIS/Flash_drought/coord.txt"
-    coord = pd.read_csv(coord_path, sep=",")
-    overview(path)
-    r = re.compile(r'\d{8}\.\d{4}')
-    extract_nc(path, coord_path, 'SoilMoi0_10cm_inst', r=r, precision=3, num_pool=8)
+    r = re.compile(r"\d{8}")
+    extract_nc(path, coord_path, "SoilMoist_RZ_tavg", r=r, precision=3, num_pool=8)

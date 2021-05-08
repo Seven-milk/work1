@@ -10,7 +10,7 @@ import time
 import re
 
 
-def extract_nc(path, coord_path, variable_name, r, precision=3):
+def extract_nc(path, coord_path, variable_name, r, precision=3, coordsave=False):
     """extract variable(given region by coord) from .nc file
     input:
         path: path of the source nc file
@@ -19,6 +19,7 @@ def extract_nc(path, coord_path, variable_name, r, precision=3):
         precision: the minimum precision of lat/lon, to match the lat/lon of source nc file
         r: <class 're.Pattern'>, regular experssion to identify time, use re.compile(r"...") to build it
             e.g. 19980101 - r = re.compile(r"\d{8}")
+        coordsave: whether save the lat_index/ lon_index/ coord
 
     output:
         {variable_name}.txt [i, j]: i(file number) j(grid point number)
@@ -64,9 +65,10 @@ def extract_nc(path, coord_path, variable_name, r, precision=3):
     variable = variable[variable[:, 0].argsort()]
     # save
     np.savetxt(f'{variable_name}.txt', variable, delimiter=' ')
-    np.savetxt('lat_index.txt', lat_index, delimiter=' ')
-    np.savetxt('lon_index.txt', lon_index, delimiter=' ')
-    coord.to_csv("coord.txt")
+    if coordsave == True:
+        np.savetxt('lat_index.txt', lat_index, delimiter=' ')
+        np.savetxt('lon_index.txt', lon_index, delimiter=' ')
+        coord.to_csv("coord.txt")
 
 
 def overview(path):
@@ -94,11 +96,17 @@ def overview(path):
 
 
 if __name__ == "__main__":
-    start = time.time()
-    path = "F:/Yanxiang/Python/yanxiang_1_2/gldas"
-    # path = "G:/GLADS/daily_data"
-    coord_path = "F:/Yanxiang/Python/yanxiang_1_2/coord.txt"
-    r = re.compile(r"\d{6}")
-    extract_nc(path, coord_path, "Snowf_tavg", r=r, precision=3)
-    end = time.time()
-    print("extract_nc time：", end - start)
+    # example
+    # start = time.time()
+    # path = "F:/Yanxiang/Python/yanxiang_1_2/gldas"
+    # # path = "G:/GLADS/daily_data"
+    # coord_path = "F:/Yanxiang/Python/yanxiang_1_2/coord.txt"
+    # r = re.compile(r"\d{6}")
+    # extract_nc(path, coord_path, "Snowf_tavg", r=r, precision=3)
+    # end = time.time()
+    # print("extract_nc time：", end - start)
+
+    path = "H:/data_zxd/GLDAS_test"
+    coord_path = "H:/GIS/Flash_drought/coord.txt"
+    r = re.compile(r"\d{8}")
+    extract_nc(path, coord_path, "SoilMoist_RZ_tavg", r=r, precision=3)
