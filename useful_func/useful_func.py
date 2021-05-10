@@ -92,6 +92,32 @@ def intersection(line1, line2, plot_=False):
     return r
 
 
+def divideLen(Len, section_num):
+    ''' divide a Len into section num
+    e.g. len(x) = 10 -> divideLen(len(x), 3) -> [0, 3, 6, 11]
+    x = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    for i in range(section_num):
+        x_section = x[output[i]: output[i+1]]
+        print(x_section)
+    >>
+    [0 1 2]
+    [3 4 5]
+    [6 7 8 9]
+
+    e.g. len(x) = 10  -> divideLen(len(x), 5) -> [0, 2, 4, 6, 8, 11]
+    x = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>
+    [0 1]
+    [2 3]
+    [4 5]
+    [6 7]
+    [8 9]
+    '''
+    section = np.linspace(0, Len, section_num + 1, dtype=int).tolist()
+    section[-1] += 1
+    return section
+
+
 if __name__ == '__main__':
     data = np.arange(10)
     slope_ = slope(data)
