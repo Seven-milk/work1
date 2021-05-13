@@ -28,7 +28,7 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
     ''' Work, Extract Nc file writing while reading in multi-processing, save as a Bin file '''
 
     def __init__(self, path, coord_path, variable_name, r, fname=None, start="", end="", format="%s",
-                 precision=3, coordsave=False, num_cpu=4, iscombine: bool = True):
+                 precision=3, coordsave=False, num_cpu=8, iscombine: bool = True):
         ''' init function
         input: similar with ExtractNcWwrBin
             num_cpu: the number of processes
@@ -78,7 +78,7 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
 
         # input start/end date and find the index in file_name
         index_start = 0 if self.start == "" else [self.start in name for name in result].index(True)
-        index_end = 0 if self.end == "" else [self.end in name for name in result].index(True)
+        index_end = len(result) if self.end == "" else [self.end in name for name in result].index(True)
         print("start - end: ", self.start, " to ", self.end)
 
         result = result[index_start: index_end + 1]
@@ -177,10 +177,11 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
 
 
 if __name__ == "__main__":
-    path = "D:/GLDAS_NOAH"
+    path = "D:/GLADS/daily_data"
     coord_path = "H:/GIS/Flash_drought/coord.txt"
-    r = re.compile(r"\d{8}\.\d{4}")
-    encmp = ExtractNcWwrBinMp(path, coord_path, "SoilMoi40_100cm_inst", start="19810101.0000", end="20141231.2100", r=r,
+    # r = re.compile(r"\d{8}\.\d{4}")
+    r = re.compile(r'\d{8}')
+    encmp = ExtractNcWwrBinMp(path, coord_path, "SoilMoist_RZ_tavg", start="", end="", r=r,
                               precision=3, num_cpu=8)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
     # encmp.overview()
     print(encmp)
