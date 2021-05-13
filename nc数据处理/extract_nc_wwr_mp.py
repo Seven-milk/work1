@@ -6,7 +6,9 @@
 # 1) writing-while-reading to avoid limitation in memory based on write mode = 'a'
 # 2) meanwhile, save file to a .npy to reduce file size (compare: .npy : 1022kb vs .txt: 2357kb in all file == 111)
 # 3) meanwhile, using multiprocessing to increase efficiency, each cpu write into one file within 'a' mode to avoid
-# share memory and keep processing safety, finally, you can combine all file into one .npy file
+# share memory and keep processing safety, finally, you can combine all file into one .npy file, if .npy file is exist
+# in the current path, it will be combined together automatically in the next extract (will be reconized in the
+# .combinefiles())
 
 import numpy as np
 from netCDF4 import Dataset
@@ -26,12 +28,11 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
     ''' Work, Extract Nc file writing while reading in multi-processing, save as a Bin file '''
 
     def __init__(self, path, coord_path, variable_name, r, fname=None, start="", end="", format="%s",
-                 precision=3, coordsave=False, num_cpu=4, direction="v"):
+                 precision=3, coordsave=False, num_cpu=4, iscombine: bool = True):
         ''' init function
         input: similar with ExtractNcWwrBin
             num_cpu: the number of processes
-            direction: "v"(vstack) or "h"(hstack), the combine direction, if you do not want to combine .npy files,
-                        set direction==None
+            iscombine: bool, whether to combine
 
             note: Process Safety: don't need lock, because each processing handles unique file, there is no sharing
                   memory
@@ -41,15 +42,13 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
         super(ExtractNcWwrBinMp, self).__init__(path, coord_path, variable_name, r, fname, start, end, format,
                                                 precision, coordsave)
         self.num_cpu = num_cpu
-        if direction != "v" and direction != "h" and direction != None:
-            raise ValueError("direction should be 'v' or 'h' or None")
-        self.direction = direction
+        self.iscombine = iscombine
 
     def run(self):
         ''' Implement WorkBase.run '''
         self.extract_nc()
-        if self.direction != None:
-            self.combinefiles(self.direction)
+        if self.iscombine == True:
+            self.combinefiles()
 
     def extract_nc(self):
         ''' override ExtractNcWwrBin.extract_nc '''
@@ -131,7 +130,7 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
         # rm bin
         self.rm_files(rf'{self.fname}cpu{cpu}.bin')
 
-    def combinefiles(self, direction):
+    def combinefiles(self):
         ''' combine all .npy file into one file '''
         files = glob.glob(rf'{self.fname}*.npy')
         if len(files) > 0:
@@ -140,19 +139,18 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
                     combine = np.load(files[i])
                 else:
                     array_ = np.load(files[i])
-                    if direction == "v":
-                        combine = np.vstack((combine, array_))
-                    elif direction == "h":
-                        combine = np.hstack((combine, array_))
+                    combine = np.vstack((combine, array_))
 
                 # rm file
                 os.remove(files[i])
 
             # sort
             combine = combine[combine[:, 0].argsort()]
+            start = self.r.search("%.8f" % combine[0, 0])[0]
+            end = self.r.search("%.8f" % combine[-1, 0])[0]
 
             # save
-            np.save(f'{self.fname}_{self.start}_{self.end}', combine)
+            np.save(f'{self.fname}_{start}_{end}', combine)
 
     def rm_files(self, rf):
         ''' override ExtractNcWwrBin.rm_bin
@@ -177,8 +175,8 @@ if __name__ == "__main__":
     path = "D:/GLDAS_NOAH"
     coord_path = "H:/GIS/Flash_drought/coord.txt"
     r = re.compile(r"\d{8}\.\d{4}")
-    encmp = ExtractNcWwrBinMp(path, coord_path, "SoilMoi0_10cm_inst", start="", end="19480201.0000", r=r, precision=3,
-                              num_cpu=8)
+    encmp = ExtractNcWwrBinMp(path, coord_path, "SoilMoi40_100cm_inst", start="19810101.0000", end="20141231.2100", r=r,
+                              precision=3, num_cpu=8)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
     # encmp.overview()
     print(encmp)
     encmp.run()

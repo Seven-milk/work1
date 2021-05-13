@@ -3,7 +3,8 @@
 # email: Z786909151@163.com
 
 # extract variable(given region by coord) from .nc4 file
-# 1) writing-while-reading to avoid limitation in memory based on write mode = 'a'
+# 1) writing-while-reading to avoid limitation in memory based on write mode = 'a', it can be continue appending into
+# the .bin file, so do not rm it
 # 2) meanwhile, save file to a .npy to reduce file size (compare: .npy : 1022kb vs .txt: 2357kb in all file == 111)
 
 import numpy as np
