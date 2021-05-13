@@ -118,9 +118,39 @@ def divideLen(Len, section_num):
     return section
 
 
+def extractIndexArray(row, col, array):
+    ''' extract All data from array based on two list/array index instead of cross data
+
+    cross:
+        array[[0,1,2], [3,4,5]] -> array[0, 3], array[1, 4], array[2, 5]
+
+    extractIndexArray:
+        extractIndexArray([0,1,2], [3,4,5], array) -> array in
+
+        row 0 : [0, 3], [0, 4], [0, 5]
+        row 1: [1, 3], [1, 4], [1, 5]
+        row 2: [2, 3], [2, 4], [2, 5]
+
+    input:
+        row/col: list/array, index for extract
+        array: np.ndarray
+
+    output:
+        ret: the array for input array in row x col
+    '''
+    index = np.meshgrid(row, col)
+    ret = array[index[0], index[1]].T
+    return ret
+
+
 if __name__ == '__main__':
     data = np.arange(10)
     slope_ = slope(data)
     data = [1, 3, 2, 0]
     sortedindex, sorteddata = sortWithIndex(data, p=True)
     r = intersection([0, 1, 2, 2], [1, 2, 2, 0], plot_=True)
+    section = divideLen(11, 3)
+    print(section)
+    y = np.random.randint(0, 10, (10, 10))
+    print(y)
+    print(extractIndexArray([0, 1, 2], [3, 4, 5], y))
