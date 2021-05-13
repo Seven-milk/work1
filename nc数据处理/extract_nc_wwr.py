@@ -29,6 +29,7 @@ class ExtractNcWwrBin(Workflow.WorkBase):
             precision: the minimum precision of lat/lon, to match the lat/lon of source nc file
             r: <class 're.Pattern'>, regular experssion to identify time, use re.compile(r"...") to build it
                 e.g. 19980101 - r = re.compile(r"\d{8}")
+                e.g. 19980101.0300 - r = re.compile(r"\d{8}\.\d{4}")
             fname: filename to save, default == None(variable_name)
             coordsave: whether save the lat_index/ lon_index/ coord
             start: control the start file to extract, its format is similar as r, default="", namely start=0 (include)
@@ -39,12 +40,12 @@ class ExtractNcWwrBin(Workflow.WorkBase):
                     np.tofile()
 
         output:
-            {variable_name} [i, j]: i(file number) j(grid point number), bytes file, encoding = UTF8
-                to read: x = np.loadtxt('H:/research/flash_drough/code/nc数据处理/SoilMoi0_10cm_inst')
+            {variable_name}.bin/.npy [i, j]: i(file number) j(grid point number), bytes file, encoding = UTF8
+                to read: x = np.loadtxt('./SoilMoi0_10cm_inst.bin')
+                         x = np.load('./SoilMoi0_10cm_inst.npy')
             self.result
             self.coord
-            lat_index.txt/lon_index.txt
-            coord.txt
+            lat_index.txt/lon_index.txt/coord.txt: optional
         '''
 
         self.path = path
@@ -212,6 +213,10 @@ class ExtractNcWwrStr(ExtractNcWwrBin):
             func: extract_nc_str, callable, handle the v_ and return a str, variable.append(str(func(v_))),
                             default=lambda x: str(float(x))
                 e.g. lambda x: format(x, '.2f') to change the decimal digits
+
+        output: similar with ExtractNcWwrBin
+            {variable_name}.txt [i, j]: i(file number) j(grid point number), text file
+                to read: x = np.loadtxt('./SoilMoi0_10cm_inst.txt')
         '''
 
         super(ExtractNcWwrStr, self).__init__(path, coord_path, variable_name, r, fname, start, end, format,

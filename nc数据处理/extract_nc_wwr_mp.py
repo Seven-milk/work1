@@ -37,7 +37,12 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
             note: Process Safety: don't need lock, because each processing handles unique file, there is no sharing
                   memory
         output:
-
+            {variable_name}.bin/.npy [i, j]: i(file number) j(grid point number), bytes file, encoding = UTF8
+                to read: x = np.loadtxt('./SoilMoi0_10cm_inst.bin')
+                         x = np.load('./SoilMoi0_10cm_inst.npy')
+            self.result
+            self.coord
+            lat_index.txt/lon_index.txt/coord.txt: optional
         '''
         super(ExtractNcWwrBinMp, self).__init__(path, coord_path, variable_name, r, fname, start, end, format,
                                                 precision, coordsave)
