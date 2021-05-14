@@ -57,10 +57,15 @@ class CheckExtract(Workflow.WorkBase):
 
     def run(self):
         ''' Implement WorkBase.run() '''
+        # check
         for i in range(self.check_num):
             check_result, false_num, accuracy = self.check()
             # print
             print(f'check{i}: false_num = {false_num}, accuracy = {accuracy}%')
+
+        # check num
+        check_num = self.check_same_num()
+        print(f'extract number == nc number: {check_num}')
 
     def check(self):
         ''' check '''
@@ -92,6 +97,11 @@ class CheckExtract(Workflow.WorkBase):
 
         return check_result, false_num, accuracy
 
+    def check_same_num(self):
+        ''' check whether extract num is equal to nc file '''
+        ret = len(self.nc_path) == len(self.extract_data)
+        return ret
+
     def cal_index(self, ncfile: str, coord: pd.DataFrame):
         ''' calculate the index of lat/lon in coord from source nc file
         input:
@@ -122,5 +132,5 @@ if __name__ == '__main__':
     # r = re.compile(r"\d{8}\.\d{4}")
     r = re.compile(r'\d{8}')
     ce = CheckExtract(extract_data_path=extract_data_path, source_data_path=source_data_path, coord_path=coord_path,
-                      variable_name=variable_name, r=r, precision=3, check_num=10)
+                      variable_name=variable_name, r=r, precision=3, check_num=1)
     ce.run()
