@@ -112,6 +112,8 @@ def divideLen(Len, section_num):
     [4 5]
     [6 7]
     [8 9]
+
+    note: do not use x[output[i]] x[output[i+1]]
     '''
     section = np.linspace(0, Len, section_num + 1, dtype=int).tolist()
     section[-1] += 1
@@ -149,8 +151,15 @@ if __name__ == '__main__':
     data = [1, 3, 2, 0]
     sortedindex, sorteddata = sortWithIndex(data, p=True)
     r = intersection([0, 1, 2, 2], [1, 2, 2, 0], plot_=True)
-    section = divideLen(11, 3)
+
+    x = list(range(8))
+    print(x)
+    section = divideLen(8, 3)
     print(section)
+    for i in range(3):
+        x_section = x[section[i]: section[i+1]]
+        print(x_section)
+
     y = np.random.randint(0, 10, (10, 10))
     print(y)
     print(extractIndexArray([0, 1, 2], [3, 4, 5], y))
