@@ -28,7 +28,7 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
     ''' Work, Extract Nc file writing while reading in multi-processing, save as a Bin file '''
 
     def __init__(self, path, coord_path, variable_name, r, fname=None, start="", end="", format="%s",
-                 precision=3, coordsave=False, num_cpu=8, iscombine: bool = True):
+                 precision=3, coordsave=False, num_cpu=4, iscombine: bool = True):
         ''' init function
         input: similar with ExtractNcWwrBin
             num_cpu: the number of processes
@@ -51,7 +51,13 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
 
     def run(self):
         ''' Implement WorkBase.run '''
-        self.extract_nc()
+        self.ret, self.target = self.extract_nc()
+        print("start post_process ...")
+        self.post_process()
+        print("post_process completed")
+
+        print("target:\n", self.target, "\nret:\n", self.ret)
+
         if self.iscombine == True:
             self.combinefiles()
 
@@ -71,31 +77,44 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
             np.savetxt('lon_index.txt', lon_index, delimiter=' ')
             coord.to_csv("coord.txt")
 
-        # make sure the file is not exist: reason, mode = 'a'
+        # make sure the file is not exist: reason, mode = 'a' -> keep safe
+        self.rm_files(rf'{self.fname}*.bin')
         if self.start == "":
-            self.rm_files(rf'{self.fname}*.bin')
             self.rm_files(rf'{self.fname}*.npy')
 
         # input start/end date and find the index in file_name
         index_start = 0 if self.start == "" else [self.start in name for name in result].index(True)
-        index_end = len(result) if self.end == "" else [self.end in name for name in result].index(True)
+        index_end = len(result) - 1 if self.end == "" else [self.end in name for name in result].index(True)
         print("start - end: ", self.start, " to ", self.end)
 
         result = result[index_start: index_end + 1]
+
         print(f"file number:{len(result)}")
 
         # read variable based on the lat_index/lon_index in multi-processing
         po = Pool(processes=self.num_cpu)
         section_index = useful_func.divideLen(len(result), self.num_cpu)
-        _ = [po.apply_async(self.read_write, (i, result[section_index[i]: section_index[i + 1]], coord, lat_index,
+        print(f'cpu number = {self.num_cpu}')
+        target = []
+        for i in range(self.num_cpu):
+            target_ = f'cpu{i}: {result[section_index[i]: section_index[i + 1]][0]} to' \
+                      f' {result[section_index[i]: section_index[i + 1]][-1]}'
+            print(target_)
+            target.append(target_)
+
+        ret_po = [po.apply_async(self.read_write, (i, result[section_index[i]: section_index[i + 1]], coord, lat_index,
                                                 lon_index, r)) for i in range(self.num_cpu)]
+
         po.close()
         po.join()
+        ret = [ret_po[i].get()[0] for i in range(self.num_cpu)]
+        return ret, target
 
     def read_write(self, cpu, result, coord, lat_index, lon_index, r):
         ''' read and write file '''
         start = r.search(result[0])[0]
         end = r.search(result[-1])[0]
+
         for i in range(len(result)):
             f = Dataset(result[i], 'r')
             variable = np.zeros((len(coord) + 1))
@@ -110,35 +129,51 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
                 # that lat/lon corssed (1057) rather than meshgrid(lat, lon) (1057*1057)
 
             # save
-            with open(f'{self.fname}cpu{cpu}.bin', mode='ab') as savefile:
+            with open(f'{self.fname}cpu{cpu}_{start}_{end}.bin', mode='ab') as savefile:
                 variable.tofile(savefile, format=self.format)
 
             print(f"cpu{cpu} : complete reading and writing file:{i}")
             f.close()
 
         # post process
-        self.post_process(cpu, start, end)
+        print('--------------------------------')
+        print(f'cpu{cpu} calculation is complete')
+        print('--------------------------------')
+        return f'cpu{cpu} calculation is complete'
 
-    def post_process(self, cpu, start, end):
+    def post_process(self):
         ''' override ExtractNcWwrBin.post_process '''
-        # reshape and sort file
-        bin_array = np.fromfile(os.path.join(os.getcwd(), f'{self.fname}cpu{cpu}.bin'))
-        bin_array = bin_array.reshape((int(len(bin_array) / (len(self.coord) + 1)), len(self.coord) + 1))
+        # files = [file for file in os.listdir() if file.startswith(f'{self.fname}cpu') and file.endswith('.bin')]
+        files = glob.glob(rf'{self.fname}cpu*.bin')
+        for i in range(len(files)):
+            if i == 0:
+                # read and reshape
+                bin_array = np.fromfile(files[i])
+                bin_array = bin_array.reshape((int(len(bin_array) / (len(self.coord) + 1)), len(self.coord) + 1))
+            else:
+                bin_ = np.fromfile(files[i])
+                bin_ = bin_.reshape((int(len(bin_) / (len(self.coord) + 1)), len(self.coord) + 1))
+                bin_array = np.vstack((bin_array, bin_))
+
+        # sort file
         bin_array = bin_array[bin_array[:, 0].argsort()]
+        start = self.r.search("%.8f" % bin_array[0, 0])[0]
+        end = self.r.search("%.8f" % bin_array[-1, 0])[0]
 
         # save
-        if os.path.exists(f'{self.fname}_{start}_{end}'):
-            os.remove(f'{self.fname}_{start}_{end}')
+        if os.path.exists(f'{self.fname}_{start}_{end}.npy'):
+            os.remove(f'{self.fname}_{start}_{end}.npy')
 
         np.save(f'{self.fname}_{start}_{end}', bin_array)
 
-        # rm bin
-        self.rm_files(rf'{self.fname}cpu{cpu}.bin')
+        # rm bin, cache file
+        # [self.rm_files(rf'{self.fname}cpu{i}.bin') for i in range(self.num_cpu)]
 
     def combinefiles(self):
         ''' combine all .npy file into one file '''
+        # files = [file for file in os.listdir() if file.startswith(f'{self.fname}') and file.endswith('.npy')]
         files = glob.glob(rf'{self.fname}*.npy')
-        if len(files) > 0:
+        if len(files) > 1:
             for i in range(len(files)):
                 if i == 0:
                     combine = np.load(files[i])
@@ -177,12 +212,12 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
 
 
 if __name__ == "__main__":
-    path = "D:/GLADS/daily_data"
+    path = "D:/GLDAS_NOAH"
     coord_path = "H:/GIS/Flash_drought/coord.txt"
-    # r = re.compile(r"\d{8}\.\d{4}")
-    r = re.compile(r'\d{8}')
-    encmp = ExtractNcWwrBinMp(path, coord_path, "SoilMoist_RZ_tavg", start="", end="", r=r,
-                              precision=3, num_cpu=8)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
+    r = re.compile(r"\d{8}\.\d{4}")
+    # r = re.compile(r'\d{8}')
+    encmp = ExtractNcWwrBinMp(path, coord_path, "SoilMoi0_10cm_inst", start="19810101.0000", end="20141231.2100", r=r,
+                              precision=3, num_cpu=4)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
     # encmp.overview()
     print(encmp)
     encmp.run()

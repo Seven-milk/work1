@@ -102,6 +102,11 @@ class CheckExtract(Workflow.WorkBase):
         ret = len(self.nc_path) == len(self.extract_data)
         return ret
 
+    def check_date(self):
+        ''' check whether the extract date is same as nc file '''
+        pass
+    # TODO
+
     def cal_index(self, ncfile: str, coord: pd.DataFrame):
         ''' calculate the index of lat/lon in coord from source nc file
         input:
