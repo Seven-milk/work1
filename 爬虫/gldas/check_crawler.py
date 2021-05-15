@@ -10,6 +10,7 @@
 # 5) search index in url file -> url not download (url notdownload.txt)
 import os
 import re
+from netCDF4 import Dataset
 
 
 def check_crawler(home, URL, r):
@@ -110,9 +111,27 @@ def check_crawler(home, URL, r):
         f.write(url_notdownload)
 
 
+def check_downloaded_completely(home, start):
+    ''' open every file to check if it is downloaded completely '''
+    files = [file for file in os.listdir(home) if file.endswith('.nc4')]
+    index_start = 0 if start == "" else [start in name for name in files].index(True)
+
+    files = files[index_start:]
+
+    for i in range(len(files)):
+        try:
+            f = Dataset(os.path.join(home, files[i]), 'r')
+            f.close()
+            print('can open: ',  files[i])
+        except:
+            raise SyntaxError(f'File error: {files[i]} can not open!')
+
+
 if __name__ == '__main__':
     # general set
     home = "D:/GLDAS_NOAH"
     URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
-    r = re.compile(r"LABEL.*\d\.nc4")
-    check_crawler(home, URL, r)
+    # r = re.compile(r"LABEL.*\d\.nc4")
+    r = re.compile(r"\d{8}\.\d{4}")
+    # check_crawler(home, URL, r)
+    check_downloaded_completely(home, start='')
