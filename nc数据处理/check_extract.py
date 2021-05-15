@@ -25,7 +25,8 @@ import useful_func
 class CheckExtract(Workflow.WorkBase):
     ''' Work, Check if the Extract file (.npy) is consistent with source file (.nc4) '''
 
-    def __init__(self, extract_data_path, source_data_path, coord_path, variable_name, r, precision=3, check_num=1):
+    def __init__(self, extract_data_path, source_data_path, coord_path, variable_name, r, precision=3, check_num=1,
+                 time_format="%Y%m%d.%H%S"):
         ''' init function
         input:
             extract_data_path: .npy file, the extract file from nc files based on before extract processing
@@ -35,6 +36,9 @@ class CheckExtract(Workflow.WorkBase):
             r: <class 're.Pattern'>, regular experssion to identify time, use re.compile(r"...") to build it
                 e.g. 19980101 - r = re.compile(r"\d{8}")
                 e.g. 19980101.0300 - r = re.compile(r"\d{8}\.\d{4}")
+            time_format: str, change str to time format, match the r
+                e.g. 19980101 - time_format = '%Y%m%d'
+                e.g. 19980101.0300 - time_format = '%Y%m%d.%H%S'
             precision: int, the minimum precision of lat/lon, to match the lat/lon of source nc file
             check_num: check times
 
@@ -48,6 +52,7 @@ class CheckExtract(Workflow.WorkBase):
         self.r = r
         self.check_num = check_num
         self.precision = precision
+        self.time_format = time_format
 
         # read file
         self.extract_data = np.load(self.extract_data_path, mmap_mode='r')
@@ -57,15 +62,31 @@ class CheckExtract(Workflow.WorkBase):
 
     def run(self):
         ''' Implement WorkBase.run() '''
-        # check
+        # check date
+        print("-----------Check date-----------")
+        ret_check_date = self.check_date()
+        if isinstance(ret_check_date, list):
+            print('extract number is equal nc number')
+            print('-----------------------------------')
+            print('false date = ', ret_check_date[1])
+            print('-----------------------------------')
+            print(f'date_accuracy = {ret_check_date[2]}')
+        else:
+            if ret_check_date > 0:
+                print("extract data is more than nc number")
+            elif ret_check_date < 0:
+                print("extract data is less than nc number")
+
+        print('-----------------------------------')
+
+        # check value
+        print("-----------Check value-----------")
         for i in range(self.check_num):
             check_result, false_num, accuracy = self.check()
             # print
             print(f'check{i}: false_num = {false_num}, accuracy = {accuracy}%')
 
-        # check num
-        check_num = self.check_same_num()
-        print(f'extract number == nc number: {check_num}')
+        print('-----------------------------------')
 
     def check(self):
         ''' check '''
@@ -97,15 +118,35 @@ class CheckExtract(Workflow.WorkBase):
 
         return check_result, false_num, accuracy
 
-    def check_same_num(self):
-        ''' check whether extract num is equal to nc file '''
-        ret = len(self.nc_path) == len(self.extract_data)
-        return ret
-
     def check_date(self):
         ''' check whether the extract date is same as nc file '''
-        pass
-    # TODO
+        # extract time from extract data and source data(fname)
+        time_extract_data = [self.r.search("%.8f" % self.extract_data[i, 0])[0] for i in range(len(self.extract_data))]
+        time_source_data = [self.r.search(nc_path)[0] for nc_path in self.nc_path]
+
+        # sort
+        time_source_data.sort(key=lambda x: float(x))
+        time_extract_data.sort(key=lambda x: float(x))
+
+        # same num
+        ret_same_num = len(time_extract_data) - len(time_source_data)
+
+        # to date
+        if ret_same_num == 0:
+            time_extract_data = pd.to_datetime(time_extract_data, format=self.time_format)
+            time_source_data = pd.to_datetime(time_source_data, format=self.time_format)
+            ret_same_date = [time_extract_data[i] == time_source_data[i] for i in range(len(time_extract_data))]
+            false_num = len(ret_same_date) - sum(ret_same_date)
+            false_date = []
+
+            for i in range(ret_same_date):
+                if ret_same_date[i] == False:
+                    false_date.append({'extract': time_extract_data[i], 'source': time_source_data[i]})
+
+            ret_same_date_accuracy = (1 - false_num / len(ret_same_date)) * 100
+            return [ret_same_num, false_date, ret_same_date_accuracy]
+        else:
+            return ret_same_num
 
     def cal_index(self, ncfile: str, coord: pd.DataFrame):
         ''' calculate the index of lat/lon in coord from source nc file
@@ -137,5 +178,5 @@ if __name__ == '__main__':
     # r = re.compile(r"\d{8}\.\d{4}")
     r = re.compile(r'\d{8}')
     ce = CheckExtract(extract_data_path=extract_data_path, source_data_path=source_data_path, coord_path=coord_path,
-                      variable_name=variable_name, r=r, precision=3, check_num=1)
+                      variable_name=variable_name, r=r, precision=3, check_num=1, time_format="%Y%m%d.%H%S")
     ce.run()
