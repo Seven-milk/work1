@@ -28,7 +28,7 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
     ''' Work, Extract Nc file writing while reading in multi-processing, save as a Bin file '''
 
     def __init__(self, path, coord_path, variable_name, r, fname=None, start="", end="", format="%s",
-                 precision=3, coordsave=False, num_cpu=4, iscombine: bool = True):
+                 precision=3, coordsave=False, num_cpu=8, iscombine: bool = True):
         ''' init function
         input: similar with ExtractNcWwrBin
             num_cpu: the number of processes
@@ -116,7 +116,11 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
         end = r.search(result[-1])[0]
 
         for i in range(len(result)):
-            f = Dataset(result[i], 'r')
+            try:
+                f = Dataset(result[i], 'r')
+            except:
+                raise SyntaxError(f'File error: {r.search(result[i])} can not open!')
+
             variable = np.zeros((len(coord) + 1))
             # Dataset.set_auto_mask(f, False) # if there no mask value, open to improve speed
             variable[0] = float(r.search(result[i])[0])
@@ -167,7 +171,7 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
         np.save(f'{self.fname}_{start}_{end}', bin_array)
 
         # rm bin, cache file
-        # [self.rm_files(rf'{self.fname}cpu{i}.bin') for i in range(self.num_cpu)]
+        [self.rm_files(rf'{self.fname}cpu*.bin') for i in range(self.num_cpu)]
 
     def combinefiles(self):
         ''' combine all .npy file into one file '''
@@ -216,8 +220,8 @@ if __name__ == "__main__":
     coord_path = "H:/GIS/Flash_drought/coord.txt"
     r = re.compile(r"\d{8}\.\d{4}")
     # r = re.compile(r'\d{8}')
-    encmp = ExtractNcWwrBinMp(path, coord_path, "SoilMoi0_10cm_inst", start="19810101.0000", end="20141231.2100", r=r,
-                              precision=3, num_cpu=4)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
+    encmp = ExtractNcWwrBinMp(path, coord_path, "SoilMoi10_40cm_inst", start="", end="", r=r,
+                              precision=3, num_cpu=8)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
     # encmp.overview()
     print(encmp)
     encmp.run()
