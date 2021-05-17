@@ -2,7 +2,7 @@
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
 
-# check if the extract variable(given region by coord) from .nc4 file is right
+# check values: check if the extract variable(given region by coord) from .nc4 file is right
 # 1) select {random_num[= 100]} files/time and points
 # 2) cal index - files/time(row), points(col)
 # 3) extract_data[row, col], note the first col is time, col select from 1 to len - 1
@@ -11,6 +11,12 @@
 # do this job for {check_num [= 1]} times ti make sure extract right
 # theory: based on two extract method(extract function, such as extract_nc_wwr_mp) and [time/filenames, coord] within
 # random files/points, two extract file can be compared for verifying
+
+# check data: check if the extract variable date is same with .nc4 files date(from file name)
+# 1) change the two date into pd.TimeIndex
+# 2) compare len
+# 3) compare value -> time_extract_data[i] == time_source_data[i]
+# 4) count True and return accuracy
 
 import numpy as np
 import os
@@ -64,7 +70,7 @@ class CheckExtract(Workflow.WorkBase):
         ''' Implement WorkBase.run() '''
         # check date
         print("-----------Check date-----------")
-        ret_check_date = self.check_date()
+        ret_check_date = self.checkDate()
         if isinstance(ret_check_date, list):
             print('extract number is equal nc number')
             print('-----------------------------------')
@@ -82,14 +88,14 @@ class CheckExtract(Workflow.WorkBase):
         # check value
         print("-----------Check value-----------")
         for i in range(self.check_num):
-            check_result, false_num, accuracy = self.check()
+            check_result, false_num, accuracy = self.checkValues()
             # print
             print(f'check{i}: false_num = {false_num}, accuracy = {accuracy}%')
 
         print('-----------------------------------')
 
-    def check(self):
-        ''' check '''
+    def checkValues(self):
+        ''' check values '''
         # set random index: 100 random files/time, 100 random points
         random_num = 100
         index_random_file = np.random.randint(0, self.extract_data.shape[0], random_num)  # row - files/time
@@ -118,7 +124,7 @@ class CheckExtract(Workflow.WorkBase):
 
         return check_result, false_num, accuracy
 
-    def check_date(self):
+    def checkDate(self):
         ''' check whether the extract date is same as nc file '''
         # extract time from extract data and source data(fname)
         time_extract_data = [self.r.search("%.8f" % self.extract_data[i, 0])[0] for i in range(len(self.extract_data))]
