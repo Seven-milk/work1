@@ -8,6 +8,11 @@
 # 3) file name -> set2, set1 - set2 ->
 # 4) file name not download ->
 # 5) search index in url file -> url not download (url notdownload.txt)
+# check whether the file can be opened
+# 1) try to open every file from "start"
+# 2) if it can be opened, pass it
+# 3) if it can not be opened, save the file name to the result
+
 import os
 import re
 from netCDF4 import Dataset
