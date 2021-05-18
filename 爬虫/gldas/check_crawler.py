@@ -84,6 +84,11 @@ class CheckCrawler(Workflow.WorkBase):
             print("start check if all files is consecutive in date")
             self.checkDate()
 
+            print("check complete")
+
+        else:
+            print("check complete")
+
     def checkDownload(self):
         ''' check whether the crawler have downloaded all files '''
         # general set
@@ -100,7 +105,7 @@ class CheckCrawler(Workflow.WorkBase):
         file_name_all, skip = self.regular_expression_url(urls, r)
 
         # file_name_downloaded
-        file_name_downloaded = [path for path in os.listdir(home) if path[-4:] == ".nc4"]
+        file_name_downloaded = [r.search(path)[0] for path in os.listdir(home) if path[-4:] == ".nc4"]
 
         # change list to set
         file_name_all = set(file_name_all)
@@ -157,7 +162,7 @@ class CheckCrawler(Workflow.WorkBase):
         skip = 0
         for url in urls:
             try:
-                file_name_all.append(r.search(url)[0][6:])
+                file_name_all.append(r.search(url)[0])
             except:
                 skip += 1
                 if p == True:
@@ -173,7 +178,7 @@ class CheckCrawler(Workflow.WorkBase):
 
         # set files based on start
         start = input("input start time that contains in nc file name, e.g. 19980101.0300, if start from begin,"
-                      "input enter")
+                      "input enter\n:")
         files = [file for file in os.listdir(home) if file.endswith('.nc4')]
         files.sort(key=lambda x: float(r.search(x)[0]))  # sort files
         index_start = 0 if start == "" else [start in name for name in files].index(True)
@@ -182,7 +187,7 @@ class CheckCrawler(Workflow.WorkBase):
         # ask if save file is exist, because the save mode == 'a'
         while True:
             if os.path.exists(os.path.join(home, 'files_not_opened.txt')):
-                rm = input("files_not_opened.txt is exist in home path, does rm it?")
+                rm = input("files_not_opened.txt is exist in home path, does rm it? True or False:")
                 if rm == True:
                     os.remove(os.path.join(home, 'files_not_opened.txt'))
                     break
@@ -210,7 +215,7 @@ class CheckCrawler(Workflow.WorkBase):
         # general set
         home = self.home
         r = self.r
-        time_interval = input("input time_interval: such as 3H, 1D")
+        time_interval = input("input time_interval: such as 3H, 1D:")
 
         # list for date and change it to pd.TimeIndex
         files = [file for file in os.listdir(home) if file.endswith('.nc4')]
@@ -246,3 +251,4 @@ if __name__ == '__main__':
     # r = re.compile(r"LABEL.*\d\.nc4")
     r = re.compile(r"\d{8}\.\d{4}")
     cc = CheckCrawler(home, URL, r, time_format='%Y%m%d.%H%S')
+    cc.run()
