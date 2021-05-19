@@ -76,7 +76,7 @@ class CheckExtract(Workflow.WorkBase):
             print('-----------------------------------')
             print('false date = ', ret_check_date[1])
             print('-----------------------------------')
-            print(f'date_accuracy = {ret_check_date[2]}')
+            print(f'date_accuracy = {ret_check_date[2]}%')
         else:
             if ret_check_date > 0:
                 print("extract data is more than nc number")
@@ -145,7 +145,7 @@ class CheckExtract(Workflow.WorkBase):
             false_num = len(ret_same_date) - sum(ret_same_date)
             false_date = []
 
-            for i in range(ret_same_date):
+            for i in range(len(ret_same_date)):
                 if ret_same_date[i] == False:
                     false_date.append({'extract': time_extract_data[i], 'source': time_source_data[i]})
 
@@ -178,11 +178,11 @@ class CheckExtract(Workflow.WorkBase):
 
 if __name__ == '__main__':
     extract_data_path = 'H:/research/flash_drough/GLDAS_NOAH/SoilMoi40_100cm_inst_19480101.0300_20141231.2100.npy'
-    source_data_path = 'D:\GLDAS_NOAH'
+    source_data_path = 'D:/GLDAS_NOAH'
     coord_path = "H:/GIS/Flash_drought/coord.txt"
     variable_name = 'SoilMoi40_100cm_inst'
     r = re.compile(r"\d{8}\.\d{4}")
     # r = re.compile(r'\d{8}')
     ce = CheckExtract(extract_data_path=extract_data_path, source_data_path=source_data_path, coord_path=coord_path,
-                      variable_name=variable_name, r=r, precision=3, check_num=1, time_format="%Y%m%d.%H%S")
+                      variable_name=variable_name, r=r, precision=3, check_num=10, time_format="%Y%m%d.%H%S")
     ce.run()
