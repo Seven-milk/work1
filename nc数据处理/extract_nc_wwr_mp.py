@@ -60,6 +60,7 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
 
         if self.iscombine == True:
             self.combinefiles()
+        print("complete")
 
     def extract_nc(self):
         ''' override ExtractNcWwrBin.extract_nc '''
@@ -136,7 +137,7 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
             with open(f'{self.fname}cpu{cpu}_{start}_{end}.bin', mode='ab') as savefile:
                 variable.tofile(savefile, format=self.format)
 
-            print(f"cpu{cpu} : complete reading and writing file:{i}")
+            print(f"cpu{cpu} : {'%.2f' % (i / len(result) * 100)}% - reading and writing file")
             f.close()
 
         # post process
@@ -220,7 +221,7 @@ if __name__ == "__main__":
     coord_path = "H:/GIS/Flash_drought/coord.txt"
     r = re.compile(r"\d{8}\.\d{4}")
     # r = re.compile(r'\d{8}')
-    encmp = ExtractNcWwrBinMp(path, coord_path, "SoilMoi10_40cm_inst", start="", end="", r=r,
+    encmp = ExtractNcWwrBinMp(path, coord_path, "RootMoist_inst", start="", end="", r=r,
                               precision=3, num_cpu=8)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
     # encmp.overview()
     print(encmp)
