@@ -12,24 +12,31 @@ import Workflow
 
 class CombineNoahSm(Workflow.WorkBase):
     ''' Work, Combine SoilMoi0_10cm_inst/10_40/40_100 into SoilMoi0_100cm '''
-    def __init__(self, home, save=False):
 
+    def __init__(self, home, save=False):
         self.Sm_path = [os.path.join(home, sm) for sm in
                         ['SoilMoi0_10cm_inst_19480101.0300_20141231.2100.npy',
-                        'SoilMoi10_40cm_inst_19480101.0300_20141231.2100.npy',
-                        'SoilMoi40_100cm_inst_19480101.0300_20141231.2100.npy']]
+                         'SoilMoi10_40cm_inst_19480101.0300_20141231.2100.npy',
+                         'SoilMoi40_100cm_inst_19480101.0300_20141231.2100.npy']]
         self.save = save
         self._info = 'Noah Sm Combination 0-100cm'
 
     def run(self):
-        Sm0_10 = np.load(self.Sm_path[0])
-        Sm10_40 = np.load(self.Sm_path[1])
-        Sm40_100 = np.load(self.Sm_path[2])
-
-        self.Sm0_100 = Sm0_10 + Sm10_40 + Sm40_100
-
+        print("start combine")
+        print("load data")
+        Sm0_10 = np.load(self.Sm_path[0], mmap_mode='r')
+        Sm10_40 = np.load(self.Sm_path[1], mmap_mode='r')
+        Sm40_100 = np.load(self.Sm_path[2], mmap_mode='r')
+        print("load complete")
+        print("sum")
+        self.Sm0_100 = np.zeros_like(Sm0_10)
+        self.Sm0_100[:, 0] = Sm0_10[:, 0]
+        self.Sm0_100[:, 1:] = Sm0_10[:, 1:] + Sm10_40[:, 1:] + Sm40_100[:, 1:]
+        print("sum complete")
+        print("save")
         if self.save == True:
             np.save('SoilMoi0_100cm_inst_19480101.0300_20141231.2100.npy', self.Sm0_100)
+        print("complete!")
 
     def __repr__(self):
         return f"This is CombineNoahSm, info: {self._info}, Combine SoilMoi0_10cm_inst/10_40/40_100 into SoilMoi0_100cm"
@@ -38,65 +45,111 @@ class CombineNoahSm(Workflow.WorkBase):
         return f"This is CombineNoahSm, info: {self._info}, Combine SoilMoi0_10cm_inst/10_40/40_100 into SoilMoi0_100cm"
 
 
-class CalPentad(Workflow.WorkBase):
-    ''' Work, calculate pentad/5days series from daily series(average), i.e. sm_rz/date to sm_rz_pentad/date_pentad '''
+class UpscaleTime(Workflow.WorkBase):
+    ''' Work, Upscale time series, such as, upscale 3H series to daily series (average or sum), upscale daily series to
+        pentad series(average or sum)
+    '''
 
-    def __init__(self, date, daily_series, save_path=None, info=""):
+    def __init__(self, original_series, multiple: int, up_method: callable = lambda x: sum(x)/len(x),
+                 original_date=None, save_path=None, combine=True, info=""):
         ''' init function
         input:
-            date: 1D array like, daily date, corresponding to daily_series
-            daily_series: 1D or 2D np.array, when daily_series is a 2D array, m(time) * n(other, such as grid points)
-            save_path: str, home path to save, if save_path=None(default), do not save
-            info: str, informatiom for this Class to print and save in save_path, shouldn't too long
+            up_method: upscale method, default = lambda x: sum(x)/len(x) = mean, note 1 0 1 -> 2/3 is not 2/2
+            original_series: 1D or 2D np.array, original series to upscale, when daily_series is a 2D array,
+                            m(time) * n(other, such as grid points)
+            original_date: 1D array like, original date corresponding to original series
+            save_path: str, path to save, default=None, namely not save
+            combine: whether combine upscale_date & upscale_series to output and save
+            multiple: int, upscale time from original_series to objective_series
+                D -> pentad: 5
+                3H -> D: 8
+                D -> Y: 365
+            info: str, informatiom for this Class to print, shouldn't too long
 
         output:
-            pentad_date, pentad_series: pentad series from date and daily_series
+            {self.save_path}_date.npy, {self.save_path}_series.npy: upscale date and series
+            {self.save_path}.npy: combine output, the first col is upscale_date
         '''
-        self.date = date
-        self.daily_series = daily_series
+
+        self.original_series = original_series
+        self.up_method = up_method
+
+        if isinstance(original_date, list) == True or isinstance(original_date, np.ndarray) == True:
+            self.original_date = original_date
+        else:
+            self.original_date = np.arange(len(self.original_series))
+
         self.save_path = save_path
+        self.multiple = multiple
         self._info = info
+        self.combine = combine
 
     def run(self):
         ''' implement WorkBase.run '''
-        num_pentad = len(self.date) // 5
-        num_out = len(self.date) - num_pentad * 5
+        print("start upScale")
+        print("start calculate")
+        upscale_date, upscale_series = self.upScale()
+        print("complete calculate")
 
-        # del [-numout:] to make sure len(daily_series) can be exact division by 5/pentad
-        if len(self.daily_series.shape) > 1:
-            daily_series = self.daily_series[:-num_out, :]
-            pentad_series = np.full((num_pentad, daily_series.shape[1]), fill_value=-9999, dtype="float")
+        # whether combine and save
+        if self.combine == True:
+            upscale_series = np.hstack((upscale_date.reshape(len(upscale_date), 1), upscale_series))
+            if self.save_path != None:
+                np.save(self.save_path, upscale_series)
+
+            print("complete upScale")
+            return upscale_series
+
         else:
-            daily_series = self.daily_series[:-num_out]
-            pentad_series = np.full((num_pentad,), fill_value=-9999, dtype="float")
+            if self.save_path != None:
+                np.save(self.save_path + '_date', upscale_date)
+                np.save(self.save_path + '_series', upscale_series)
 
-        date = self.date[:-num_out]
-        pentad_date = np.full((num_pentad,), fill_value=-9999, dtype="int")
+            print("complete upScale")
+            return upscale_date, upscale_series
 
-        # cal pentad_date & pentad_series
-        for i in range(num_pentad):
-            if len(self.daily_series.shape) > 1:
-                pentad_series[i, :] = daily_series[i * 5: (i + 1) * 5, :].mean(axis=0)
+    def upScale(self):
+        ''' up scale series '''
+
+        # cal the series num which can be contain in cal period
+        multiple = self.multiple
+        up_method = self.up_method
+        num_in = len(self.original_series) // multiple
+        num_out = len(self.original_series) - num_in * multiple
+
+        # del [-numout:] to make sure len(original_series) can be exact division by self.multiple
+        if len(self.original_series.shape) > 1:
+            original_series = self.original_series[:-num_out, :] if num_out != 0 else self.original_series
+            upscale_series = np.zeros((num_in, self.original_series.shape[1]), dtype="float")
+        else:
+            original_series = self.original_series[:-num_out] if num_out != 0 else self.original_series
+            upscale_series = np.zeros((num_in, ), dtype="float")
+
+        original_date = self.original_date[:-num_out] if num_out != 0 else self.original_date
+        upscale_date = np.zeros((num_in,), dtype="float")
+
+        # cal upscale_series & upscale_date
+        for i in range(num_in):
+            if len(self.original_series.shape) > 1:
+                upscale_series[i, :] = up_method(original_series[i * multiple: (i + 1) * multiple, :])  # axis=0
             else:
-                pentad_series[i, :] = daily_series[i * 5: (i + 1) * 5].mean(axis=0)
-            pentad_date[i] = date[i * 5 + 2]  # center date
+                upscale_series[i] = up_method(original_series[i * multiple: (i + 1) * multiple])
 
-        # save result
-        if self.save_path != None:
-            np.savetxt(os.path.join(self.save_path, f"pentad_date_{self._info}.txt"), pentad_date)
-            np.savetxt(os.path.join(self.save_path, f"pentad_series_{self._info}.txt"), pentad_series)
+            # center date(depend on multiple, odd is center, even is the right of center)
+            upscale_date[i] = original_date[i * multiple + multiple // 2]
 
-        return pentad_date, pentad_series
+        return upscale_date, upscale_series
 
     def __repr__(self):
-        return f"This is CalPentad, info: {self._info}, calculate pentad/5days series from daily series"
+        return f"This is UpscaleTime, info: {self._info}, Upscale time series"
 
     def __str__(self):
-        return f"This is CalPentad, info: {self._info}, calculate pentad/5days series from daily series"
+        return f"This is UpscaleTime, info: {self._info}, Upscale time series"
 
 
 class CalSmPercentile(Workflow.WorkBase):
     ''' Work, calculate SmPercentile series from SM series, i.e. sm_rz_pentad to sm_percentile_rz_pentad '''
+
     def __init__(self, sm, timestep, save_path=None, info=""):
         ''' init function
         input:
@@ -147,6 +200,7 @@ class CalSmPercentile(Workflow.WorkBase):
 class CompareSmPercentile(Workflow.WorkBase):
     ''' Work, compare sm_rz_pentad and sm_percentile_rz_pentad: differences result from the fit and section
      calculation '''
+
     def __init__(self, sm_rz_pentad, sm_percentile_rz_pentad, info=""):
         ''' init function '''
 
@@ -168,9 +222,75 @@ class CompareSmPercentile(Workflow.WorkBase):
         return f"This is CompareSmPercentile, info: {self._info}, compare sm_rz_pentad and sm_percentile_rz_pentad"
 
 
-if __name__ == '__main__':
+def combine_Noah_SM():
+    # combine Noah Sm, sum
     cns = CombineNoahSm(home='H:/research/flash_drough/GLDAS_Noah', save=True)
     cns.run()
+
+
+def Upscale_Noah_D():
+    # Upscale Noah from 3H to D
+    original_series = ['H:/research/flash_drough/GLDAS_Noah/RootMoist_inst_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/SoilMoi0_10cm_inst_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/SoilMoi10_40cm_inst_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/SoilMoi40_100cm_inst_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101.0300_20141231.2100.npy']
+    save_path = ['H:/research/flash_drough/GLDAS_Noah/RootMoist_inst_19480101_20141231_D',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi0_10cm_inst_19480101_20141231_D',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi10_40cm_inst_19480101_20141231_D',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi40_100cm_inst_19480101_20141231_D',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_D']
+
+    for i in range(len(original_series)):
+        original_series_ = np.load(original_series[i], mmap_mode='r')
+        original_series_post = original_series_[:7, :]  # start from 0300, the first day contains 7 days rather than 8 days
+        original_series_after = original_series_[7:, :]
+
+        D_post = UpscaleTime(original_series=original_series_post[:, 1:], multiple=7,
+                                original_date=original_series_post[:, 0], save_path=None,
+                                combine=True, info=save_path[i][save_path[i].rfind("/") + 1:]).run()
+        D_after = UpscaleTime(original_series=original_series_after[:, 1:], multiple=8,
+                                original_date=original_series_after[:, 0], save_path=None,
+                                combine=True, info=save_path[i][save_path[i].rfind("/") + 1:]).run()
+
+        D_ = np.vstack((D_post, D_after))
+        np.save(save_path[i], D_)
+
+
+def Upscale_Noah_Pentad():
+    # Upscale Noah from D to Pentad
+    original_series = ['H:/research/flash_drough/GLDAS_Noah/RootMoist_inst_19480101_20141231_D.npy',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi0_10cm_inst_19480101_20141231_D.npy',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi10_40cm_inst_19480101_20141231_D.npy',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi40_100cm_inst_19480101_20141231_D.npy',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_D.npy']
+    save_path = ['H:/research/flash_drough/GLDAS_Noah/RootMoist_inst_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi0_10cm_inst_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi10_40cm_inst_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi40_100cm_inst_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad']
+    upscale_Noah = Workflow.WorkFlow()
+
+    for i in range(len(original_series)):
+        original_series_ = np.load(original_series[i], mmap_mode='r')
+        upscale_Noah_ = UpscaleTime(original_series=original_series_[:, 1:], multiple=5,
+                                original_date=original_series_[:, 0], save_path=save_path[i],
+                                combine=True, info=save_path[i][save_path[i].rfind("/") + 1:])
+        upscale_Noah += upscale_Noah_
+
+    upscale_Noah.runflow()
+
+
+def Upscale_CLS_Pentad():
+    original_series = 'H:/research/flash_drough/GLDAS_Catchment/SoilMoist_RZ_tavg_19480101_20141230.npy'
+    save_path = 'H:/research/flash_drough/GLDAS_Catchment/SoilMoist_RZ_tavg_19480101_20141230_Pentad'
+    original_series = np.load(original_series, mmap_mode='r')
+    upscale_CLS = UpscaleTime(original_series=original_series[:, 1:], multiple=5, original_date=original_series[:, 0],
+                              save_path=save_path, combine=True, info=save_path[save_path.rfind("/") + 1:])
+    upscale_CLS.run()
+
+
+if __name__ == '__main__':
     # # general set
     # home = "H:/research/flash_drough/"
     # data_path = os.path.join(home, "GLDAS_Catchment")
