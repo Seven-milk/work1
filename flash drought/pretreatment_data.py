@@ -291,6 +291,7 @@ def Upscale_CLS_Pentad():
 
 
 if __name__ == '__main__':
+    pass
     # # general set
     # home = "H:/research/flash_drough/"
     # data_path = os.path.join(home, "GLDAS_Catchment")
