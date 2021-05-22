@@ -13,6 +13,7 @@ import re
 from matplotlib import pyplot as plt
 from scipy.stats import pearsonr
 import Workflow
+import draw_plot
 
 
 class ReadFiletoExcel(Workflow.WorkBase):
@@ -71,7 +72,7 @@ class ReadFiletoExcel(Workflow.WorkBase):
 class SmValidation(Workflow.WorkBase):
     ''' Work, validate Model Sm data(GLDAS Noah and GLDAS CLS) based on ISMN measured data(multiple stations) '''
 
-    def __init__(self, model_sm, station_sm, model_coord, station_coord, model_date, station_name):
+    def __init__(self, model_sm, station_sm, model_coord, station_coord, model_date, station_name, info=""):
         ''' init function
         input:
             model_sm: 2D array, m(time) * n(grid), the model SM
@@ -87,6 +88,11 @@ class SmValidation(Workflow.WorkBase):
 
             model_date: pandas.DatetimeIndex, the date covering model_sm and station_sm
                     use: pd.date_range('19480101', '20141230', freq='d') or pd.to_date()
+            info: str, informatiom for this Class to print, shouldn't too long
+
+        output:
+            ret: r and p_value for the correlation test between model sm and observation station sm
+            fig: time series fig and bar fig
         '''
         self.model_coord = model_coord
         self.station_coord = station_coord
@@ -94,6 +100,7 @@ class SmValidation(Workflow.WorkBase):
         self.station_sm = station_sm
         self.model_date = model_date
         self.station_name = station_name
+        self._info = info
 
     def run(self):
         ''' Implement WorkBase.run '''
@@ -257,6 +264,12 @@ class SmValidation(Workflow.WorkBase):
         plt.title(title, font)
         plt.legend(prop=font2, loc='upper left', labelspacing=0.1, borderpad=0.2)
 
+    def __repr__(self):
+        return f"This is SmValidation, info: {self._info}, validate Model Sm data(GLDAS Noah and GLDAS CLS) based on ISMN measured data(multiple stations) "
+
+    def __str__(self):
+        return f"This is SmValidation, info: {self._info}, validate Model Sm data(GLDAS Noah and GLDAS CLS) based on ISMN measured data(multiple stations) "
+
 
 def read_station_sm(start_layer, end_layer):
     ''' read station sm, start_layer and end_layer to set the sum layers
@@ -386,6 +399,25 @@ def GLDAS_NOAH_SoilMoi40_100cm_inst_validation():
     smv = SmValidation(model_sm[:, 1:], station_sm, model_coord, station_coord, model_date, station_name)
     ret = smv.run()
     ret.to_excel("GLDAS_Noah_SoilMoi40_100cm_inst_Validation.xlsx")
+
+
+class compareModelSm(Workflow.WorkBase):
+    ''' Work, compare different Models Soil moisture '''
+    def __init__(self, model1_sm, model2_sm, mode1_date, model2_date):
+        ''' init function
+        input:
+        output:
+        '''
+        self.model1_sm = model1_sm
+        self.mode12_sm = model2_sm
+        self.model1_date = mode1_date
+        self.model2_date = model2_date
+
+
+    def run(self):
+        ''' Implement WorkBase.run '''
+
+    # def
 
 
 if __name__ == '__main__':
