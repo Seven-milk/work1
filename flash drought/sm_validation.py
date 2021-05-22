@@ -403,21 +403,41 @@ def GLDAS_NOAH_SoilMoi40_100cm_inst_validation():
 
 class compareModelSm(Workflow.WorkBase):
     ''' Work, compare different Models Soil moisture '''
-    def __init__(self, model1_sm, model2_sm, mode1_date, model2_date):
+    def __init__(self, model_sm, model_date, model_name):
         ''' init function
         input:
+            model_sm: list
+            model_date: list
+            model_name: list
         output:
         '''
-        self.model1_sm = model1_sm
-        self.mode12_sm = model2_sm
-        self.model1_date = mode1_date
-        self.model2_date = model2_date
-
+        self.model_sm = model_sm
+        self.model_date = model_date
+        self.model_name = model_name
 
     def run(self):
         ''' Implement WorkBase.run '''
 
-    # def
+
+
+    def plotCompareSeries(self, title="Compare Models' Soil Moisture Series"):
+        ''' plot compare series '''
+        # general set
+
+        # plot compare time series
+        plt.figure()
+        plt.plot(model1_date, model1_sm, "royalblue", label="Model1 data", alpha=0.5)
+        plt.plot(model2_date, model2_sm, "r-", label="Station data")
+        plt.xlim(min(model1_date.min(), model2_date.min()), max(model1_date.max(), model2_date.max()))
+        font = {'family': 'Arial', 'weight': 'normal', 'size': 20}
+        font2 = {'family': 'Arial', 'weight': 'normal', 'size': 17}
+        plt.xticks(fontproperties=font2)
+        plt.yticks(fontproperties=font2)
+        plt.xlabel("Date", font)
+        plt.ylabel("Soil moisture / m", font)
+        plt.title(title, font)
+        plt.legend(prop=font2, loc='upper left', labelspacing=0.1, borderpad=0.2)
+
 
 
 if __name__ == '__main__':
