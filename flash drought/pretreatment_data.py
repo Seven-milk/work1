@@ -291,6 +291,12 @@ def Upscale_CLS_Pentad():
 
 
 if __name__ == '__main__':
+    # # combine Noah SM between different layers
+    # combine_Noah_SM()
+    # # upscale noah and CLS sm
+    # Upscale_Noah_D()
+    # Upscale_Noah_Pentad()
+    # Upscale_CLS_Pentad()
     pass
     # # general set
     # home = "H:/research/flash_drough/"

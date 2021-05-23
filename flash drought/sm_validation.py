@@ -111,22 +111,28 @@ class SmValidation(Workflow.WorkBase):
             model_downscaling_sm = self.downScaleModelSm(self.station_coord)
             station_sm = self.station_sm
             station_name = self.station_name[0]
-            r, p_value = self.compare(station_sm, model_downscaling_sm, title=f"Compare datasets between model and"
-                                                                              f" observation in {station_name}")
-            ret = pd.DataFrame([r, p_value], index=['r', 'p_value'])
+            r, p_value, diff = self.compare(station_sm, model_downscaling_sm, title=f"Compare datasets between model"
+                                                                                    f" and observation in {station_name}")
+            diff_max = diff.max()
+            diff_mean = diff.mean()
+            ret = pd.DataFrame([r, p_value, diff_max, diff_mean], index=['r', 'p_value', 'diff_max', 'diff_mean'])
 
         # compare model sm with multiple stations
         elif isinstance(self.station_coord, list):
-            ret = pd.DataFrame(np.zeros((2, len(self.station_name))), index=['r', 'p_value'], columns=self.station_name,
-                               dtype='float')
+            ret = pd.DataFrame(np.zeros((4, len(self.station_name))), index=['r', 'p_value', 'diff_max', 'diff_mean'],
+                               columns=self.station_name, dtype='float')
             for i in range(len(self.station_coord)):
                 model_downscaling_sm = self.downScaleModelSm(self.station_coord[i])
                 station_sm = self.station_sm[i]
                 station_name = self.station_name[i]
-                r, p_value = self.compare(station_sm, model_downscaling_sm, title=f"Compare datasets between model and"
-                                                                                  f" observation in {station_name}")
+                r, p_value, diff = self.compare(station_sm, model_downscaling_sm, title=f"Compare datasets between model"
+                                                                                        f" and observation in {station_name}")
+                diff_max = diff.max()
+                diff_mean = diff.mean()
                 ret.loc["r", self.station_name[i]] = r
                 ret.loc["p_value", self.station_name[i]] = p_value
+                ret.loc["diff_max", self.station_name[i]] = diff_max
+                ret.loc["diff_mean", self.station_name[i]] = diff_mean
 
         print(ret)
         plt.show()
@@ -213,10 +219,13 @@ class SmValidation(Workflow.WorkBase):
         # plot compare bar
         self.plotCompareBar(station_date, model_downscaling_sm_extract_date, station_sm, title=title)
 
+        # cal diff
+        diff = model_downscaling_sm_extract_date - station_sm
+
         # calculate the correlation between model data and station data
         r, p_value = pearsonr(model_downscaling_sm_extract_date, station_sm.values)
 
-        return r, p_value
+        return r, p_value, diff
 
     def plotCompareSeries(self, model_downscaling_sm, station_sm, station_date,
                           title="Compare datasets between model and observation"):
@@ -532,7 +541,9 @@ if __name__ == '__main__':
     # GLDAS_NOAH_RootMoist_validation()
     # GLDAS_NOAH_RootMoist_validation()
     # GLDAS_NOAH_SoilMoi0_100cm_inst_validation()
+    # GLDAS_NOAH_SoilMoi0_10cm_inst_validation()
     # GLDAS_NOAH_SoilMoi10_40cm_inst_validation()
     # GLDAS_NOAH_SoilMoi40_100cm_inst_validation()
+    # plt.close()
     # compareNoahCLS()
     pass
