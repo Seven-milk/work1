@@ -291,8 +291,28 @@ class HistDraw(DrawBase):
         self.kwargs = kwargs
 
     def plot(self, ax, Fig):
-        ''' Implements the DrawBase.plot function '''
+        ''' Implement the DrawBase.plot function '''
         ax.hist(self.x, label=self.label, **self.kwargs)
+
+
+class BarDraw(DrawBase):
+    ''' Bar Draw '''
+
+    def __init__(self, x, height, **kwargs):
+        ''' init function
+        input:
+            x: The x coordinates of the bars. See also align for the alignment of the bars to the coordinates.
+            height: The height(s) of the bars.
+            **kwargs: keyword args, it could contain "width", "bottom", "aligh", "color", "edgecolor", "linewidth",
+                "tick_label", "label", see pyplot.bar()
+        '''
+        self.x = x
+        self.height = height
+        self.kwargs = kwargs
+
+    def plot(self, ax, Fig):
+        ''' Implement the DrawBase.plot function '''
+        ax.bar(self.x, self.height, **self.kwargs)
 
 
 class KdeDraw(DrawBase):
@@ -428,7 +448,7 @@ class Draw:
 
 if __name__ == "__main__":
     # np.random.seed(15)
-    f = Figure(6)
+    f = Figure(8)
     facecolors = ["lightgrey", 'lightgreen', 'lightblue']  # pink
     x = np.random.rand(500, 3)
     # d0: box and text
@@ -461,3 +481,9 @@ if __name__ == "__main__":
     d6 = Draw(f.ax[5], f, gridy=True, labelx="X", labely="Y", legend_on=True, title="PlotDraw")
     l = PlotDraw(sorted(x[:, 0]), sorted(x[:, 1]), "b--", label="x0-x1")  # color="b", linestyle="--"
     d6.adddraw(l)
+    # d7: bar
+    d7 = Draw(f.ax[6], f, gridy=True, labelx="X", labely="Y", legend_on=True, title="BarDraw")
+    bar = BarDraw([1, 2, 3], x[0, :3], label="x")
+    d7.adddraw(bar)
+    # del d8
+    f.unview_last()
