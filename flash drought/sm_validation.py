@@ -151,7 +151,7 @@ class SmValidation(Workflow.WorkBase):
 
         input:
             station_coord: the coord of grids covering the station
-        out:
+        output:
             model_downscaling_sm: 1D np.ndarray (time, ), Model downscaling sm on stations
         '''
         # general set
@@ -192,7 +192,7 @@ class SmValidation(Workflow.WorkBase):
             station_sm: the observation data (dataframe) of the station, such as GUYUAN
             model_downscaling_sm: downscaling model sm on the station position
 
-        output
+        output:
             r, p_value: correlation analysis of model data and observation data
         '''
         # general set
