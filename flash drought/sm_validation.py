@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 from scipy.stats import pearsonr
 import Workflow
 import draw_plot
+import itertools
 
 
 class ReadFiletoExcel(Workflow.WorkBase):
@@ -91,7 +92,7 @@ class SmValidation(Workflow.WorkBase):
             info: str, informatiom for this Class to print, shouldn't too long
 
         output:
-            ret: r and p_value for the correlation test between model sm and observation station sm
+            ret: pandas.Dataframe, r and p_value for the correlation test between model sm and observation station sm
             fig: time series fig and bar fig
         '''
         self.model_coord = model_coord
@@ -265,10 +266,12 @@ class SmValidation(Workflow.WorkBase):
         plt.legend(prop=font2, loc='upper left', labelspacing=0.1, borderpad=0.2)
 
     def __repr__(self):
-        return f"This is SmValidation, info: {self._info}, validate Model Sm data(GLDAS Noah and GLDAS CLS) based on ISMN measured data(multiple stations) "
+        return f"This is SmValidation, info: {self._info}, validate Model Sm data(GLDAS Noah and GLDAS CLS) based on" \
+               f" ISMN measured data(multiple stations) "
 
     def __str__(self):
-        return f"This is SmValidation, info: {self._info}, validate Model Sm data(GLDAS Noah and GLDAS CLS) based on ISMN measured data(multiple stations) "
+        return f"This is SmValidation, info: {self._info}, validate Model Sm data(GLDAS Noah and GLDAS CLS) based on" \
+               f" ISMN measured data(multiple stations) "
 
 
 def read_station_sm(start_layer, end_layer):
@@ -403,41 +406,125 @@ def GLDAS_NOAH_SoilMoi40_100cm_inst_validation():
 
 class compareModelSm(Workflow.WorkBase):
     ''' Work, compare different Models Soil moisture '''
-    def __init__(self, model_sm, model_date, model_name):
+    def __init__(self, model_sm, model_date, model_name, info=""):
         ''' init function
         input:
-            model_sm: list
-            model_date: list
-            model_name: list
+            model_sm: list of 1D(m(time), ), the models' sm (average or at one grid)
+            model_date: list of 1D pd.DatetimeIndex, the models' date
+            model_name: list of str, the models' name
+            info: str, informatiom for this Class to print, shouldn't too long
         output:
+            ret: pandas.Dataframe, r and p_value for the correlation test between models' sm
+            fig: time series fig and bar fig
         '''
         self.model_sm = model_sm
         self.model_date = model_date
         self.model_name = model_name
+        self._info = info
 
     def run(self):
         ''' Implement WorkBase.run '''
-
-
-
-    def plotCompareSeries(self, title="Compare Models' Soil Moisture Series"):
-        ''' plot compare series '''
+        print("compare models' sm")
         # general set
+        fig_series = draw_plot.Figure()
+        draw_series = draw_plot.Draw(fig_series.ax, fig_series, gridy=True, labelx="Date", labely="Soil moisture / m",
+                                     legend_on={"loc": "upper right", "framealpha": 0.8},
+                                     title="Compare Models' Soil Moisture Series")
+        fig_bars = draw_plot.Figure()
+        draw_bars = draw_plot.Draw(fig_bars.ax, fig_bars, gridy=True, labelx="Date", labely="Soil moisture / m",
+                                     legend_on={"loc": "upper right", "framealpha": 0.8},
+                                   title="Compare Models' Soil Moisture Bars", ylim=(0.15, 0.3))
 
-        # plot compare time series
-        plt.figure()
-        plt.plot(model1_date, model1_sm, "royalblue", label="Model1 data", alpha=0.5)
-        plt.plot(model2_date, model2_sm, "r-", label="Station data")
-        plt.xlim(min(model1_date.min(), model2_date.min()), max(model1_date.max(), model2_date.max()))
-        font = {'family': 'Arial', 'weight': 'normal', 'size': 20}
-        font2 = {'family': 'Arial', 'weight': 'normal', 'size': 17}
-        plt.xticks(fontproperties=font2)
-        plt.yticks(fontproperties=font2)
-        plt.xlabel("Date", font)
-        plt.ylabel("Soil moisture / m", font)
-        plt.title(title, font)
-        plt.legend(prop=font2, loc='upper left', labelspacing=0.1, borderpad=0.2)
+        # plot series and bar
+        for i in range(len(self.model_sm)):
+            model_sm_ = self.model_sm[i]
+            model_date_ = self.model_date[i]
+            model_name_ = self.model_name[i]
+            self.plotSeries(draw_series, model_sm_, model_date_, model_name_)
+            self.plotBars(draw_bars, model_sm_, model_date_, model_name_)
 
+        # ret set: calculate correlation coefficient between models sm
+        # iter to compare between models, such as: [0, 1, 2] -> [(0, 1), (0, 2), (1, 2)]
+        index_iter = list(itertools.combinations(list(range(len(self.model_name))), 2))
+
+        columns_ = [f"{self.model_name[index_iter[i][0]]}_vs_{self.model_name[index_iter[i][1]]}" for i in range(len(index_iter))]
+        ret = pd.DataFrame(np.zeros((2, len(index_iter))), index=['r', 'p_value'], columns=columns_, dtype='float')
+        for i in range(len(index_iter)):
+            index_1 = index_iter[i][0]
+            index_2 = index_iter[i][1]
+            r, p_value = self.correlation(self.model_sm[index_1], self.model_sm[index_2], self.model_date[index_1],
+                                          self.model_date[index_2])
+            ret.iloc[0, i] = r
+            ret.iloc[1, i] = p_value
+
+        print(ret)
+        print("complete")
+        return ret
+
+    def plotSeries(self, draw_series, model_sm_, model_date_, model_name_):
+        ''' plot models' sm series '''
+        # general set
+        plotdraw = draw_plot.PlotDraw(model_date_, model_sm_, label=model_name_, linewidth=0.5)
+
+        # add
+        draw_series.adddraw(plotdraw)
+
+    def plotBars(self, draw_series, model_sm_, model_date_, model_name_):
+        ''' plot models' sm bar '''
+        # general set
+        bardraw = draw_plot.BarDraw(model_date_, model_sm_, label=model_name_)
+
+        # add
+        draw_series.adddraw(bardraw)
+
+    def correlation(self, model1_sm, model2_sm, model1_date, model2_date):
+        ''' calculate correlation coefficient between two sm series '''
+        # make dataframe
+        model1 = pd.DataFrame(model1_sm, index=model1_date)
+        model2 = pd.DataFrame(model2_sm, index=model2_date)
+
+        # extract same period
+        same_date = pd.date_range(max(min(model1_date), min(model2_date)), min(max(model1_date), max(model2_date)))
+
+        model1_ = model1.loc[same_date].values.flatten()
+        model2_ = model2.loc[same_date].values.flatten()
+
+        r, p_value = pearsonr(model1_, model2_)
+
+        return r, p_value
+
+    def __repr__(self):
+        return f"This is compareModelSm, info: {self._info}, compare different Models Soil moisture"
+
+    def __str__(self):
+        return f"This is compareModelSm, info: {self._info}, compare different Models Soil moisture"
+
+
+def compareNoahCLS():
+    # load data
+    model_sm_Noah0_100cm = np.load('H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_D.npy', mmap_mode="r")
+    model_sm_Noah_RootMoist = np.load('H:/research/flash_drough/GLDAS_Noah/RootMoist_inst_19480101_20141231_D.npy', mmap_mode="r")
+    model_sm_CLS_RZ = np.load('H:/research/flash_drough/GLDAS_Catchment/SoilMoist_RZ_tavg_19480101_20141230.npy', mmap_mode="r")
+
+    # date
+    model_date_Noah0_100cm = pd.to_datetime(model_sm_Noah0_100cm[:, 0], format='%Y%m%d')
+    model_date_Noah_RootMoist = pd.to_datetime(model_sm_Noah_RootMoist[:, 0], format='%Y%m%d')
+    model_date_CLS_RZ = pd.to_datetime(model_sm_CLS_RZ[:, 0], format='%Y%m%d')
+    model_date = [model_date_Noah0_100cm, model_date_Noah_RootMoist, model_date_CLS_RZ]
+
+    # sm
+    model_sm_Noah0_100cm = model_sm_Noah0_100cm[:, 1:].mean(axis=1) / 1000
+    model_date_Noah_RootMoist = model_sm_Noah_RootMoist[:, 1:].mean(axis=1) / 1000
+    model_date_CLS_RZ = model_sm_CLS_RZ[:, 1:].mean(axis=1) / 1000
+    model_sm = [model_sm_Noah0_100cm, model_date_Noah_RootMoist, model_date_CLS_RZ]
+
+    # name
+    model_name = ['Noah0_100cm', 'Noah_RZ', 'CLS_RZ']
+
+    # compare
+    cms = compareModelSm(model_sm, model_date, model_name)
+    ret = cms.run()
+    ret.to_excel("Compare_GLDAS_models_sm_correlation_coefficient.xlsx")
 
 
 if __name__ == '__main__':
@@ -447,4 +534,5 @@ if __name__ == '__main__':
     # GLDAS_NOAH_SoilMoi0_100cm_inst_validation()
     # GLDAS_NOAH_SoilMoi10_40cm_inst_validation()
     # GLDAS_NOAH_SoilMoi40_100cm_inst_validation()
+    # compareNoahCLS()
     pass
