@@ -650,6 +650,10 @@ class Map:
         # title
         self.ax.set_title(title, fontdict=self.Fig.font_title)
 
+    def show(self):
+        ''' show fig '''
+        plt.show()
+
 
 if __name__ == "__main__":
     # general set

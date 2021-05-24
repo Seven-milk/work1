@@ -445,6 +445,10 @@ class Draw:
         '''
         self.ax.legend(prop=self.Fig.font_legend, **kwargs)
 
+    def show(self):
+        ''' show fig '''
+        plt.show()
+
 
 if __name__ == "__main__":
     # np.random.seed(15)
