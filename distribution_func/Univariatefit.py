@@ -8,7 +8,7 @@ import numpy as np
 
 
 class UnivariateDistribution():
-    def __init__(self, data: list, distribution: stats.rv_continuous):
+    def __init__(self, data, distribution: stats.rv_continuous):
         ''' init function
         input
             data: list, the data to fit.

@@ -133,6 +133,10 @@ class Figure:
             os.mkdir(os.path.join(os.getcwd(), 'fig'))
         plt.savefig('fig/' + title + '.jpg', dpi=self.dpi, bbox_inches='tight')
 
+    def show(self):
+        ''' show fig '''
+        plt.show()
+
 
 class FigureVert(Figure):
     ''' figure set in vertical direction '''
@@ -283,7 +287,7 @@ class HistDraw(DrawBase):
         input:
             x: values in vector to draw hist plot
             label: legend label
-            **kwargs: keyword args, it could contain "bins", "alpha"
+            **kwargs: keyword args, it could contain "bins", "alpha", "cumulative"
                 bins suggest: when use kde, set bins = int(len(x) * kde.covariance_factor())
         '''
         self.x = x
@@ -444,10 +448,6 @@ class Draw:
                 "borderpad", "labelspacing"...
         '''
         self.ax.legend(prop=self.Fig.font_legend, **kwargs)
-
-    def show(self):
-        ''' show fig '''
-        plt.show()
 
 
 if __name__ == "__main__":

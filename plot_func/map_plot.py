@@ -559,6 +559,10 @@ class Figure:
             os.mkdir(os.path.join(os.getcwd(), 'fig'))
         plt.savefig('fig/' + title + '.jpg', dpi=self.dpi, bbox_inches='tight')
 
+    def show(self):
+        ''' show fig '''
+        plt.show()
+
 
 class Map:
     ''' Add map(has proj) in one ax(Geoax), this class is used to represent ax and plot map '''
@@ -649,10 +653,6 @@ class Map:
 
         # title
         self.ax.set_title(title, fontdict=self.Fig.font_title)
-
-    def show(self):
-        ''' show fig '''
-        plt.show()
 
 
 if __name__ == "__main__":
