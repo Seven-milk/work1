@@ -8,14 +8,26 @@ import numpy as np
 from scipy import stats
 import draw_plot
 import Univariatefit
+import Distribution
 
 
-class NonparamBase(abc.ABC):
+class NonparamBase(Distribution.DistributionBase):
     ''' Nonparametric distribution Base abstract class '''
+    def fit(self, data):
+        pass
+
+    def cdf(self, data):
+        pass
+
+    def pdf(self, data):
+        pass
 
 
 class KdeDistribution(NonparamBase):
     ''' Kde dirtribution class '''
+
+    def fit(self, data):
+        pass
 
     def cdf(self, data, **kwargs):
         '''
@@ -29,6 +41,9 @@ class KdeDistribution(NonparamBase):
 
 class Gringorten(NonparamBase):
     ''' Gringorten nonparametric distribution '''
+
+    def fit(self, data):
+        pass
 
     def cdf(self, data):
         series_ = pd.Series(data)
@@ -49,8 +64,9 @@ if __name__ == '__main__':
     kdecdf = kde.cdf(x)
 
     # normal
-    normal = Univariatefit.UnivariateDistribution(x, stats.norm)
-    normal_cdf = normal.data_cdf
+    normal = Univariatefit.UnivariateDistribution(stats.norm)
+    normal.fit(x)
+    normal_cdf = normal.cdf(x)
 
     # gringorten
     gg = Gringorten()

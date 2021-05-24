@@ -5,21 +5,21 @@
 from matplotlib import pyplot as plt
 from scipy import stats
 import numpy as np
+import Distribution
 
 
-class UnivariateDistribution():
-    def __init__(self, data, distribution: stats.rv_continuous):
+class UnivariateDistribution(Distribution.DistributionBase):
+    def __init__(self, distribution: stats.rv_continuous):
         ''' init function
         input
-            data: list, the data to fit.
             distribution: stats.rv_continuous, the distribution to fit.
         '''
-        self.data = data
-        self.params = distribution.fit(self.data)
-        self.distribution = distribution(*self.params)  # freezing distribution
+        self.distribution = distribution
+
+    def fit(self, data):
+        self.params = self.distribution.fit(data)
+        self.distribution = self.distribution(*self.params)  # freezing distribution
         self.stats = self.distribution.stats()
-        self.data_cdf = self.distribution.cdf(self.data)
-        self.data_pdf = self.distribution.pdf(self.data)
 
     def cdf(self, data):
         return self.distribution.cdf(data)
@@ -27,16 +27,16 @@ class UnivariateDistribution():
     def pdf(self, data):
         return self.distribution.pdf(data)
 
-    def plot(self, PointNumber=1000):
+    def plot(self, data, PointNumber=1000):
         ''' plot function, plot PDF & CDF
         input
             PointNumber: int, the point number to plot pdf/cdf line, default=1000
         '''
-        dataSort = sorted(self.data)  # ascending order
+        dataSort = sorted(data)  # ascending order
         start = dataSort[0] - (dataSort[-1] - dataSort[0]) * 0.1
         stop = dataSort[-1] + (dataSort[-1] - dataSort[0]) * 0.1
         dataSortExtend = np.linspace(start, stop, num=PointNumber)
-        bins = int(len(self.data) / 10)
+        bins = int(len(data) / 10)
         # pdf
         plt.figure()
         plt.plot(dataSortExtend, self.distribution.pdf(dataSortExtend), color='b', label='Fit pdf')
@@ -57,5 +57,6 @@ class UnivariateDistribution():
 
 if __name__ == "__main__":
     data = np.random.normal(0, 1, 1000)
-    x = UnivariateDistribution(data, stats.norm)
-    x.plot()
+    x = UnivariateDistribution(stats.norm)
+    x.fit(data)
+    x.plot(data)
