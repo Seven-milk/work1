@@ -18,8 +18,14 @@ class UnivariateDistribution():
         self.params = distribution.fit(self.data)
         self.distribution = distribution(*self.params)  # freezing distribution
         self.stats = self.distribution.stats()
-        self.data_cdf = self.distribution.cdf(data)
-        self.data_pdf = self.distribution.pdf(data)
+        self.data_cdf = self.distribution.cdf(self.data)
+        self.data_pdf = self.distribution.pdf(self.data)
+
+    def cdf(self, data):
+        return self.distribution.cdf(data)
+
+    def pdf(self, data):
+        return self.distribution.pdf(data)
 
     def plot(self, PointNumber=1000):
         ''' plot function, plot PDF & CDF
