@@ -14,9 +14,10 @@ class UnivariateDistribution(Distribution.DistributionBase):
         input
             distribution: stats.rv_continuous, the distribution to fit.
         '''
-        self.distribution = distribution
+        self.distribution_type = distribution
 
     def fit(self, data):
+        self.distribution = self.distribution_type
         self.params = self.distribution.fit(data)
         self.distribution = self.distribution(*self.params)  # freezing distribution
         self.stats = self.distribution.stats()
