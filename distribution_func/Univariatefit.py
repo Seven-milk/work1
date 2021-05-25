@@ -27,6 +27,10 @@ class UnivariateDistribution(Distribution.DistributionBase):
     def pdf(self, data):
         return self.distribution.pdf(data)
 
+    def ppf(self, q, *args, **kwargs):
+        ''' inverse of `cdf` '''
+        return self.distribution.ppf(q, *args, **kwargs)
+
     def plot(self, data, PointNumber=1000):
         ''' plot function, plot PDF & CDF
         input
