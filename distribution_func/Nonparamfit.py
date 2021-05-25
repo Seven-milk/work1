@@ -60,7 +60,8 @@ class EmpiricalDistribution(NonparamBase):
         pass
 
     def cdf(self, data):
-        cdf = [len([x_ for x_ in data if x_ < x]) / len(data) for x in data]
+        # /(len(data) + 1) to avoid max(cdf) == 1
+        cdf = [len([x_ for x_ in data if x_ <= x]) / (len(data) + 1) for x in data]
         cdf = np.array(cdf)
         return cdf
 
