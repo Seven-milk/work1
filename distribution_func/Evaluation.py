@@ -32,10 +32,11 @@ class Evaluation:
     def aic(self, data, theory_ppf, param_num):
         # rmse
         rmse = self.rmse(data, theory_ppf)
+        mse = rmse ** 2
 
         # aic
         n = len(data)
-        aic = 2 * param_num + n * math.log(rmse / n)
+        aic = 2 * param_num + n * math.log(mse)
 
         return aic
 
@@ -63,15 +64,15 @@ class Evaluation:
 if __name__ == '__main__':
     # np.random.seed(10)
     data = np.random.normal(0, 1, 1000)
-    norm = Univariatefit.UnivariateDistribution(stats.norm)
-    norm.fit(data)
-    norm.plot(data)
+    norm_ = Univariatefit.UnivariateDistribution(stats.norm)
+    norm_.fit(data)
+    norm_.plot(data)
     evaluation = Evaluation()
-    kstest_ret_norm = evaluation.kstest(data, norm.cdf)
+    kstest_ret_norm = evaluation.kstest(data, norm_.cdf)
 
     print(f"kstest\nKS-statistic={kstest_ret_norm[0]}, p_value={kstest_ret_norm[1]}")
 
-    rmse = evaluation.rmse(data, norm.ppf)
-    aic = evaluation.aic(data, norm.ppf, len(norm.params))
+    rmse = evaluation.rmse(data, norm_.ppf)
+    aic = evaluation.aic(data, norm_.ppf, len(norm_.params))
 
     print(f'rmse: {rmse}, aic: {aic}')
