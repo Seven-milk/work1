@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import draw_plot
+import runtheory
 
 
 class Drought:
@@ -169,13 +170,13 @@ class Drought:
 
         # drought index series
         drought_index_plot = draw_plot.PlotDraw(self.Date, self.drought_index, label="drought index",
-                                                color="cornflowerblue", alpha=0.5, linewidth=1)
+                                                color="cornflowerblue", alpha=0.5, linewidth=0.5)
         draw.adddraw(drought_index_plot)
 
         # threshold series
         threshold_series = np.full((len(self.Date),), fill_value=self.threshold)
         threshold_plot = draw_plot.PlotDraw(self.Date, threshold_series, label=f"Threshold: {self.threshold}",
-                                            color="chocolate")
+                                            color="chocolate", linewidth=1)
         draw.adddraw(threshold_plot)
 
         # trend series
@@ -198,7 +199,7 @@ class Drought:
             # draw.adddraw(events_plot)
 
         # fill drought events
-        fig.ax.fill_between(self.Date, events, self.threshold, alpha=0.8, facecolor="r", label="Drought events",
+        fig.ax.fill_between(self.Date, events, self.threshold, alpha=1, facecolor="r", label="Drought events",
                             interpolate=True, zorder=20)  # peru
 
         fig.ax.set_xticks(self.Date[::int(len(self.Date) / 6)])  # set six ticks
@@ -226,6 +227,7 @@ class Drought:
         plt.title("drought_index")
         if yes == 1:
             plt.savefig("Drought_character_boxplot")
+
 
 if __name__ == '__main__':
     np.random.seed(15)
