@@ -15,7 +15,7 @@ class RuntheoryBase(abc.ABC):
 
 class UnderRuntheory(RuntheoryBase):
 
-    def run(self, index: np.ndarray, threshold: float) -> (np.ndarray, np.ndarray): # , axis=None
+    def run(self, index: np.ndarray, threshold: float) -> (np.ndarray, np.ndarray):
         """ Implements the RuntheoryBase.run function
         run_threshold to identify dry bell (start-end)
         point explain(discrete): start < threshold, end < threshold --> it is shrinkable and strict
