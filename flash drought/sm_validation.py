@@ -222,7 +222,7 @@ class SmValidation(Workflow.WorkBase):
         # cal diff
         diff = model_downscaling_sm_extract_date - station_sm
 
-        # calculate the correlation between model data and station data
+        # calculate the correlation between model data and station data, p_value < alpha, passed
         r, p_value = pearsonr(model_downscaling_sm_extract_date, station_sm.values)
 
         return r, p_value, diff
