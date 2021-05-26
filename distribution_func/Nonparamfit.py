@@ -32,7 +32,7 @@ class KdeDistribution(NonparamBase):
     def cdf(self, data, **kwargs):
         '''
         input:
-            **kwargs: key word args, it could contains bw_method=None, weights=None, reference stats.gaussian_kde
+            **kwargs: key word args, it could contains bw_method=None("Scott"), weights=None, reference stats.gaussian_kde
         '''
         kde = stats.gaussian_kde(data, **kwargs)
         cdf = np.array([kde.integrate_box_1d(low=-np.inf, high=data[i]) for i in range(len(data))])
