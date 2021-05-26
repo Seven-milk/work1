@@ -4,10 +4,14 @@
 # pretreatment data and save
 import numpy as np
 import pandas as pd
-import FDIP
 import os
 from matplotlib import pyplot as plt
 import Workflow
+import Nonparamfit, Univariatefit, Distribution
+import draw_plot
+import Evaluation
+from scipy import stats
+from scipy.stats import pearsonr
 
 
 class CombineNoahSm(Workflow.WorkBase):
@@ -148,45 +152,70 @@ class UpscaleTime(Workflow.WorkBase):
 
 
 class CalSmPercentile(Workflow.WorkBase):
-    ''' Work, calculate SmPercentile series from SM series, i.e. sm_rz_pentad to sm_percentile_rz_pentad '''
+    ''' Work, calculate SmPercentile series from SM series based on a given distribution
+    the sms with same month put together to build distribution
+    '''
 
-    def __init__(self, sm, timestep, save_path=None, info=""):
+    def __init__(self, sm, date, format, distribution: Distribution.DistributionBase, combine=True, save_path=None, info=""):
         ''' init function
         input:
             sm: 1D or 2D array like, soil moisture series, m(time) * n(other, such as grid points)
-            timestep: timestep in FDIP.SmPercentile
-                365 : daily, 365 data in one year
-                12 : monthly, 12 data in one year
-                73 : pentad(5), 73 data in one year
-                x ：x data in one year
+            date: 1D array, date will further change into pd.DatetimeIndex
+            format: format to change date, e.g. 19980101 '%Y%m%d'
+            distribution: a instance having the func cdf to cal cdf
             save_path: str, home path to save, if save_path=None(default), do not save
+            combine: whether combine date & sm_percentile to output and save
             info: str, informatiom for this Class to print and save in save_path, shouldn't too long
 
         output:
+            sm_percentile: sm percentile(combine date or not)
+            save_path.npy: sm_percentile file
 
         '''
         self._sm = sm
-        self.timestep = timestep
+        self.date = date
+        self.format = format
         self.save_path = save_path
+        self.distribution = distribution
+        self.combine = combine
         self._info = info
 
     def run(self):
         ''' implement WorkBase.run '''
-        sm_percentile = np.full_like(self._sm, fill_value=-9999, dtype="float")
+        sm_percentile = np.zeros_like(self._sm, dtype="float")
+        date = pd.to_datetime(self.date, format=self.format)
 
         if len(self._sm.shape) > 1:
             print(f"all series number {self._sm.shape[1]}")
+            # each series
             for i in range(self._sm.shape[1]):
-                SM_ = FDIP.SmPercentile(self._sm[:, i], timestep=self.timestep)
-                sm_percentile[:, i] = SM_.SM_percentile
+                sm_ = self._sm[:, i]
+                # each month
+                for j in range(12):
+                    index_month = [date_ for date_ in range(len(sm_)) if date[date_].month == j + 1]
+                    sm_month = sm_[index_month]
+                    self.distribution.fit(sm_month)
+                    sm_month_percentile = self.distribution.cdf(sm_month)
+                    sm_percentile[index_month, i] = sm_month_percentile
+
                 print(f"sm series {i} calculated completely")
+
         else:
-            SM_ = FDIP.SmPercentile(self._sm, timestep=self.timestep)
-            sm_percentile = SM_.SM_percentile
+            sm_ = self._sm
+            for j in range(12):
+                index_month = [date_ for date_ in range(len(sm_)) if date[date_].month == j + 1]
+                sm_month = sm_[index_month]
+                self.distribution.fit(sm_month)
+                sm_month_percentile = self.distribution.cdf(sm_month)
+                sm_percentile[index_month] = sm_month_percentile
+
+        # combine
+        if self.combine == True:
+            sm_percentile = np.hstack((self.date.reshape(len(self.date), 1), sm_percentile))
 
         # save result
         if self.save_path != None:
-            np.savetxt(os.path.join(self.save_path, f"sm_percentile_{self._info}.txt"), sm_percentile)
+            np.save(self.save_path, sm_percentile)
 
         return sm_percentile
 
@@ -197,29 +226,166 @@ class CalSmPercentile(Workflow.WorkBase):
         return f"This is CalSmPercentile, info: {self._info}, calculate SmPercentile series from SM series"
 
 
+class CalSmPercentileMultiDistribution(CalSmPercentile):
+    ''' Work, calculate SmPercentile series from SM series based on multiple distribution '''
+
+    def __init__(self, sm, date, format, distribution: list, nonparamdistribution: Nonparamfit.NonparamBase, alpha=0.05,
+                 combine=True, save_path=None, info=""):
+        ''' init function: similar with CalSmPercentile
+            note:
+                distribution: list of multiple-distributions
+
+        '''
+        self._sm = sm
+        self.date = date
+        self.format = format
+        self.save_path = save_path
+        self.distribution = distribution
+        self.combine = combine
+        self._info = info
+        self.nonparamdistribution = nonparamdistribution
+        self.alpha = alpha
+
+    def run(self):
+        ''' implement WorkBase.run '''
+        sm_percentile = np.zeros_like(self._sm, dtype="float")
+        date = pd.to_datetime(self.date, format=self.format)
+
+        if len(self._sm.shape) > 1:
+            distribution_ret = np.zeros((12, self._sm.shape[1]), dtype=int)
+            print(f"all series number {self._sm.shape[1]}")
+            # each series
+            for i in range(self._sm.shape[1]):
+                sm_ = self._sm[:, i]
+                # each month
+                for j in range(12):
+                    index_month = [date_ for date_ in range(len(sm_)) if date[date_].month == j + 1]
+                    sm_month = sm_[index_month]
+
+                    # evaluation distribution
+                    evaluation_ret = pd.DataFrame(np.zeros((len(self.distribution), 2)), columns=['kstest', 'aic'],
+                                                  index=[i for i in range(len(self.distribution))], dtype=float)
+                    evaluation = Evaluation.Evaluation()
+                    for k in range(len(self.distribution)):
+                        self.distribution[k].fit(sm_month)
+                        kstest = evaluation.kstest(sm_month, self.distribution[k].cdf)
+                        kstest = kstest[1] > 1 - self.alpha  # p_value > 1-alpha, if true, passed
+                        aic = evaluation.aic(sm_month, self.distribution[k].ppf, len(self.distribution[k].params))
+                        evaluation_ret.iloc[k, 0] = kstest
+                        evaluation_ret.iloc[k, 1] = aic
+
+                    # select distribution
+                    evaluation_ret = evaluation_ret[evaluation_ret["kstest"]==1]
+                    if len(evaluation_ret) > 1:
+                        index_distribution = int(evaluation_ret.index[evaluation_ret.aic.argmin()])
+                        distribution_select = self.distribution[index_distribution]
+                    else:
+                        index_distribution = -1
+                        distribution_select = self.nonparamdistribution
+
+                    # save in distribution_ret
+                    distribution_ret[j, i] = index_distribution
+
+                    # fit and cal sm_month_percentile
+                    distribution_select.fit(sm_month)
+                    sm_month_percentile = distribution_select.cdf(sm_month)
+                    sm_percentile[index_month, i] = sm_month_percentile
+
+                print(f"sm series {i} calculated completely")
+
+            distribution_ret = pd.DataFrame(distribution_ret, index=[f"month{i_ + 1}" for i_ in range(12)],
+                                            columns=[i_ for i_ in range(self._sm.shape[1])])
+
+        else:
+            distribution_ret = np.zeros((12, ), dtype=int)
+            sm_ = self._sm
+            for j in range(12):
+                index_month = [date_ for date_ in range(len(sm_)) if date[date_].month == j + 1]
+                sm_month = sm_[index_month]
+
+                # evaluation distribution
+                evaluation_ret = pd.DataFrame(np.zeros((len(self.distribution), 2)), columns=['kstest', 'aic'],
+                                              index=[i for i in range(len(self.distribution))], dtype=float)
+                evaluation = Evaluation.Evaluation()
+
+                for i in range(len(self.distribution)):
+                    self.distribution[i].fit(sm_month)
+                    kstest = evaluation.kstest(sm_month, self.distribution[i].cdf)
+                    kstest = kstest[1] > 1 - self.alpha  # p_value > 1-alpha, if true, passed
+                    aic = evaluation.aic(sm_month, self.distribution[i].ppf, len(self.distribution[i].params))
+                    evaluation_ret.iloc[i, 0] = kstest
+                    evaluation_ret.iloc[i, 1] = aic
+
+                # select distribution
+                evaluation_ret = evaluation_ret[evaluation_ret["kstest"] == 1]
+                if len(evaluation_ret) > 1:
+                    index_distribution = int(evaluation_ret.index[evaluation_ret.aic.argmin()])
+                    distribution_select = self.distribution[index_distribution]
+                else:
+                    index_distribution = -1
+                    distribution_select = self.nonparamdistribution
+
+                # save in distribution_ret
+                distribution_ret[j] = index_distribution
+
+                # fit and cal sm_month_percentile
+                distribution_select.fit(sm_month)
+                sm_month_percentile = distribution_select.cdf(sm_month)
+                sm_percentile[index_month] = sm_month_percentile
+
+            distribution_ret = pd.DataFrame(distribution_ret, index=[f"month{i_ + 1}" for i_ in range(12)])
+
+        # combine
+        if self.combine == True:
+            sm_percentile = np.hstack((self.date.reshape(len(self.date), 1), sm_percentile))
+
+        # save result
+        if self.save_path != None:
+            np.save(self.save_path, sm_percentile)
+            distribution_ret.to_excel(self.save_path + "_distribution_ret.xlsx")
+
+        return sm_percentile, distribution_ret
+
+
 class CompareSmPercentile(Workflow.WorkBase):
     ''' Work, compare sm_rz_pentad and sm_percentile_rz_pentad: differences result from the fit and section
      calculation '''
 
-    def __init__(self, sm_rz_pentad, sm_percentile_rz_pentad, info=""):
-        ''' init function '''
+    def __init__(self, sm, sm_percentile, date, info=""):
+        ''' init function
+        input:
+            sm & sm_percentile: 1D array, sm and sm percentile
+            date: pd.DatetimeIndex, the models' date
+        '''
 
-        self.sm_rz_pentad = sm_rz_pentad
-        self.sm_percentile_rz_pentad = sm_percentile_rz_pentad
+        self.sm = sm
+        self.sm_percentile = sm_percentile
         self._info = info
+        self.date = date
 
     def run(self):
         """ implement WorkBase.run """
-        fig, ax1 = plt.subplots()
-        ax2 = ax1.twinx()
-        ax1.plot(self.sm_rz_pentad[:, 1], "b", alpha=0.5)
-        ax2.plot(self.sm_percentile_rz_pentad[:, 1], "r.", markersize=1)
+        # plot set
+        f = draw_plot.Figure()
+        d_sm = draw_plot.Draw(f.ax, f, gridy=True, labelx="Date", labely="Sm / m", legend_on=True)
+        d_sm_percentile = draw_plot.Draw(f.ax.twinx(), f, gridy=True, labely="Sm percentile", legend_on=True)
+
+        # add plot
+        d_sm.adddraw(draw_plot.PlotDraw(self.date, self.sm, "b.", alpha=0.5, markersize=0.5, label="sm"))
+        d_sm_percentile.adddraw(draw_plot.PlotDraw(self.date, self.sm_percentile, "r.", markersize=0.5, label="sm_percentile"))
+
+        # show
+        f.show()
+
+        # coefficient, p_value < alpha, passed
+        r, p_value = pearsonr(self.sm, self.sm_percentile)
+        print(f"r={r}, p_value={p_value}")
 
     def __repr__(self):
-        return f"This is CompareSmPercentile, info: {self._info}, compare sm_rz_pentad and sm_percentile_rz_pentad"
+        return f"This is CompareSmPercentile, info: {self._info}, compare sm and sm_percentile"
 
     def __str__(self):
-        return f"This is CompareSmPercentile, info: {self._info}, compare sm_rz_pentad and sm_percentile_rz_pentad"
+        return f"This is CompareSmPercentile, info: {self._info}, compare sm and sm_percentile"
 
 
 def combine_Noah_SM():
@@ -290,45 +456,92 @@ def Upscale_CLS_Pentad():
     upscale_CLS.run()
 
 
+def smpercentile_Noah_0_100cm_kde():
+    sm_ = np.load('H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad.npy', mmap_mode="r")
+    sm = sm_[:, 1:]
+    date = sm_[:, 0]
+    format = '%Y%m%d'
+
+    # use kde
+    kde = Nonparamfit.KdeDistribution()
+
+    # cal sm percentile
+    csp_kde = CalSmPercentile(sm, date, format=format, distribution=kde, info="Kde distribution sm percentile",
+                              save_path="SoilMoi0_100cm_inst_19480101_20141231_Pentad_KdeSmPercentile")
+    csp_kde.run()
+
+
+def smpercentile_Noah_0_100cm_multiple_distribution():
+    sm_ = np.load('H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad.npy', mmap_mode="r")
+    sm = sm_[:, 1:]
+    date = sm_[:, 0]
+    format = '%Y%m%d'
+
+    # nonparam
+    nonparamdistribution = Nonparamfit.Gringorten()
+
+    # distributions
+    distribution = [Univariatefit.UnivariateDistribution(stats.expon), Univariatefit.UnivariateDistribution(stats.gamma),
+                    Univariatefit.UnivariateDistribution(stats.beta), Univariatefit.UnivariateDistribution(stats.lognorm),
+                    Univariatefit.UnivariateDistribution(stats.logistic), Univariatefit.UnivariateDistribution(stats.pareto),
+                    Univariatefit.UnivariateDistribution(stats.weibull_min), Univariatefit.UnivariateDistribution(stats.genextreme)]
+
+    # cal sm percentile
+    cspmd = CalSmPercentileMultiDistribution(sm, date, format, distribution=distribution,
+                                             nonparamdistribution=nonparamdistribution, info="multiple distribution sm percentile",
+                                             save_path="SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis_SmPercentile")
+    cspmd.run()
+
+
+def compareSmSmPercentile_Noah_0_100cm_kde_multiple_dis():
+    sm_ = np.load('H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad.npy', mmap_mode="r")
+    sm_percentile_kde_ = np.load('H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad_KdeSmPer'
+                             'centile.npy', mmap_mode="r")
+    sm_percentile_multi_dis_ = np.load('H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis'
+                                      '_SmPercentile.npy', mmap_mode="r")
+
+    sm = sm_[:, 1:]
+    sm_percentile_kde = sm_percentile_kde_[:, 1:]
+    sm_percentile_multi_dis = sm_percentile_multi_dis_[:, 1:]
+
+    date = pd.to_datetime(sm_[:, 0], format='%Y%m%d')
+
+    point = 117
+
+    csp_kde = CompareSmPercentile(sm[:, point], sm_percentile_kde[:, point], date)
+    csp_multi_dis = CompareSmPercentile(sm[:, point], sm_percentile_multi_dis[:, point], date)
+    csp_kde.run()
+    csp_multi_dis.run()
+
+    csp_c = CompareSmPercentile(sm_percentile_multi_dis[:, point], sm_percentile_kde[:, point], date)
+    csp_c.run()
+
+    # diff
+    diff = sm_percentile_kde - sm_percentile_multi_dis
+    diff_mean = abs(diff).mean(axis=0)
+
+    mean_ = (sm_percentile_kde + sm_percentile_multi_dis) / 2
+    diff_relative = abs(diff / mean_) * 100
+    diff_relative_mean = diff_relative.mean(axis=0)
+
+    diff_ = np.vstack((diff_mean, diff_relative_mean))
+    diff = pd.DataFrame(diff_, index=["diff_mean", "diff_relative_mean"], columns=list(range(sm_percentile_kde.shape[1])))
+    diff.to_excel("diff.xlsx")
+
+
 if __name__ == '__main__':
     # # combine Noah SM between different layers
     # combine_Noah_SM()
+
     # # upscale noah and CLS sm
     # Upscale_Noah_D()
     # Upscale_Noah_Pentad()
     # Upscale_CLS_Pentad()
+
+    # cal sm percentile
+    # smpercentile_Noah_0_100cm_kde()
+    # smpercentile_Noah_0_100cm_multiple_distribution()
+
+    # compare sm with sm percentile
+    # compareSmSmPercentile_Noah_0_100cm_kde_multiple_dis()
     pass
-    # # general set
-    # home = "H:/research/flash_drough/"
-    # data_path = os.path.join(home, "GLDAS_Catchment")
-    # coord_path = os.path.join(home, "coord.txt")
-    # coord = pd.read_csv(coord_path, sep=",")
-    # date = pd.date_range('19480101', '20141230', freq='d').strftime("%Y%m%d").to_numpy(dtype="int")
-    # sm_rz = np.loadtxt(os.path.join(data_path, "SoilMoist_RZ_tavg.txt"), dtype="float", delimiter=" ")
-    # sm_rz_Helong = np.loadtxt(os.path.join(home, "sm_rz_Helong.txt"), dtype="float", delimiter=" ")
-    # sm_rz_noHelong = np.loadtxt(os.path.join(home, "sm_rz_noHelong.txt"), dtype="float", delimiter=" ")
-    #
-    # # CalPentad
-    # sm_rz_CP = CalPentad(date, sm_rz, info="sm_rz_CP")
-    # sm_rz_Helong_CP = CalPentad(date, sm_rz_Helong, info="sm_rz_Helong_CP")
-    # sm_rz_noHelong_CP = CalPentad(date, sm_rz_noHelong, info="sm_rz_noHelong_CP")
-    # WF_CP = Workflow.WorkFlow(sm_rz_CP, sm_rz_Helong_CP, sm_rz_noHelong_CP)
-    #
-    # date_pentad, sm_rz_pentad = sm_rz_CP.run()
-    # _, sm_rz_Helong_pentad = sm_rz_Helong_CP.run()
-    # _, sm_rz_noHelong_pentad = sm_rz_noHelong_CP.run()
-    #
-    # # CalSmPercentile
-    # sm_rz_pentad_CSP = CalSmPercentile(sm_rz_pentad, timestep=73, info="sm_rz_pentad_CSP")
-    #
-    # sm_percentile_rz_pentad = sm_rz_pentad_CSP.run()
-    #
-    # # compare sm and sm_percentile
-    # CompareSP = CompareSmPercentile(sm_rz_pentad, sm_percentile_rz_pentad, info="sm_rz_pentadVSsm_percentile_rz_pentad")
-    #
-    # # Pretreatment_data WF
-    # PDWF = Workflow.WorkFlow()
-    # PDWF += WF_CP
-    # PDWF += sm_rz_pentad_CSP
-    # PDWF += CompareSP
-    # PDWF.runflow(key=[4])
