@@ -4,7 +4,7 @@
 # plot the spatial distribution of FD
 import numpy as np
 import pandas as pd
-import FDIP
+import FlashDrought
 import os
 import re
 from matplotlib import pyplot as plt

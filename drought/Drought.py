@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import draw_plot
-import runtheory
+import useful_func
 
 
 class Drought:
@@ -26,19 +26,13 @@ class Drought:
                     volume(si)
             excluding: bool, whether activate excluding: excluding while (rd = di / dmean < rds) or (rs = si / smean <
                     rds), based on IC method
-
-            timestep: the timestep of SM （the number of SM data in one year）, which is used to do cal_SM_percentile
-            (reshape a vector to a array, which shape is (n(year)+1 * timestep))
-                365 : daily, 365 data in one year
-                12 : monthly, 12 data in one year
-                73 : pentad(5), 73 data in one year
-                x ：x data in one year
+                rds: predefined critical excluding ratio, compare with rd/rs = d/s / d/s_mean
 
         output:
             self.dry_flag_start, self.dry_flag_end: start end of each drought events(shrinkable)
             self.DD, self.DS, self.SM_min: character of each drought events
-            plot: use self.plot(plot(self, title="Drought", yes=0)), save figure set yes = 1: plot dorught
-            xlsx: use self.out_put(self, xlsx=1) , set xlsx=1: out put drought the xlsx
+            plot: use self.plot, save figure by setting save_on = True
+            out_put: use self.out_put(self, xlsx=1) , set xlsx=1: out put drought and save as xlsx
 
         """
         # input set
@@ -74,7 +68,7 @@ class Drought:
         # character
         self.DD, self.DS, self.index_min, self.index_min_flag = self.character()
 
-        #  excluding, should be after character
+        # excluding, should be after character
         if self.excluding:
             self.cal_excluding()
 
@@ -109,18 +103,29 @@ class Drought:
 
     def character(self) -> (np.ndarray, np.ndarray, np.ndarray):
         """ extract the drought character variables
-        DD: duration of drought events (unit based on timestep)
-        DS: severity of drought events (unit based on drought index)
-        index_min/_flag: the min value of index (unit based on index)
+
+            DD: duration of drought events (unit based on timestep)
+            DS: severity of drought events (unit based on drought index)
+            index_min/_flag: the min value of index (unit based on index)
+
         """
-        n = len(self.dry_flag_start)  # the number of flash drought events
+        # the number of flash drought events
+        n = len(self.dry_flag_start)
+
+        # extract drought character
         DD = self.dry_flag_end - self.dry_flag_start + 1
+
+        # end + 1: to contain the end point, it satisfy drought_index[end] < threshold
         x = self.threshold - self.drought_index
         DS = np.array([x[self.dry_flag_start[i]: self.dry_flag_end[i] + 1].sum() for i in range(n)], dtype='float')
+
         index_min = np.array([min(self.drought_index[self.dry_flag_start[i]: self.dry_flag_end[i] + 1]) for i in range(n)],
                           dtype='float')
+
+        # add self.dry_flag_start to revert flag index to make it based on index of drought index
         index_min_flag = np.array([np.argmin(self.drought_index[self.dry_flag_start[i]: self.dry_flag_end[i] + 1]) +
                                 self.dry_flag_start[i] for i in range(n)], dtype='float')
+
         return DD, DS, index_min, index_min_flag
 
     def cal_excluding(self):
@@ -144,18 +149,26 @@ class Drought:
                 i += 1
 
     def out_put(self, xlsx_on=False) -> pd.DataFrame:
-        """ output the drought event to a dataframe and .xlsx file(to set xlsx=1) """
-        n = len(self.dry_flag_start)  # the number of flash drought events
+        """ output the drought event to a dataframe and .xlsx file(to set xlsx_on=True) """
+        # the number of flash drought events
+        n = len(self.dry_flag_start)
+
+        # calculate other characters which will be put into output
         Date_start = np.array([self.Date_tick[self.dry_flag_start[i]] for i in range(n)])
         Date_end = np.array([self.Date_tick[self.dry_flag_end[i]] for i in range(n)])
         threshold = np.full((n,), self.threshold, dtype='float')
+
+        # build output character
         Drought_character = pd.DataFrame(
             np.vstack((Date_start, Date_end, self.dry_flag_start, self.dry_flag_end, self.DD, self.DS, self.index_min,
                        self.index_min_flag, threshold)).T,
             columns=("Date_start", "Date_end", "flag_start", "flag_end", "DD", "DS", "index_min", "index_min_flag",
                      "threshold"))
+
+        # save
         if xlsx_on == True:
             Drought_character.to_excel("Drought_character.xlsx", index=False)
+
         return Drought_character
 
     def plot(self, title="Drought", save_on=False):
@@ -170,7 +183,7 @@ class Drought:
 
         # drought index series
         drought_index_plot = draw_plot.PlotDraw(self.Date, self.drought_index, label="drought index",
-                                                color="cornflowerblue", alpha=0.5, linewidth=0.5)
+                                                color="cornflowerblue", alpha=0.5, linewidth=0.5, zorder=30)
         draw.adddraw(drought_index_plot)
 
         # threshold series
@@ -187,10 +200,35 @@ class Drought:
         draw.adddraw(trend_plot)
 
         # drought events
-        events = np.full((len(self.Date),), fill_value=self.threshold)
         for i in range(len(self.dry_flag_start)):
-            events[self.dry_flag_start[i]:self.dry_flag_end[i] + 1] = \
-                self.drought_index[self.dry_flag_start[i]:self.dry_flag_end[i] + 1]
+            # start and end
+            start = self.dry_flag_start[i]
+            end = self.dry_flag_end[i]
+
+            # event
+            event_date = np.array(self.Date[start: end + 1], dtype=float)
+            event = self.drought_index[start: end + 1]
+
+            # event fix
+            drought_index_start = self.drought_index[start]
+            drought_index_end = self.drought_index[end]
+
+            # drought_index_start/end must <= threshold
+            if drought_index_start < self.threshold and start > 0:
+                r = useful_func.intersection([start-1, self.threshold, start, self.threshold],
+                                           [start-1, self.drought_index[start - 1], start, self.drought_index[start]])
+                event_date = np.insert(event_date, 0, r[0])
+                event = np.insert(event, 0, r[1])
+
+            if drought_index_end < self.threshold and end < len(self.drought_index) - 1:
+                r = useful_func.intersection([end, self.threshold, end + 1, self.threshold],
+                                             [end, self.drought_index[end], end + 1, self.drought_index[end + 1]])
+                event_date = np.append(event_date, r[0])
+                event = np.append(event, r[1])
+
+            # fill
+            fig.ax.fill_between(event_date, event, self.threshold, alpha=1, facecolor="r", label="Drought events",
+                            interpolate=True, zorder=20)
             # plot line
             # start = self.dry_flag_start[i]
             # end = self.dry_flag_end[i]
@@ -198,10 +236,7 @@ class Drought:
             # linewidth=1)
             # draw.adddraw(events_plot)
 
-        # fill drought events
-        fig.ax.fill_between(self.Date, events, self.threshold, alpha=1, facecolor="r", label="Drought events",
-                            interpolate=True, zorder=20)  # peru
-
+        # set ticks and labels
         fig.ax.set_xticks(self.Date[::int(len(self.Date) / 6)])  # set six ticks
         fig.ax.set_xticklabels(self.Date_tick[::int(len(self.Date) / 6)])
         fig.show()

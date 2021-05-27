@@ -4,7 +4,7 @@
 # Statistical data: calculate statistical parameter of Drought and FD
 import numpy as np
 import pandas as pd
-import FDIP
+import FlashDrought
 import os
 import mannkendall_test
 
@@ -82,10 +82,10 @@ def cal_stat_params():
     # calculate the statistical params for all grid (loop)
     for i in range(Num_point):
         # the sm_rz_pentad time series of every point
-        FD_ = FDIP.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
-                      pc=0.28,
-                      excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                      fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+        FD_ = FlashDrought.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+                              pc=0.28,
+                              excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                              fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
         # SM_percentile, RI, out_put, dp = FD_.general_out()
         # Drought_FOC FD_FOC
         Drought_FOC[i] = FD_.DD.sum() / len(FD_.SM)
@@ -136,10 +136,10 @@ def cal_season_params():
     # calculate season params for all grid (season feature) (loop)
     for i in range(Num_point):
         # the sm_rz_pentad time series of every point
-        FD_ = FDIP.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
-                      pc=0.28,
-                      excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                      fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+        FD_ = FlashDrought.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+                              pc=0.28,
+                              excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                              fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
 
         # calculate season params for this grid
         Drought_spring_ = 0  # drought events number occur in spring(3, 4, 5)
@@ -201,10 +201,10 @@ def cal_season_params():
 
 # special point: 1036, the grid with 376 drought events and 314 FD events
 def SpecialPoint():
-    FD_ = FDIP.FD(sm_rz_pentad[:, 1036], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
-                  pc=0.28,
-                  excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                  fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+    FD_ = FlashDrought.FD(sm_rz_pentad[:, 1036], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+                          pc=0.28,
+                          excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                          fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
     FD_.general_out()
 
 
@@ -217,10 +217,10 @@ def year_number():
 
     for i in range(Num_point):
         # the sm_rz_pentad time series of every point
-        FD_ = FDIP.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
-                      pc=0.28,
-                      excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                      fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+        FD_ = FlashDrought.FD(sm_rz_pentad[:, i], Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+                              pc=0.28,
+                              excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                              fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
         for j in range(len(FD_.dry_flag_start)):
             Drought_year = date2year(date_pentad[FD_.dry_flag_start[j]])
             Drought_year_number.loc[i, Drought_year] += 1

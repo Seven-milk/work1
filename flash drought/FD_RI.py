@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
-from FDIP import FD
+from FlashDrought import FD
 
 
 class FD_RI(FD):

@@ -7,7 +7,7 @@
 # fd_tc = 2 fd_pc=0.29 fd_rds=0.28
 import numpy as np
 import pandas as pd
-import FDIP
+import FlashDrought
 import os
 from matplotlib import pyplot as plt
 
@@ -18,9 +18,9 @@ date_pentad = np.loadtxt(os.path.join(home, "date_pentad.txt"), dtype="int")
 
 # baseline: not activate pooling/excluding and fd pooling/excluding
 tc_avg = 5
-FD_avg = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=False, tc=tc_avg, pc=0.2,
-                 excluding=False, rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                 fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+FD_avg = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=False, tc=tc_avg, pc=0.2,
+                         excluding=False, rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                         fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
 
 
 # SM_percentile, RI, out_put, dp = FD_avg.general_out()
@@ -84,10 +84,10 @@ def sensitity_Drought():
     pc_avg = [pc_ / 100 for pc_ in list(range(0, 51, 1))]
     ratio_DD_mean_p, ratio_DS_mean_p, ratio_number_p, ratio_SM_min_mean_p = [], [], [], []
     for i in range(len(pc_avg)):
-        FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
-                      pc=pc_avg[i], excluding=False, rds=0.41, RI_threshold=0.05, eliminating=True,
-                      eliminate_threshold=0.2,
-                      fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+        FD_ = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
+                              pc=pc_avg[i], excluding=False, rds=0.41, RI_threshold=0.05, eliminating=True,
+                              eliminate_threshold=0.2,
+                              fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
         ratio_DD_mean_p.append(FD_.DD.mean() / FD_avg.DD.mean())
         ratio_DS_mean_p.append(FD_.DS.mean() / FD_avg.DS.mean())
         ratio_number_p.append(len(FD_.DD) / len(FD_avg.DD))
@@ -97,10 +97,10 @@ def sensitity_Drought():
     rds_avg = [rds_ / 100 for rds_ in list(range(0, 51, 1))]
     ratio_DD_mean_e, ratio_DS_mean_e, ratio_number_e, ratio_SM_min_mean_e = [], [], [], []
     for i in range(len(rds_avg)):
-        FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=False, tc=tc_avg,
-                      pc=0.2, excluding=True, rds=rds_avg[i], RI_threshold=0.05, eliminating=True,
-                      eliminate_threshold=0.2,
-                      fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+        FD_ = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=False, tc=tc_avg,
+                              pc=0.2, excluding=True, rds=rds_avg[i], RI_threshold=0.05, eliminating=True,
+                              eliminate_threshold=0.2,
+                              fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
         ratio_DD_mean_e.append(FD_.DD.mean() / FD_avg.DD.mean())
         ratio_DS_mean_e.append(FD_.DS.mean() / FD_avg.DS.mean())
         ratio_number_e.append(len(FD_.DD) / len(FD_avg.DD))
@@ -111,9 +111,9 @@ def sensitity_Drought():
     rds_avg = [rds_ / 100 for rds_ in list(range(0, 51, 1))]
     ratio_DD_mean_pe, ratio_DS_mean_pe, ratio_number_pe, ratio_SM_min_mean_pe = [], [], [], []
     for i in range(len(rds_avg)):
-        FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
-                      pc=pc_selected, excluding=True, rds=rds_avg[i], RI_threshold=0.05, eliminating=True,
-                      eliminate_threshold=0.2, fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+        FD_ = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
+                              pc=pc_selected, excluding=True, rds=rds_avg[i], RI_threshold=0.05, eliminating=True,
+                              eliminate_threshold=0.2, fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
         ratio_DD_mean_pe.append(FD_.DD.mean() / FD_avg.DD.mean())
         ratio_DS_mean_pe.append(FD_.DS.mean() / FD_avg.DS.mean())
         ratio_number_pe.append(len(FD_.DD) / len(FD_avg.DD))
@@ -125,14 +125,14 @@ def sensitity_Drought():
     rds_avg = [rds_ / 100 for rds_ in list(range(0, 51, 1))]
     ratio_DD_mean_pec, ratio_DS_mean_pec, ratio_number_pec, ratio_SM_min_mean_pec = [], [], [], []
     for i in range(len(rds_avg)):
-        FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
-                      pc=pc_selected, excluding=True, rds=rds_avg[i], RI_threshold=0.05, eliminating=True,
-                      eliminate_threshold=0.2, fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
-        FD_compare = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True,
-                             tc=tc_avg,
-                             pc=pc_selected, excluding=False, rds=rds_avg[i], RI_threshold=0.05, eliminating=True,
-                             eliminate_threshold=0.2, fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False,
-                             fd_rds=0.41)
+        FD_ = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
+                              pc=pc_selected, excluding=True, rds=rds_avg[i], RI_threshold=0.05, eliminating=True,
+                              eliminate_threshold=0.2, fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+        FD_compare = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True,
+                                     tc=tc_avg,
+                                     pc=pc_selected, excluding=False, rds=rds_avg[i], RI_threshold=0.05, eliminating=True,
+                                     eliminate_threshold=0.2, fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False,
+                                     fd_rds=0.41)
         ratio_DD_mean_pec.append(FD_.DD.mean() / FD_compare.DD.mean())
         ratio_DS_mean_pec.append(FD_.DS.mean() / FD_compare.DS.mean())
         ratio_number_pec.append(len(FD_.DD) / len(FD_compare.DD))
@@ -238,19 +238,19 @@ def sensitity_FD():
     fd_tc_avg = 2
     pc_avg = 0.28
     rds_avg = 0.22  # has been pooling and excluding in drought perspective
-    FD_avg = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
-                     pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
-                     eliminate_threshold=0.2,
-                     fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+    FD_avg = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
+                             pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
+                             eliminate_threshold=0.2,
+                             fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
 
     # sensitity analysis: (pooling at fd_pc = 0 : 0.1 : 0.5 & no excluding) vs (no pooling & no excluding)
     fd_pc_avg = [pc_ / 100 for pc_ in list(range(0, 51, 1))]
     ratio_FDD_mean_p, ratio_FDS_mean_p, ratio_number_p, ratio_number_NFD_p, ratio_RImean_mean_p, ratio_RImax_mean_p = [], [], [], [], [], []
     for i in range(len(fd_pc_avg)):
-        FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
-                      pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
-                      eliminate_threshold=0.2,
-                      fd_pooling=True, fd_tc=fd_tc_avg, fd_pc=fd_pc_avg[i], fd_excluding=False, fd_rds=0.41)
+        FD_ = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
+                              pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
+                              eliminate_threshold=0.2,
+                              fd_pooling=True, fd_tc=fd_tc_avg, fd_pc=fd_pc_avg[i], fd_excluding=False, fd_rds=0.41)
         ratio_FDD_mean_p.append(FD_.FDD_mean / FD_avg.FDD_mean)
         ratio_FDS_mean_p.append(FD_.FDS_mean / FD_avg.FDS_mean)
         ratio_number_p.append(sum(FD_.dp) / sum(FD_avg.dp))
@@ -266,10 +266,10 @@ def sensitity_FD():
     fd_rds_avg = [rds_ / 100 for rds_ in list(range(0, 51, 1))]
     ratio_FDD_mean_e, ratio_FDS_mean_e, ratio_number_e, ratio_number_NFD_e, ratio_RImean_mean_e, ratio_RImax_mean_e = [], [], [], [], [], []
     for i in range(len(fd_pc_avg)):
-        FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
-                      pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
-                      eliminate_threshold=0.2,
-                      fd_pooling=False, fd_tc=fd_tc_avg, fd_pc=0.2, fd_excluding=True, fd_rds=fd_rds_avg[i])
+        FD_ = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
+                              pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
+                              eliminate_threshold=0.2,
+                              fd_pooling=False, fd_tc=fd_tc_avg, fd_pc=0.2, fd_excluding=True, fd_rds=fd_rds_avg[i])
         ratio_FDD_mean_e.append(FD_.FDD_mean / FD_avg.FDD_mean)
         ratio_FDS_mean_e.append(FD_.FDS_mean / FD_avg.FDS_mean)
         ratio_number_e.append(sum(FD_.dp) / sum(FD_avg.dp))
@@ -285,10 +285,10 @@ def sensitity_FD():
     fd_pc_selected = 0.29
     ratio_FDD_mean_pe, ratio_FDS_mean_pe, ratio_number_pe, ratio_number_NFD_pe, ratio_RImean_mean_pe, ratio_RImax_mean_pe = [], [], [], [], [], []
     for i in range(len(fd_pc_avg)):
-        FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
-                      pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
-                      eliminate_threshold=0.2,
-                      fd_pooling=True, fd_tc=fd_tc_avg, fd_pc=fd_pc_selected, fd_excluding=True, fd_rds=fd_rds_avg[i])
+        FD_ = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
+                              pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
+                              eliminate_threshold=0.2,
+                              fd_pooling=True, fd_tc=fd_tc_avg, fd_pc=fd_pc_selected, fd_excluding=True, fd_rds=fd_rds_avg[i])
         ratio_FDD_mean_pe.append(FD_.FDD_mean / FD_avg.FDD_mean)
         ratio_FDS_mean_pe.append(FD_.FDS_mean / FD_avg.FDS_mean)
         ratio_number_pe.append(sum(FD_.dp) / sum(FD_avg.dp))
@@ -303,16 +303,16 @@ def sensitity_FD():
     fd_pc_selected = 0.29
     ratio_FDD_mean_pec, ratio_FDS_mean_pec, ratio_number_pec, ratio_number_NFD_pec, ratio_RImean_mean_pec, ratio_RImax_mean_pec = [], [], [], [], [], []
     for i in range(len(fd_pc_avg)):
-        FD_ = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
-                      pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
-                      eliminate_threshold=0.2,
-                      fd_pooling=True, fd_tc=fd_tc_avg, fd_pc=fd_pc_selected, fd_excluding=True, fd_rds=fd_rds_avg[i])
-        FD_compare = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True,
-                             tc=tc_avg,
-                             pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
-                             eliminate_threshold=0.2,
-                             fd_pooling=True, fd_tc=fd_tc_avg, fd_pc=fd_pc_selected, fd_excluding=False,
-                             fd_rds=fd_rds_avg[i])
+        FD_ = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=tc_avg,
+                              pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
+                              eliminate_threshold=0.2,
+                              fd_pooling=True, fd_tc=fd_tc_avg, fd_pc=fd_pc_selected, fd_excluding=True, fd_rds=fd_rds_avg[i])
+        FD_compare = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True,
+                                     tc=tc_avg,
+                                     pc=pc_avg, excluding=True, rds=rds_avg, RI_threshold=0.05, eliminating=True,
+                                     eliminate_threshold=0.2,
+                                     fd_pooling=True, fd_tc=fd_tc_avg, fd_pc=fd_pc_selected, fd_excluding=False,
+                                     fd_rds=fd_rds_avg[i])
         ratio_FDD_mean_pec.append(FD_.FDD_mean / FD_compare.FDD_mean)
         ratio_FDS_mean_pec.append(FD_.FDS_mean / FD_compare.FDS_mean)
         ratio_number_pec.append(sum(FD_.dp) / sum(FD_compare.dp))
@@ -367,16 +367,16 @@ def sensitity_FD():
 
 
 def compare():
-    FD_before = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=False, tc=tc_avg, pc=0.2,
-                     excluding=False, rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                     fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+    FD_before = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=False, tc=tc_avg, pc=0.2,
+                                excluding=False, rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                                fd_pooling=False, fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
     _, _, out_put_before, _ = FD_before.general_out()
 
     # result:
     # tc = 5 pc=0.28 rds = 0.22
     # fd_tc = 2 fd_pc=0.29 fd_rds=0.28
-    FD_after = FDIP.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5, pc=0.28,
-                     excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                     fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+    FD_after = FlashDrought.FD(sm_rz_pentad_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5, pc=0.28,
+                               excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                               fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
     _, _, out_put_after, _ = FD_after.general_out()
     return out_put_before, out_put_after

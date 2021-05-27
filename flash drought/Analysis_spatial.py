@@ -4,7 +4,7 @@
 # Spatial analysis: fixed time (one time), as a map
 import numpy as np
 import pandas as pd
-import FDIP
+import FlashDrought
 import os
 from matplotlib import pyplot as plt
 from importlib import reload

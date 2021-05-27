@@ -5,7 +5,7 @@
 # Root Zone Soil moisture: 'SoilMoist_RZ_tavg'
 import numpy as np
 import pandas as pd
-import FDIP
+import FlashDrought
 import os
 import draw_plot, map_plot
 from importlib import reload
@@ -71,10 +71,10 @@ FD_year_number_noHelong_mean = FD_year_number_noHelong.mean(axis=0)
 
 # time series of spaital average sm
 def plot_sm():
-    FD_avg = FDIP.FD(sm_rz_pentad_spatial_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
-                     pc=0.28,
-                     excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
-                     fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
+    FD_avg = FlashDrought.FD(sm_rz_pentad_spatial_avg, Date_tick=date_pentad, timestep=73, threshold=0.4, pooling=True, tc=5,
+                             pc=0.28,
+                             excluding=True, rds=0.22, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2,
+                             fd_pooling=True, fd_tc=2, fd_pc=0.29, fd_excluding=True, fd_rds=0.28)
     SM_percentile, RI, out_put, dp = FD_avg.general_out()
     # out_put.to_excel("out_put.xlsx")
 
