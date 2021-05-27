@@ -89,6 +89,8 @@ def intersection(line1, line2, plot_=False):
         draw.adddraw(line21_Text)
         draw.adddraw(line22_Text)
 
+        fig.show()
+
     return r
 
 
