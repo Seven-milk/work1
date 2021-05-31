@@ -18,7 +18,8 @@ class Gif:
 
 
 if __name__ == '__main__':
-    image_list = [os.path.join('H:/research/flash_drough/GLC_LandUse', image) for image in
-                  os.listdir('H:/research/flash_drough/GLC_LandUse') if image.endswith(".tif")]
+    home = 'H:/work/daimeng/20210531gif/gif1'
+    image_list = [os.path.join(home, image) for image in
+                  os.listdir(home) if image.endswith(".png")]
     gif = Gif()
-    gif.ToGif(image_list=image_list, gif_name='Land_Use_1982_to_2015.gif', duration=0.35)
+    gif.ToGif(image_list=image_list, gif_name='1.gif', duration=0.35)
