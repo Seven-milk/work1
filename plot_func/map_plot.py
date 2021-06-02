@@ -446,7 +446,7 @@ class Figure:
     ''' figure set '''
 
     def __init__(self, addnumber: int = 1, dpi: int = 300, figsize=(12, 5), proj: crs.Projection = crs.PlateCarree(),
-                 wspace=None, hspace=None, **kwargs):
+                 wspace=None, hspace=None, family="Arial", **kwargs):
         ''' init function
         input:
             addnumber: the init add fig number
@@ -458,6 +458,7 @@ class Figure:
                   InterruptedGoodeHomolosine...
                   reference: https://scitools.org.uk/cartopy/docs/latest/crs/projections.html
             wspace/hspace: the space between subfig
+            family: font family
             **kwargs: keyword args of subplots, it could contain "sharex" "sharey"
 
         self.figNumber: fig number in the base map, default=1
@@ -482,11 +483,11 @@ class Figure:
         self.wspace = wspace
         self.hspace = hspace
         self.addFig(addnumber, wspace=self.wspace, hspace=self.hspace, **self.kwargs)
-        self.font_label = {'family': 'Arial', 'weight': 'normal',
+        self.font_label = {'family': family, 'weight': 'normal',
                            'size': 6 if isinstance(self.ax, np.ndarray) else 8}
-        self.font_ticks = {'family': 'Arial', 'weight': 'normal',
+        self.font_ticks = {'family': family, 'weight': 'normal',
                            'size': 6 if isinstance(self.ax, np.ndarray) else 8}
-        self.font_title = {'family': 'Arial', 'weight': 'bold',
+        self.font_title = {'family': family, 'weight': 'bold',
                            'size': 6 if isinstance(self.ax, np.ndarray) else 8}
         if self.add == True:
             self.unview_last()
