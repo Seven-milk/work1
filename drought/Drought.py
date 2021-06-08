@@ -1,8 +1,8 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
-# drought identify
-# reference:
+# Drought Identify
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt

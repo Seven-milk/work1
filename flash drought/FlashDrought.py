@@ -1,8 +1,7 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
-# Flash Drought Identify Process
-# TODO ADD reference
+# Flash Drought Identify
 
 import numpy as np
 import pandas as pd
