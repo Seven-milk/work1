@@ -1,7 +1,6 @@
 # code: utf-8
 # author: "Xudong Zheng" 
 # email: Z786909151@163.com
-# work flow class, 未来需要进一步改进，如workflow可以写成容器，设置set/get方法、workbase基类设置抽象属性等
 import abc
 from importlib import reload
 
@@ -10,8 +9,8 @@ class WorkBase(abc.ABC):
     ''' WorkBase abstract class '''
 
     @abc.abstractmethod
-    def run(self):
-        ''' define something to run for this work '''
+    def __call__(self):
+        ''' define something to do for this work '''
 
 
 class WorkExample(WorkBase):
@@ -23,8 +22,8 @@ class WorkExample(WorkBase):
         self._args = args
         self._kwargs = kwargs
 
-    def run(self):
-        ''' Implement the WorkBase.run '''
+    def __call__(self):
+        ''' Implement the WorkBase.__call__ '''
         print(f"I'm running: {self._info}{self._args}{self._kwargs}...I have completed this work")
         return None
 
@@ -36,7 +35,7 @@ class WorkExample(WorkBase):
 
 
 class WorkFlow:
-    ''' WorkFlow, work manager: add work and run '''
+    ''' WorkFlow, work manager: add work and manager them '''
 
     def __init__(self, *args: WorkBase):
         ''' init function
@@ -89,11 +88,11 @@ class WorkFlow:
             raise TypeError("Input should be a instance of WorkBase")
         return None
 
-    def runflow(self, key: list = None, skip: list = None):
-        ''' run WorkFlow: run works in this flow
+    def __call__(self, key: list = None, skip: list = None):
+        ''' run WorkFlow: do works in this flow
         input:
-            key: list, work to do
-            skip: list, work to skip
+            key: list, the index of works will be done
+            skip: list, the index of works will be skipped
         '''
         # default set
         if key == None:
@@ -108,8 +107,8 @@ class WorkFlow:
                 i += 1
                 continue
             print(f"Start running work{i}: {str(work)}")
-            # append work.run() results in self._ret
-            ret_ = work.run()
+            # append work() results in self._ret
+            ret_ = work()
             self.ret.append({f"work{i}_ret": ret_})
             i += 1
             print(f"Complete wrok{i}: {str(work)}\n")
@@ -120,7 +119,7 @@ if __name__ == '__main__':
     we1 = WorkExample("work0", 1, 2, people=1)
     we2 = WorkExample("work1", people=2)
     print(we1)
-    we1.run()
+    we1()
     wf = WorkFlow(we1)
     print(wf)
     wf += we2
@@ -129,4 +128,4 @@ if __name__ == '__main__':
     print(wf)
     del wf[0]
     print(wf)
-    wf.runflow()
+    wf()
