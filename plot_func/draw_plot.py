@@ -365,6 +365,39 @@ class KdeDraw(DrawBase):
         ax.plot(self.x_eval, self.kde(self.x_eval), label=self.label, **self.kwargs)
 
 
+class PcolormeshDraw(DrawBase):
+    ''' Pcolormesh Draw '''
+
+    def __init__(self, *args, cb_label="cb", **kwargs):
+        ''' init function
+        cb_label: colorbar label name
+        *args: position args
+        **kwargs: keyword args, it could contain "alpha", "norm", "cmap", "vmin", "vmax", "shading", "antialiased",
+                reference ax.pcolormesh
+        general use: pcolormesh([X, Y,] C, **kwargs)
+        '''
+        self.args = args
+        self.kwargs = kwargs
+        self.cb_label = cb_label
+
+    def plot(self, ax, Fig):
+        ''' Implements the DrawBase.plot function '''
+        # pcolormesh
+        pcm = ax.pcolormesh(*self.args, **self.kwargs)
+
+        # colorbar
+        shrinkrate = 0.9 if isinstance(Fig.ax, np.ndarray) else 1
+        extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
+        cb = Fig.fig.colorbar(pcm, ax=ax, orientation='vertical', shrink=shrinkrate, pad=0.05, extend=extend)
+        cb.ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
+        if isinstance(Fig.ax, np.ndarray):
+            cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
+        else:
+            cb.set_label(self.cb_label, fontdict=Fig.font_label)
+        for l in cb.ax.yaxis.get_ticklabels():
+            l.set_family('Arial')
+
+
 class Draw:
     ''' Add Draw in one ax, this class is used to represent ax and plot a draw '''
 
@@ -491,5 +524,11 @@ if __name__ == "__main__":
     d7 = Draw(f.ax[6], f, gridy=True, labelx="X", labely="Y", legend_on=True, title="BarDraw")
     bar = BarDraw([1, 2, 3], x[0, :3], label="x")
     d7.adddraw(bar)
+    # d8: pcolormesh
+    d8 = Draw(f.ax[7], f, gridy=True, labelx="X", labely="Y", legend_on=False, title="Pcolormesh")
+    pcolormesh = PcolormeshDraw(x[:100, 0].reshape((10, 10)))
+    d8.adddraw(pcolormesh)
     # del d8
-    f.unview_last()
+    # f.unview_last()
+    # fig show
+    f.show()
