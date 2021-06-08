@@ -124,8 +124,8 @@ class ExtractRegion(Workflow.WorkBase):
         self.save_path = save_path
         self._info = info
 
-    def run(self):
-        ''' implement WorkBase.run '''
+    def __call__(self):
+        ''' implement WorkBase.__call__ '''
         extract_region_ = extract_region()
         region_data = extract_region_.extract_data(self.coord_region, self.coord_original, self.data_original,
                                                    self.axis)
@@ -163,7 +163,7 @@ def extract_sm_static_params():
     # WF add
     WF_sm_static_params = Workflow.WorkFlow(ER_sm_rz_Helong, ER_sm_rz_noHelong, ER_static_params_Helong,
                                             ER_static_params_noHelong)
-    WF_sm_static_params.runflow()
+    WF_sm_static_params()
     return WF_sm_static_params
 
     # extract data based on extract_region
@@ -198,7 +198,7 @@ def extract_Drought_FD_number():
     # WF add
     WF_sm_static_params = Workflow.WorkFlow(ER_Drought_year_number_Helong, ER_Drought_year_number_noHelong,
                                             ER_FD_year_number_Helong, ER_FD_year_number_noHelong)
-    WF_sm_static_params.runflow()
+    WF_sm_static_params()
     return WF_sm_static_params
 
     # extract data based on extract_region

@@ -24,8 +24,8 @@ class ReadFiletoExcel(Workflow.WorkBase):
      source data: https://ismn.geo.tuwien.ac.at/en/
     '''
 
-    def run(self):
-        ''' Implement WorkBase.run '''
+    def __call__(self):
+        ''' Implement WorkBase.__call__ '''
         print("start read txt to excel")
         self.read_txt_to_excel()
         print("complete")
@@ -103,8 +103,8 @@ class SmValidation(Workflow.WorkBase):
         self.station_name = station_name
         self._info = info
 
-    def run(self):
-        ''' Implement WorkBase.run '''
+    def __call__(self):
+        ''' Implement WorkBase.__call__ '''
         print("start validation")
         # compare model sm with one station
         if isinstance(self.station_coord, pd.DataFrame):
@@ -334,7 +334,7 @@ def GLDAS_CLS_validation():
 
     # validation
     smv = SmValidation(model_sm[:, 1:], station_sm, model_coord, station_coord, model_date, station_name)
-    ret = smv.run()
+    ret = smv()
     ret.to_excel("GLDAS_CLS_SoilMoist_RZ_tavg_Validation.xlsx")
 
 
@@ -349,7 +349,7 @@ def GLDAS_NOAH_RootMoist_validation():
 
     # validation
     smv = SmValidation(model_sm[:, 1:], station_sm, model_coord, station_coord, model_date, station_name)
-    ret = smv.run()
+    ret = smv()
     ret.to_excel("GLDAS_Noah_RootMoist_inst_Validation.xlsx")
 
 
@@ -364,7 +364,7 @@ def GLDAS_NOAH_SoilMoi0_10cm_inst_validation():
 
     # validation
     smv = SmValidation(model_sm[:, 1:], station_sm, model_coord, station_coord, model_date, station_name)
-    ret = smv.run()
+    ret = smv()
     ret.to_excel("GLDAS_Noah_SoilMoi0_10cm_inst_Validation.xlsx")
 
 
@@ -379,7 +379,7 @@ def GLDAS_NOAH_SoilMoi0_100cm_inst_validation():
 
     # validation
     smv = SmValidation(model_sm[:, 1:], station_sm, model_coord, station_coord, model_date, station_name)
-    ret = smv.run()
+    ret = smv()
     ret.to_excel("GLDAS_Noah_SoilMoi0_100cm_inst_Validation.xlsx")
 
 
@@ -394,7 +394,7 @@ def GLDAS_NOAH_SoilMoi10_40cm_inst_validation():
 
     # validation
     smv = SmValidation(model_sm[:, 1:], station_sm, model_coord, station_coord, model_date, station_name)
-    ret = smv.run()
+    ret = smv()
     ret.to_excel("GLDAS_Noah_SoilMoi10_40cm_inst_Validation.xlsx")
 
 
@@ -409,7 +409,7 @@ def GLDAS_NOAH_SoilMoi40_100cm_inst_validation():
 
     # validation
     smv = SmValidation(model_sm[:, 1:], station_sm, model_coord, station_coord, model_date, station_name)
-    ret = smv.run()
+    ret = smv()
     ret.to_excel("GLDAS_Noah_SoilMoi40_100cm_inst_Validation.xlsx")
 
 
@@ -431,8 +431,8 @@ class compareModelSm(Workflow.WorkBase):
         self.model_name = model_name
         self._info = info
 
-    def run(self):
-        ''' Implement WorkBase.run '''
+    def __call__(self):
+        ''' Implement WorkBase.__call__ '''
         print("compare models' sm")
         # general set
         fig_series = draw_plot.Figure()
@@ -532,7 +532,7 @@ def compareNoahCLS():
 
     # compare
     cms = compareModelSm(model_sm, model_date, model_name)
-    ret = cms.run()
+    ret = cms()
     ret.to_excel("Compare_GLDAS_models_sm_correlation_coefficient.xlsx")
 
 

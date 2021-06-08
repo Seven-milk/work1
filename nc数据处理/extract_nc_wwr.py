@@ -69,8 +69,8 @@ class ExtractNcWwrBin(Workflow.WorkBase):
         self.result = [self.path + "/" + d for d in os.listdir(self.path) if d[-4:] == ".nc4"]
         self.result.sort(key=lambda x: float(r.search(x)[0]))  # sort result
 
-    def run(self):
-        ''' Implement WorkBase.run '''
+    def __call__(self):
+        ''' Implement WorkBase.__call__ '''
         self.extract_nc()
 
     def extract_nc(self):
@@ -315,4 +315,4 @@ if __name__ == "__main__":
                           precision=3)
     enc.overview()
     print(enc)
-    enc.run()
+    enc()

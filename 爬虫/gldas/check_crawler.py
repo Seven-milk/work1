@@ -69,8 +69,8 @@ class CheckCrawler(Workflow.WorkBase):
         self.r = r
         self.time_format = time_format
 
-    def run(self):
-        ''' Implement WorkBase.run '''
+    def __call__(self):
+        ''' Implement WorkBase.__call__ '''
         # checkDownload
         print("start check if all files in urls has been Download")
         ret_download = self.checkDownload()
@@ -251,4 +251,4 @@ if __name__ == '__main__':
     # r = re.compile(r"LABEL.*\d\.nc4")
     r = re.compile(r"\d{8}\.\d{4}")
     cc = CheckCrawler(home, URL, r, time_format='%Y%m%d.%H%S')
-    cc.run()
+    cc()

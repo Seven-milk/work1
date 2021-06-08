@@ -66,8 +66,8 @@ class CheckExtract(Workflow.WorkBase):
         self.coord = self.coord.round(self.precision)  # coord precision correlating with .nc file lat/lon
         self.nc_path = [self.source_data_path + "/" + d for d in os.listdir(self.source_data_path) if d[-4:] == ".nc4"]
 
-    def run(self):
-        ''' Implement WorkBase.run() '''
+    def __call__(self):
+        ''' Implement WorkBase.__call__ '''
         # check date
         print("-----------Check date-----------")
         ret_check_date = self.checkDate()
@@ -185,4 +185,4 @@ if __name__ == '__main__':
     r = re.compile(r'\d{8}')
     ce = CheckExtract(extract_data_path=extract_data_path, source_data_path=source_data_path, coord_path=coord_path,
                       variable_name=variable_name, r=r, precision=3, check_num=10, time_format="%Y%m%d") # .%H%S
-    ce.run()
+    ce()

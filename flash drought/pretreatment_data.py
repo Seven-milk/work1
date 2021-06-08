@@ -25,7 +25,7 @@ class CombineNoahSm(Workflow.WorkBase):
         self.save = save
         self._info = 'Noah Sm Combination 0-100cm'
 
-    def run(self):
+    def __call__(self):
         print("start combine")
         print("load data")
         Sm0_10 = np.load(self.Sm_path[0], mmap_mode='r')
@@ -88,8 +88,8 @@ class UpscaleTime(Workflow.WorkBase):
         self._info = info
         self.combine = combine
 
-    def run(self):
-        ''' implement WorkBase.run '''
+    def __call__(self):
+        ''' implement WorkBase.__call__ '''
         print("start upScale")
         print("start calculate")
         upscale_date, upscale_series = self.upScale()
@@ -180,8 +180,8 @@ class CalSmPercentile(Workflow.WorkBase):
         self.combine = combine
         self._info = info
 
-    def run(self):
-        ''' implement WorkBase.run '''
+    def __call__(self):
+        ''' implement WorkBase.__call__ '''
         sm_percentile = np.zeros_like(self._sm, dtype="float")
         date = pd.to_datetime(self.date, format=self.format)
 
@@ -246,8 +246,8 @@ class CalSmPercentileMultiDistribution(CalSmPercentile):
         self.nonparamdistribution = nonparamdistribution
         self.alpha = alpha
 
-    def run(self):
-        ''' implement WorkBase.run '''
+    def __call__(self):
+        ''' implement WorkBase.__call__ '''
         sm_percentile = np.zeros_like(self._sm, dtype="float")
         date = pd.to_datetime(self.date, format=self.format)
 
@@ -363,8 +363,8 @@ class CompareSmPercentile(Workflow.WorkBase):
         self._info = info
         self.date = date
 
-    def run(self):
-        """ implement WorkBase.run """
+    def __call__(self):
+        """ implement WorkBase.__call__ """
         # plot set
         f = draw_plot.Figure()
         d_sm = draw_plot.Draw(f.ax, f, gridy=True, labelx="Date", labely="Sm / m", legend_on=True)
@@ -391,7 +391,7 @@ class CompareSmPercentile(Workflow.WorkBase):
 def combine_Noah_SM():
     # combine Noah Sm, sum
     cns = CombineNoahSm(home='H:/research/flash_drough/GLDAS_Noah', save=True)
-    cns.run()
+    cns()
 
 
 def Upscale_Noah_D():
@@ -414,10 +414,10 @@ def Upscale_Noah_D():
 
         D_post = UpscaleTime(original_series=original_series_post[:, 1:], multiple=7,
                                 original_date=original_series_post[:, 0], save_path=None,
-                                combine=True, info=save_path[i][save_path[i].rfind("/") + 1:]).run()
+                                combine=True, info=save_path[i][save_path[i].rfind("/") + 1:])()
         D_after = UpscaleTime(original_series=original_series_after[:, 1:], multiple=8,
                                 original_date=original_series_after[:, 0], save_path=None,
-                                combine=True, info=save_path[i][save_path[i].rfind("/") + 1:]).run()
+                                combine=True, info=save_path[i][save_path[i].rfind("/") + 1:])()
 
         D_ = np.vstack((D_post, D_after))
         np.save(save_path[i], D_)
@@ -444,7 +444,7 @@ def Upscale_Noah_Pentad():
                                 combine=True, info=save_path[i][save_path[i].rfind("/") + 1:])
         upscale_Noah += upscale_Noah_
 
-    upscale_Noah.runflow()
+    upscale_Noah()
 
 
 def Upscale_CLS_Pentad():
@@ -453,7 +453,7 @@ def Upscale_CLS_Pentad():
     original_series = np.load(original_series, mmap_mode='r')
     upscale_CLS = UpscaleTime(original_series=original_series[:, 1:], multiple=5, original_date=original_series[:, 0],
                               save_path=save_path, combine=True, info=save_path[save_path.rfind("/") + 1:])
-    upscale_CLS.run()
+    upscale_CLS()
 
 
 def smpercentile_Noah_0_100cm_kde():
@@ -468,7 +468,7 @@ def smpercentile_Noah_0_100cm_kde():
     # cal sm percentile
     csp_kde = CalSmPercentile(sm, date, format=format, distribution=kde, info="Kde distribution sm percentile",
                               save_path="SoilMoi0_100cm_inst_19480101_20141231_Pentad_KdeSmPercentile")
-    csp_kde.run()
+    csp_kde()
 
 
 def smpercentile_Noah_0_100cm_multiple_distribution():
@@ -490,7 +490,7 @@ def smpercentile_Noah_0_100cm_multiple_distribution():
     cspmd = CalSmPercentileMultiDistribution(sm, date, format, distribution=distribution,
                                              nonparamdistribution=nonparamdistribution, info="multiple distribution sm percentile",
                                              save_path="SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis_SmPercentile")
-    cspmd.run()
+    cspmd()
 
 
 def compareSmSmPercentile_Noah_0_100cm_kde_multiple_dis():
@@ -510,11 +510,11 @@ def compareSmSmPercentile_Noah_0_100cm_kde_multiple_dis():
 
     csp_kde = CompareSmPercentile(sm[:, point], sm_percentile_kde[:, point], date)
     csp_multi_dis = CompareSmPercentile(sm[:, point], sm_percentile_multi_dis[:, point], date)
-    csp_kde.run()
-    csp_multi_dis.run()
+    csp_kde()
+    csp_multi_dis()
 
     csp_c = CompareSmPercentile(sm_percentile_multi_dis[:, point], sm_percentile_kde[:, point], date)
-    csp_c.run()
+    csp_c()
 
     # diff
     diff = sm_percentile_kde - sm_percentile_multi_dis
