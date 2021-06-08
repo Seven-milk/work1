@@ -211,7 +211,8 @@ class CalSmPercentile(Workflow.WorkBase):
 
         # combine
         if self.combine == True:
-            sm_percentile = np.hstack((self.date.reshape(len(self.date), 1), sm_percentile))
+            sm_percentile_ = sm_percentile if len(self._sm.shape) > 1 else sm_percentile.reshape(len(sm_percentile), 1)
+            sm_percentile = np.hstack((self.date.reshape(len(self.date), 1), sm_percentile_))
 
         # save result
         if self.save_path != None:
@@ -337,7 +338,8 @@ class CalSmPercentileMultiDistribution(CalSmPercentile):
 
         # combine
         if self.combine == True:
-            sm_percentile = np.hstack((self.date.reshape(len(self.date), 1), sm_percentile))
+            sm_percentile_ = sm_percentile if len(self._sm.shape) > 1 else sm_percentile.reshape(len(sm_percentile), 1)
+            sm_percentile = np.hstack((self.date.reshape(len(self.date), 1), sm_percentile_))
 
         # save result
         if self.save_path != None:
@@ -488,7 +490,8 @@ def smpercentile_Noah_0_100cm_multiple_distribution():
 
     # cal sm percentile
     cspmd = CalSmPercentileMultiDistribution(sm, date, format, distribution=distribution,
-                                             nonparamdistribution=nonparamdistribution, info="multiple distribution sm percentile",
+                                             nonparamdistribution=nonparamdistribution,
+                                             info="multiple distribution sm percentile",
                                              save_path="SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis_SmPercentile")
     cspmd()
 
@@ -529,6 +532,28 @@ def compareSmSmPercentile_Noah_0_100cm_kde_multiple_dis():
     diff.to_excel("diff.xlsx")
 
 
+def smpercentile_Noah_0_100cm_multiple_distribution_Region_mean():
+    sm_ = np.load('H:/research/flash_drough/GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad.npy', mmap_mode="r")
+    sm = sm_[:, 1:].mean(axis=1)
+    date = sm_[:, 0]
+    format = '%Y%m%d'
+
+    # nonparam
+    nonparamdistribution = Nonparamfit.Gringorten()
+
+    # distributions
+    distribution = [Univariatefit.UnivariateDistribution(stats.expon), Univariatefit.UnivariateDistribution(stats.gamma),
+                    Univariatefit.UnivariateDistribution(stats.beta), Univariatefit.UnivariateDistribution(stats.lognorm),
+                    Univariatefit.UnivariateDistribution(stats.logistic), Univariatefit.UnivariateDistribution(stats.pareto),
+                    Univariatefit.UnivariateDistribution(stats.weibull_min), Univariatefit.UnivariateDistribution(stats.genextreme)]
+
+    # cal sm percentile
+    cspmd = CalSmPercentileMultiDistribution(sm, date, format, distribution=distribution,
+                                             nonparamdistribution=nonparamdistribution,
+                                             info="multiple distribution sm percentile from region mean sm",
+                                             save_path="SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis_SmPercentile_RegionMean")
+    cspmd()
+
 if __name__ == '__main__':
     # # combine Noah SM between different layers
     # combine_Noah_SM()
@@ -544,4 +569,7 @@ if __name__ == '__main__':
 
     # compare sm with sm percentile
     # compareSmSmPercentile_Noah_0_100cm_kde_multiple_dis()
+
+    # cal sm percentile RegionMean
+    # smpercentile_Noah_0_100cm_multiple_distribution_Region_mean()
     pass
