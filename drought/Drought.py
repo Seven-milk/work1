@@ -228,7 +228,7 @@ class Drought:
 
             # fill
             fig.ax.fill_between(event_date, event, self.threshold, alpha=1, facecolor="r", label="Drought events",
-                            interpolate=True, zorder=20)
+                                interpolate=True, zorder=20)
             # plot line
             # start = self.dry_flag_start[i]
             # end = self.dry_flag_end[i]
@@ -265,14 +265,33 @@ class Drought:
 
 
 if __name__ == '__main__':
+    # test code through using a random series(with a random seed)
     np.random.seed(15)
-    sm = np.random.rand(365 * 3, )
-    sm = np.convolve(sm, np.repeat(1 / 2, 3), mode='full')  # running means
+    drought_index = np.random.rand(365 * 3, )
+    drought_index = np.convolve(drought_index, np.repeat(1 / 2, 3), mode='full')  # running means
     tc = 10
     pc = 0.5
     rds = 0.41
     fd_pc = 0.2
     fd_tc = 2
-    d = Drought(sm, Date_tick=[], tc=tc, pc=pc, rds=rds)
+    d = Drought(drought_index, Date_tick=[], tc=tc, pc=pc, rds=rds)
     d.plot()
     print(d.out_put())
+
+    # ----------------------- compare results with different configuration -----------------------
+    # D1
+    D1 = Drought(drought_index, Date_tick=[], tc=tc, pc=pc, rds=rds)
+    D1.plot()
+    out1 = D1.out_put()
+    # D2
+    D2 = Drought(drought_index, Date_tick=[], pooling=False, excluding=False, tc=tc, pc=pc, rds=rds)
+    D2.plot()
+    out2 = D2.out_put()
+    # D3
+    D3 = Drought(drought_index, Date_tick=[], pooling=True, excluding=False, tc=tc, pc=pc, rds=rds)
+    D3.plot()
+    out3 = D3.out_put()
+    # D4
+    D4 = Drought(drought_index, Date_tick=[], pooling=False, excluding=True, tc=tc, pc=pc, rds=rds)
+    D4.plot()
+    out4 = D4.out_put()

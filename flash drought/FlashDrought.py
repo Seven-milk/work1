@@ -459,28 +459,23 @@ if __name__ == "__main__":
     fd_tc = 2
     Date_tick = []
     FD = FlashDrought(drought_index, Date_tick=Date_tick, tc=tc, pc=pc, rds=rds, eliminating=True, fd_pooling=True,
-             fd_tc=fd_tc, fd_pc=fd_pc, fd_excluding=False)
+                      fd_tc=fd_tc, fd_pc=fd_pc, fd_excluding=False)
     RI, out_put, dp = FD.general_out()
-    # ------------------------------------------------------------------ compare results with different configuration
-    # D1 = Drought(sm, 365, tc=tc, pc=pc, rds=rds)
-    # sm_per = D1.SM_percentile
-    # D1.plot()
-    # print(D1.out_put())
-    # out1 = D1.out_put()
-    # D2 = Drought(sm, 365, pooling=False, excluding=False, tc=tc, pc=pc, rds=rds)
-    # D2.plot()
-    # print(D2.out_put())
-    # out2 = D2.out_put()
-    # D3 = Drought(sm, 365, pooling=True, excluding=False, tc=tc, pc=pc, rds=rds)
-    # D3.plot()
-    # print(D3.out_put())
-    # out3 = D3.out_put()
-    # D4 = Drought(sm, 365, pooling=False, excluding=True, tc=tc, pc=pc, rds=rds)
-    # D4.plot()
-    # print(D4.out_put())
-    # out4 = D4.out_put()
-    # np.savetxt("1.txt", D1.SM_percentile)
-    # out.to_excel("1.xlsx")
-    # out2.to_excel("2.xlsx")
-    # out3.to_excel("3.xlsx")
-    # out4.to_excel("4.xlsx")
+
+    # ----------------------- compare results with different configuration -----------------------
+    # FD1
+    FD1 = FlashDrought(drought_index, Date_tick=[], tc=tc, pc=pc, rds=rds)
+    FD1.plot()
+    out1 = FD1.out_put()
+    # FD2
+    FD2 = FlashDrought(drought_index, Date_tick=[], pooling=False, excluding=False, tc=tc, pc=pc, rds=rds)
+    FD2.plot()
+    out2 = FD2.out_put()
+    # FD3
+    FD3 = FlashDrought(drought_index, Date_tick=[], pooling=True, excluding=False, tc=tc, pc=pc, rds=rds)
+    FD3.plot()
+    out3 = FD3.out_put()
+    # FD4
+    FD4 = FlashDrought(drought_index, Date_tick=[], pooling=False, excluding=True, tc=tc, pc=pc, rds=rds)
+    FD4.plot()
+    out4 = FD4.out_put()
