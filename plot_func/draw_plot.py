@@ -415,7 +415,11 @@ class ContourDraw(DrawBase):
         self.kwargs = kwargs
 
     def plot(self, ax, Fig):
-        ax.contour(*self.args, **self.kwargs)
+        # contour
+        c = ax.contour(*self.args, **self.kwargs)
+
+        # clabel
+        ax.clabel(c, inline=True, fontsize=Fig.font_label["size"])
 
 
 class Draw:
