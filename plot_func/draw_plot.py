@@ -410,6 +410,7 @@ class ContourDraw(DrawBase):
         **kwargs: keyword args, it could contain "colors", "cmap", "linewidths", "alpha", "vmin", "vmax", "norm",
                 "extent", "extend", reference ax.contour
         general use: contour([X, Y,] C, **kwargs), note: X, Y = np.meshgrid(x, y) should be preprocessed before plot
+        note: if you put contour above a contourf, set the same level can make it looks better
         '''
         self.args = args
         self.kwargs = kwargs
@@ -419,7 +420,7 @@ class ContourDraw(DrawBase):
         c = ax.contour(*self.args, **self.kwargs)
 
         # clabel
-        ax.clabel(c, inline=True, fontsize=Fig.font_label["size"])
+        ax.clabel(c, inline=True, fontsize=Fig.font_label["size"]-3)
 
 
 class ContourfDraw(DrawBase):
