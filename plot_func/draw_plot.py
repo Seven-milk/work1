@@ -375,6 +375,8 @@ class PcolormeshDraw(DrawBase):
         **kwargs: keyword args, it could contain "alpha", "norm", "cmap", "vmin", "vmax", "shading", "antialiased",
                 reference ax.pcolormesh
         general use: pcolormesh([X, Y,] C, **kwargs)
+        note: attention to the relationship between C and the axis X/Y, sometimes, to harmonize them, you should use
+                np.flip(C, axis=..)
         '''
         self.args = args
         self.kwargs = kwargs
