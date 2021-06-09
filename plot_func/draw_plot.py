@@ -386,16 +386,33 @@ class PcolormeshDraw(DrawBase):
         pcm = ax.pcolormesh(*self.args, **self.kwargs)
 
         # colorbar
-        shrinkrate = 0.9 if isinstance(Fig.ax, np.ndarray) else 1
+        # shrinkrate = 0.9 if isinstance(Fig.ax, np.ndarray) else 1
         extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
-        cb = Fig.fig.colorbar(pcm, ax=ax, orientation='vertical', shrink=shrinkrate, pad=0.05, extend=extend)
-        cb.ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
+        cb = Fig.fig.colorbar(pcm, ax=ax, orientation='vertical', pad=0.05, extend=extend)  # , shrink=shrinkrate
+        cb.ax.tick_params(labelsize=Fig.font_label["size"])  # , direction='in'
         if isinstance(Fig.ax, np.ndarray):
             cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
         else:
             cb.set_label(self.cb_label, fontdict=Fig.font_label)
         for l in cb.ax.yaxis.get_ticklabels():
             l.set_family('Arial')
+
+
+class ContourDraw(DrawBase):
+    ''' Contour Draw '''
+
+    def __init__(self, *args, **kwargs):
+        ''' init function
+        *args: position args, it could contain a int to control lines number, i.e. contour([X, Y,] C, 20, **kwargs)
+        **kwargs: keyword args, it could contain "colors", "cmap", "linewidths", "alpha", "vmin", "vmax", "norm",
+                "extent", "extend", reference ax.contour
+        general use: contour([X, Y,] C, **kwargs), note: X, Y = np.meshgrid(x, y) should be preprocessed before plot
+        '''
+        self.args = args
+        self.kwargs = kwargs
+
+    def plot(self, ax, Fig):
+        ax.contour(*self.args, **self.kwargs)
 
 
 class Draw:
@@ -487,7 +504,7 @@ class Draw:
 
 if __name__ == "__main__":
     # np.random.seed(15)
-    f = Figure(8)
+    f = Figure(9, hspace=0.5, wspace=0.5)
     facecolors = ["lightgrey", 'lightgreen', 'lightblue']  # pink
     x = np.random.rand(500, 3)
     # d0: box and text
@@ -528,6 +545,10 @@ if __name__ == "__main__":
     d8 = Draw(f.ax[7], f, gridy=True, labelx="X", labely="Y", legend_on=False, title="Pcolormesh")
     pcolormesh = PcolormeshDraw(x[:100, 0].reshape((10, 10)))
     d8.adddraw(pcolormesh)
+    # d9: contour
+    d9 = Draw(f.ax[8], f, gridy=True, labelx="X", labely="Y", legend_on=False, title="Contour")
+    contour = ContourDraw(x[:100, 0].reshape((10, 10)), colors="k", linewidths=1)
+    d9.adddraw(contour)
     # del d8
     # f.unview_last()
     # fig show
