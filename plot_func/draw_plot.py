@@ -389,8 +389,8 @@ class PcolormeshDraw(DrawBase):
 
         # colorbar
         # shrinkrate = 0.9 if isinstance(Fig.ax, np.ndarray) else 1
-        extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
-        cb = Fig.fig.colorbar(pcm, ax=ax, orientation='vertical', pad=0.05, extend=extend)  # , shrink=shrinkrate
+        # extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
+        cb = Fig.fig.colorbar(pcm, ax=ax, orientation='vertical', pad=0.05)  # , shrink=shrinkrate, extend=extend
         cb.ax.tick_params(labelsize=Fig.font_label["size"])  # , direction='in'
         if isinstance(Fig.ax, np.ndarray):
             cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
@@ -420,6 +420,37 @@ class ContourDraw(DrawBase):
 
         # clabel
         ax.clabel(c, inline=True, fontsize=Fig.font_label["size"])
+
+
+class ContourfDraw(DrawBase):
+    ''' Contourf Draw '''
+
+    def __init__(self, *args, cb_label="cb", **kwargs):
+        ''' init function
+         cb_label: colorbar label name
+        *args: position args
+        **kwargs: keyword args, it could contain "colors", "cmap", "linewidths", "alpha", "vmin", "vmax", "norm",
+                "extent", "extend", reference ax.contourf
+        '''
+        self.args = args
+        self.kwargs = kwargs
+        self.cb_label = cb_label
+
+    def plot(self, ax, Fig):
+        # contourf
+        cf = ax.contourf(*self.args, **self.kwargs)
+
+        # colorbar
+        # shrinkrate = 0.9 if isinstance(Fig.ax, np.ndarray) else 1
+        # extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
+        cb = Fig.fig.colorbar(cf, ax=ax, orientation='vertical', pad=0.05)  # , shrink=shrinkrate, extend=extend
+        cb.ax.tick_params(labelsize=Fig.font_label["size"])  # , direction='in'
+        if isinstance(Fig.ax, np.ndarray):
+            cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
+        else:
+            cb.set_label(self.cb_label, fontdict=Fig.font_label)
+        for l in cb.ax.yaxis.get_ticklabels():
+            l.set_family('Arial')
 
 
 class Draw:
@@ -511,7 +542,7 @@ class Draw:
 
 if __name__ == "__main__":
     # np.random.seed(15)
-    f = Figure(9, hspace=0.5, wspace=0.5)
+    f = Figure(10, hspace=0.5, wspace=0.5)
     facecolors = ["lightgrey", 'lightgreen', 'lightblue']  # pink
     x = np.random.rand(500, 3)
     # d0: box and text
@@ -556,6 +587,11 @@ if __name__ == "__main__":
     d9 = Draw(f.ax[8], f, gridy=True, labelx="X", labely="Y", legend_on=False, title="Contour")
     contour = ContourDraw(x[:100, 0].reshape((10, 10)), colors="k", linewidths=1)
     d9.adddraw(contour)
+    # d10: contourf
+    d10 = Draw(f.ax[9], f, gridy=True, labelx="X", labely="Y", legend_on=False, title="Contourf")
+    contourf = ContourfDraw(x[:100, 0].reshape((10, 10)))
+    d10.adddraw(contourf)
+
     # del d8
     # f.unview_last()
     # fig show
