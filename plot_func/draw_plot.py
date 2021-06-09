@@ -405,7 +405,8 @@ class ContourDraw(DrawBase):
 
     def __init__(self, *args, **kwargs):
         ''' init function
-        *args: position args, it could contain a int to control lines number, i.e. contour([X, Y,] C, 20, **kwargs)
+        *args: position args, it could contain a int to control lines number(it can also be specificed in kwargs,
+                "levels"), i.e. contour([X, Y,] C, 20, **kwargs)
         **kwargs: keyword args, it could contain "colors", "cmap", "linewidths", "alpha", "vmin", "vmax", "norm",
                 "extent", "extend", reference ax.contour
         general use: contour([X, Y,] C, **kwargs), note: X, Y = np.meshgrid(x, y) should be preprocessed before plot
