@@ -24,7 +24,7 @@ class Drought:
                 tc: predefined critical duration
                 pc: pooling ratio, the critical ratio of excess volume(vi) of inter-event time and the preceding deficit
                     volume(si)
-            excluding: bool, whether activate excluding: excluding while (rd = di / dmean < rds) or (rs = si / smean <
+            excluding: bool, whether activate excluding: excluding while (rd = di / dmean < rds) and (rs = si / smean <
                     rds), based on IC method
                 rds: predefined critical excluding ratio, compare with rd/rs = d/s / d/s_mean
 
@@ -129,7 +129,7 @@ class Drought:
         return DD, DS, index_min, index_min_flag
 
     def cal_excluding(self):
-        """ excluding while (rd = di / dmean < rds) or (rs = si / smean < rds), based on IC method """
+        """ excluding while (rd = di / dmean < rds) and (rs = si / smean < rds), based on IC method """
         RD = self.DD / self.DD.mean()
         RS = self.DS / self.DS.mean()
         size = len(RD)
