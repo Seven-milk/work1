@@ -14,7 +14,7 @@ import useful_func
 class FlashDrought(Drought):
     def __init__(self, drought_index, Date_tick, threshold=0.4, pooling=True, tc=1, pc=0.2, excluding=True,
                  rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2, fd_pooling=True, fd_tc=1,
-                 fd_pc=0.2, fd_excluding=True, fd_rds=0.41):
+                 fd_pc=0.2, fd_excluding=False, fd_rds=0.41):
         """
         Identify flash drought based on rule: extract from a drought event(start-1 : end)
         (ps: start/i - 1 means it can represent the rapid change from wet to drought)
@@ -23,6 +23,8 @@ class FlashDrought(Drought):
 
         note: this identification regard flash drought as a flash develop period of a normal drought event, and a normal
         drought can contain more than one flash drought
+        note: generally, we do not consider excluding in FD, there have many condition to limit FD, keep it's "flash"
+            and "drought"
 
         input: similar with Drought
             RI_threshold: the threshold of RI to extract extract flash development period(RI instantaneous)
