@@ -135,7 +135,8 @@ class Drought:
         size = len(RD)
         i = 0
         while i < size:
-            if (RD[i] <= self.rds) or (RS[i] <= self.rds):
+            if (RD[i] <= self.rds) and (RS[i] <= self.rds):  # note: change or to and, avoid to excluding short serious
+                # events
                 self.dry_flag_start = np.delete(self.dry_flag_start, i)
                 self.dry_flag_end = np.delete(self.dry_flag_end, i)
                 self.DD = np.delete(self.DD, i)
