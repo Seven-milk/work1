@@ -420,7 +420,7 @@ class ContourDraw(DrawBase):
         c = ax.contour(*self.args, **self.kwargs)
 
         # clabel
-        ax.clabel(c, inline=True, fontsize=Fig.font_label["size"]-3)
+        ax.clabel(c, inline=True, fontsize=Fig.font_label["size"]-2.5)
 
 
 class ContourfDraw(DrawBase):
