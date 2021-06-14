@@ -12,6 +12,7 @@ import useful_func
 
 
 class FlashDrought(Drought):
+    ''' Flash Drought Class '''
     def __init__(self, drought_index, Date_tick, threshold=0.4, pooling=True, tc=1, pc=0.2, excluding=True,
                  rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2, fd_pooling=True, fd_tc=1,
                  fd_pc=0.2, fd_excluding=False, fd_rds=0.41):
@@ -446,6 +447,18 @@ class FlashDrought(Drought):
         print("dp: \n", sum(self.dp), "\n")
         print("-----------------------------------------------")
         return self.RI, self.out_put(), self.dp
+
+
+class FlashDrought_Frozen(FlashDrought):
+    ''' Frozen Params
+    tc = 6, pc = 0.5, rds = 0.2
+    fd_tc = 1, fd_pc = 0.4
+    '''
+    def __init__(self, drought_index, Date_tick):
+        super(FlashDrought_Frozen, self).__init__(drought_index, Date_tick, threshold=0.4, pooling=True, tc=6, pc=0.5,
+                                                  excluding=True, rds=0.2, RI_threshold=0.05, eliminating=True,
+                                                  eliminate_threshold=0.2, fd_pooling=True, fd_tc=1, fd_pc=0.4,
+                                                  fd_excluding=False, fd_rds=0.41)
 
 
 if __name__ == "__main__":

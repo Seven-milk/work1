@@ -11,6 +11,7 @@ import useful_func
 
 
 class Drought:
+    ''' Drought Class '''
     def __init__(self, drought_index, Date_tick, threshold=0.4, pooling=True, tc=1, pc=0.2, excluding=True,
                  rds=0.41):
         """
@@ -263,6 +264,15 @@ class Drought:
         plt.title("drought_index")
         if yes == 1:
             plt.savefig("Drought_character_boxplot")
+
+
+class Drought_Frozen(Drought):
+    ''' Frozen Params
+    tc = 6, pc = 0.5, rds = 0.2
+    '''
+    def __init__(self, drought_index, Date_tick):
+        super(Drought_Frozen, self).__init__(drought_index, Date_tick, threshold=0.4, pooling=True, tc=6, pc=0.5,
+                                             excluding=True, rds=0.2)
 
 
 if __name__ == '__main__':
