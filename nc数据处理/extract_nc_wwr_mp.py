@@ -49,8 +49,8 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
         self.num_cpu = num_cpu
         self.iscombine = iscombine
 
-    def run(self):
-        ''' Implement WorkBase.run '''
+    def __call__(self):
+        ''' Implement WorkBase.__call__ '''
         self.ret, self.target = self.extract_nc()
         print("start post_process ...")
         self.post_process()
@@ -225,4 +225,4 @@ if __name__ == "__main__":
                               precision=3, num_cpu=8)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
     # encmp.overview()
     print(encmp)
-    encmp.run()
+    encmp()
