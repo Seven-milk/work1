@@ -17,3 +17,7 @@ class DistributionBase(abc.ABC):
     @abc.abstractmethod
     def pdf(self, data):
         ''' pdf '''
+
+    @abc.abstractmethod
+    def ppf(self, percentile):
+        ''' ppf, inverse of cdf '''
