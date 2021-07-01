@@ -10,6 +10,7 @@ import draw_plot
 import Univariatefit
 import Distribution
 import useful_func
+import time
 
 
 class NonparamBase(Distribution.DistributionBase):
@@ -27,15 +28,17 @@ class NonparamBase(Distribution.DistributionBase):
 class KdeDistribution(NonparamBase):
     ''' Kde dirtribution class '''
 
-    def fit(self, data, **kwargs):
+    def fit(self, data, cdf_on=False, pdf_on=False, **kwargs):
         '''
         input:
             **kwargs: key word args, it could contains bw_method=None("Scott"), weights=None, reference stats.gaussian_kde
         '''
         self.kde = stats.gaussian_kde(data, **kwargs)
         self._data = np.array(data)
-        self._cdf = self.cdf(data)
-        self._pdf = self.pdf(data)
+        if cdf_on == True:
+            self._cdf = self.cdf(data)
+        if pdf_on == True:
+            self._pdf = self.pdf(data)
 
     def cdf(self, data):
         if isinstance(data, list) or isinstance(data, np.ndarray):
@@ -82,12 +85,13 @@ class KdeDistribution(NonparamBase):
 class Gringorten(NonparamBase):
     ''' Gringorten nonparametric distribution '''
 
-    def fit(self, data):
+    def fit(self, data, cdf_on=False):
         self._data = np.array(data)
-        series_ = pd.Series(data)
-        cdf = [(series_.rank(axis=0, method="min", ascending=True)[i] - 0.44) / (len(series_) + 0.12) for i in
-               range(len(series_))]
-        self._cdf = np.array(cdf)
+        if cdf_on == True:
+            series_ = pd.Series(data)
+            cdf = [(series_.rank(axis=0, method="min", ascending=True)[i] - 0.44) / (len(series_) + 0.12) for i in
+                   range(len(series_))]
+            self._cdf = np.array(cdf)
 
     def cdf(self, data):
         if isinstance(data, list) or isinstance(data, np.ndarray):
@@ -142,11 +146,13 @@ class Gringorten(NonparamBase):
 class EmpiricalDistribution(NonparamBase):
     ''' Empirical Distribution '''
 
-    def fit(self, data):
+    def fit(self, data, cdf_on=False):
         # /(len(data) + 1) to avoid max(cdf) == 1
         self._data = np.array(data)
-        cdf = [len([x_ for x_ in data if x_ <= x]) / (len(data) + 1) for x in data]
-        self._cdf = np.array(cdf)
+        if cdf_on == True:
+            cdf = [len([x_ for x_ in data if x_ <= x]) / (len(data) + 1) for x in data]
+            self._cdf = np.array(cdf)
+            end = time.time()
 
     def cdf(self, data):
         if isinstance(data, list) or isinstance(data, np.ndarray):
@@ -204,7 +210,7 @@ if __name__ == '__main__':
 
     # kde
     kde = KdeDistribution()
-    kde.fit(x)
+    kde.fit(x, cdf_on=True)
     kdecdf = kde.cdf(x)
     print("kde ppf 0.5", kde.ppf(0.5))
 
@@ -216,13 +222,13 @@ if __name__ == '__main__':
 
     # gringorten
     gg = Gringorten()
-    gg.fit(x)
+    gg.fit(x, cdf_on=True)
     ggcdf = gg.cdf(x)
     print("gg ppf 0.5", gg.ppf(0.5))
 
     # Empirical
     ed = EmpiricalDistribution()
-    ed.fit(x)
+    ed.fit(x, cdf_on=True)
     edcdf = ed.cdf(x)
     print("ed ppf 0.5", ed.ppf(0.5))
 
