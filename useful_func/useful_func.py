@@ -179,6 +179,7 @@ if __name__ == '__main__':
     data = [1, 3, 2, 0]
     sortedindex, sorteddata = sortWithIndex(data, p=True)
     r = intersection([0, 1, 2, 2], [1, 2, 2, 0], plot_=True)
+    print("r=", r)
 
     x = list(range(8))
     print(x)
