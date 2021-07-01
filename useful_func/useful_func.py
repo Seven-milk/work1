@@ -147,6 +147,32 @@ def extractIndexArray(row, col, array):
     return ret
 
 
+def side(series, x):
+    ''' find side of x in series
+
+    series:
+        0.1 0.3 0.5 0.4 0.8 0.2 0.0
+
+    x:
+        0.2
+
+    side:
+        0.1 (0.2) 0.3: index=0 index=1
+        0.8 (0.2) 0.2: index=4 index=5
+        0.2 (0.2) 0.0: index=5 index=6
+
+    if series is sorted, 0 <= side <= one set
+    else 0 <= side
+    note: 0.2 == 0.2, it could also be found out
+    '''
+    ret = []
+    for i in range(len(series) - 1):
+        if (series[i] - x) * (x - series[i + 1]) >= 0:
+            ret.append({'index_left': i, 'index_right': i + 1, 'left': series[i], 'right': series[i + 1]})
+
+    return ret
+
+
 if __name__ == '__main__':
     data = np.arange(10)
     slope_ = slope(data)
@@ -165,3 +191,8 @@ if __name__ == '__main__':
     y = np.random.randint(0, 10, (10, 10))
     print(y)
     print(extractIndexArray([0, 1, 2], [3, 4, 5], y))
+
+    series = [0.1, 0.3, 0.5, 0.4, 0.8, 0.2, 0.0]
+    x = 0.2
+    ret = side(series, x)
+    print(ret)
