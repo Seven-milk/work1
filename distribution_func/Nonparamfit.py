@@ -152,7 +152,6 @@ class EmpiricalDistribution(NonparamBase):
         if cdf_on == True:
             cdf = [len([x_ for x_ in data if x_ <= x]) / (len(data) + 1) for x in data]
             self._cdf = np.array(cdf)
-            end = time.time()
 
     def cdf(self, data):
         if isinstance(data, list) or isinstance(data, np.ndarray):
