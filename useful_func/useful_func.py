@@ -165,10 +165,13 @@ def side(series, x):
     else 0 <= side
     note: 0.2 == 0.2, it could also be found out
     '''
-    ret = []
-    for i in range(len(series) - 1):
-        if (series[i] - x) * (x - series[i + 1]) >= 0:
-            ret.append({'index_left': i, 'index_right': i + 1, 'left': series[i], 'right': series[i + 1]})
+    series = np.array(series)
+    series_l = (series - x)[:-1]
+    series_r = (x - series)[1:]
+    judge = series_l * series_r
+    index = np.where(judge >= 0)[0]
+    index = np.delete(index, np.where(index == len(series)))
+    ret = [{'index_left': i, 'index_right': i + 1, 'left': series[i], 'right': series[i + 1]} for i in index]
 
     return ret
 
