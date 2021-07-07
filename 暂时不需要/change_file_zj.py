@@ -14,11 +14,12 @@ value_ = []
 
 for index in df.index:
     for column in df.columns:
-        index_.append(index)
-        column_.append(column)
-        value_.append(df.loc[index, column])
+        if not np.isnan(df.loc[index, column]):
+            index_.append(index[4:])
+            column_.append(column[5:])
+            value_.append(df.loc[index, column])
 
 combine = np.vstack([np.array(index_), np.array(column_), np.array((value_))]).T
-out = pd.DataFrame(combine, columns=["index", "column", "value"])
+out = pd.DataFrame(combine, columns=["Lat", "Lon", "value"])
 # out = out.set_index(["index", "column"])
-out.to_csv("out.csv")
+out.to_excel("out.xlsx", index=False)
