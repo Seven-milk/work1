@@ -913,7 +913,7 @@ class OCVD(VDBase):
             data: 1D array, time series
 
         output:
-
+            self.bp: breakpoint
         '''
 
         self._data = data
@@ -1030,14 +1030,14 @@ if __name__ == '__main__':
     bgvd = BGVD(x)
     ret_bgvd = bgvd.passRet
     bp_bgvd = bgvd.bp
-    # bgvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
+    bgvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
 
     # sccvd
     sccvd = SCCVD(x)
     ret_sccvd = sccvd.ret
     bp_sccvd = sccvd.bp
     # bp_diff_sccvd = sccvd.slope_bp_diff
-    # sccvd.plot(5, time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
+    sccvd.plot(5, time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
 
     # sccvd with filter
     # flt = filter.ButterFilter
@@ -1066,10 +1066,12 @@ if __name__ == '__main__':
     mkvd = MKVD(x)
     interP_mkvd = mkvd.interP
     bp_mkvd = mkvd.bp
-    # mkvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
+    mkvd.plot(time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
     # mkvd.plotdata()
 
     # ocvd
     ocvd = OCVD(x)
     bp_ocvd = ocvd.bp
-    # ocvd.plot(maxplotnumber=1, time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
+    ocvd.plot(maxplotnumber=1, time_ticks={"ticks": [str(i) + 'x' for i in np.arange(200)], "interval": 10})
+
+    plt.show()
