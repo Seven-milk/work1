@@ -176,6 +176,42 @@ def side(series, x):
     return ret
 
 
+def mean_list(lst: list):
+    ''' calculate the mean of a list
+    input
+        lst: a list have int or float.. number
+    return
+        ret: the mean of the list input
+    '''
+    if len(lst) != 0:
+        ret = sum(lst) / len(lst)
+    else:
+        ret = 0
+    return ret
+
+
+def date2month(date: int) -> int:
+    ''' calculate the month from a int date (19481019 -> 10)
+    input
+        date: int date, like 19481019
+    return
+        ret: int month, like 10 (1~12)
+    '''
+    ret = int((date % 10000 - date % 100) / 100)
+    return ret
+
+
+def date2year(date: int) -> int:
+    ''' calculate the year from a int date (19481019 -> 1948)
+    input
+        date: int date, like 19481019
+    return
+        ret: int year, like 1948
+    '''
+    ret = int((date - date % 10000) / 10000)
+    return ret
+
+
 if __name__ == '__main__':
     data = np.arange(10)
     slope_ = slope(data)
