@@ -913,7 +913,7 @@ class OCVD(VDBase):
             data: 1D array, time series
 
         output:
-            self.bp: breakpoint
+            self.bp: sorted list of breakpoint, the farther forward it is, the more significant it is
         '''
 
         self._data = data
