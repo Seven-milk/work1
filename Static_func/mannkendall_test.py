@@ -147,6 +147,7 @@ class MkTest:
             fit_line = curve_fit.PolyCurve(x, self.vals, deg=1)
             fig, draw = fit_line.plot(num=num)
             draw.set(title=title, labelx=labelx, labely=labely, gridy=True, gridx=True)
+            fig.show()
             return fig, draw
 
 
