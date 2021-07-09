@@ -192,6 +192,7 @@ def mean_list(lst: list):
 
 def date2month(date: int) -> int:
     ''' calculate the month from a int date (19481019 -> 10)
+    use pd.date_range('19480103', '20141231', freq='5d').strftime("%Y%m%d").to_numpy(dtype="int") to set date
     input
         date: int date, like 19481019
     return
