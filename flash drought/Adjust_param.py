@@ -10,7 +10,6 @@ import FlashDrought
 import Drought
 import os
 import draw_plot
-from matplotlib import pyplot as plt
 import Workflow
 
 

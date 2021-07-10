@@ -9,7 +9,6 @@
 import numpy as np
 import pandas as pd
 import os
-import re
 from matplotlib import pyplot as plt
 from scipy.stats import pearsonr
 import Workflow

@@ -4,13 +4,8 @@
 # Spatial analysis: fixed time (one time), as a map
 import numpy as np
 import pandas as pd
-import FlashDrought
 import os
-from matplotlib import pyplot as plt
-from importlib import reload
 import map_plot
-import draw_plot
-from FlashDrought import FlashDrought_Frozen
 import Workflow
 
 

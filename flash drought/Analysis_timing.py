@@ -9,7 +9,7 @@ import os
 import draw_plot
 import mannkendall_test
 import variation_detect
-from FlashDrought import FlashDrought_Frozen
+from FlashDrought import FlashDrought_Frozen as FD
 import Workflow
 
 
@@ -24,7 +24,7 @@ class FDseries(Workflow.WorkBase):
     def __call__(self):
         drought_index = self.drought_index
         Date_tick = self.Date_tick
-        fd = FlashDrought_Frozen(drought_index, Date_tick)
+        fd = FD(drought_index, Date_tick)
         RI, out_put, dp = fd.general_out()
         return RI, out_put, dp
 

@@ -461,6 +461,10 @@ class FlashDrought_Frozen(FlashDrought):
                                                   fd_excluding=False, fd_rds=0.41)
 
 
+class FlashDrought_Liu():
+    ''' YiLiu FlashDrought ''' # TODO 复现刘懿代码
+
+
 if __name__ == "__main__":
     # test code through using a random series(with a random seed)
     np.random.seed(15)

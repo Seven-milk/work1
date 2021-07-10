@@ -12,8 +12,6 @@ surface_runoff_amount(Storm surface runoff): "Qs_tavg";
 subsurface_runoff_amount(Baseflow-groundwater runoff): "Qsb_tavg"
 wind_speed: 'Wind_f_tavg'"""
 
-import extract_nc as ex
-import numpy as np
 import pandas as pd
 
 """ extarct variable using serial function """

@@ -5,7 +5,6 @@
 import numpy as np
 import pandas as pd
 import os
-from matplotlib import pyplot as plt
 import Workflow
 import Nonparamfit, Univariatefit, Distribution
 import draw_plot

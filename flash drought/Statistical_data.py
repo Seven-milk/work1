@@ -7,7 +7,7 @@ import pandas as pd
 import os
 import mannkendall_test
 import Workflow
-from FlashDrought import FlashDrought_Frozen
+from FlashDrought import FlashDrought_Frozen as FD
 from useful_func import mean_list
 
 
@@ -93,7 +93,7 @@ class StaticalData(Workflow.WorkBase):
         print(f"there are {Num_point} grids")
         for i in range(Num_point):
             # FD for this grid
-            FD_ = FlashDrought_Frozen(drought_index[:, i], Date_tick)
+            FD_ = FD(drought_index[:, i], Date_tick)
 
             # cal grid static for this grid
             Drought_FOC[i] = FD_.DD.sum() / len(FD_.drought_index)  # FOC for Drought and FD
