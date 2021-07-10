@@ -183,10 +183,10 @@ class StaticalData(Workflow.WorkBase):
 
         # save
         if save_on != None:
-            grid_static.to_excel(save_on + "_grid_static.xlsx")
-            season_static.to_excel(save_on + "season_static.xlsx")
-            Drought_year_number.to_excel(save_on + "Drought_year_number.xlsx")
-            FD_year_number.to_excel(save_on + "FD_year_number.xlsx")
+            grid_static.to_excel("grid_static.xlsx")
+            season_static.to_excel("season_static.xlsx")
+            Drought_year_number.to_excel("Drought_year_number.xlsx")
+            FD_year_number.to_excel("FD_year_number.xlsx")
 
         # ret
         ret = {"grid_static": grid_static, "season_static": season_static, "Drought_year_number": Drought_year_number,
