@@ -27,13 +27,14 @@ class SpatialAnalysis(Workflow.WorkBase):
     def __call__(self):
         pass
 
-    def mapPlot(self, det, lat, lon, extent, data, res_grid, res_label, title, cb_label, shps, cmap_name='BrBG', **kwargs):
+    def mapPlot(self, det, lat, lon, extent, data, res_grid, res_label, title, cb_label, shps, cmap_name='BrBG',
+                map_boundry=None):
         ''' map Plot for static params
         input:
             data: list, the list of data for plotting, [data1] or [data1, data2...]
             title: list, title for each sub-fig, [title1] or [title1, title2...]
             cb_label: list, cb_label for each sub-fig, [cb_label1] or [cb_label1, cb_label2...]
-            **kwargs: keywords args, it could contains map_boundry to set [vmin, vmax]
+            map_boundry: map_boundry to set [vmin, vmax], if not none, [map_boundry1, map_boundry2...]
         '''
         ax_num = len(title)
         fig = map_plot.Figure(ax_num)
@@ -41,8 +42,12 @@ class SpatialAnalysis(Workflow.WorkBase):
             fig_ax = fig.ax[i] if ax_num > 1 else fig.ax
             map = map_plot.Map(fig_ax, fig, extent=extent, grid=True, res_grid=res_grid, res_label=res_label,
                                title=title[i])
-            raster = map_plot.RasterMap(det=det, data_lat=lat, data_lon=lon, data=data[i], expand=5, cmap_name=cmap_name,
-                                        cb_label=cb_label[i], **kwargs)
+            if map_boundry != None:
+                raster = map_plot.RasterMap(det=det, data_lat=lat, data_lon=lon, data=data[i], expand=5,
+                                            cmap_name=cmap_name, cb_label=cb_label[i], map_boundry=map_boundry[i])
+            else:
+                raster = map_plot.RasterMap(det=det, data_lat=lat, data_lon=lon, data=data[i], expand=5,
+                                            cmap_name=cmap_name, cb_label=cb_label[i])
             map.addmap(raster)
             # add shp
             for shp in shps:
@@ -50,14 +55,14 @@ class SpatialAnalysis(Workflow.WorkBase):
 
         fig.show()
 
-    def segmentedMapPlot(self, colorlevel, colordict, cbticks, cbticks_position, det, lat, lon, extent, data, res_grid, res_label, title,
-                         cb_label, shps, cmap_name='BrBG', **kwargs):
+    def segmentedMapPlot(self, colorlevel, colordict, cbticks, cbticks_position, det, lat, lon, extent, data, res_grid,
+                         res_label, title, cb_label, shps, cmap_name='BrBG', map_boundry=None):
         ''' segmented map Plot for static params
         input:
             data: list, the list of data for plotting, [data1] or [data1, data2...]
             title: list, title for each sub-fig
             cb_label: list, cb_label for each sub-fig
-            **kwargs: keywords args, it could contains map_boundry to set [vmin, vmax]
+            map_boundry: map_boundry to set [vmin, vmax], if not none, [map_boundry1, map_boundry2...]
         '''
         ax_num = len(title)
         fig = map_plot.Figure(ax_num)
@@ -65,10 +70,16 @@ class SpatialAnalysis(Workflow.WorkBase):
             fig_ax = fig.ax[i] if ax_num > 1 else fig.ax
             map = map_plot.Map(fig_ax, fig, extent=extent, grid=True, res_grid=res_grid, res_label=res_label,
                                title=title[i])
-            raster = map_plot.RasterMap_segmented_cb(colorlevel=colorlevel, colordict=colordict, cbticks=cbticks,
-                                                     cbticks_position=cbticks_position, det=det, data_lat=lat,
-                                                     data_lon=lon, data=data[i], expand=5, cmap_name=cmap_name,
-                                                     cb_label=cb_label[i], **kwargs)
+            if map_boundry != None:
+                raster = map_plot.RasterMap_segmented_cb(colorlevel=colorlevel, colordict=colordict, cbticks=cbticks,
+                                                         cbticks_position=cbticks_position, det=det, data_lat=lat,
+                                                         data_lon=lon, data=data[i], expand=5, cmap_name=cmap_name,
+                                                         cb_label=cb_label[i], map_boundry=map_boundry[i])
+            else:
+                raster = map_plot.RasterMap_segmented_cb(colorlevel=colorlevel, colordict=colordict, cbticks=cbticks,
+                                                         cbticks_position=cbticks_position, det=det, data_lat=lat,
+                                                         data_lon=lon, data=data[i], expand=5, cmap_name=cmap_name,
+                                                         cb_label=cb_label[i])
             map.addmap(raster)
             # add shp
             for shp in shps:
@@ -94,13 +105,14 @@ def plotAverageTimeSm():
 
 def droughtParamsSpatialAnalysis():
     sa = SpatialAnalysis(info="drought Params Spatial Analysis")
-    title = ["Drought FOC", "Drought number", "Mean Drought Duration", "Mean Drought Severity", "Mean drought_index_min"]
+    title = ["Drought FOC", "Drought number", "Mean Drought Duration", "Mean Drought Severity", "Mean droughtIndex_min"]
     cb_label = ["frequency", "number", "pentad", "pentad*\npercentile", "percentile"]
+    map_boundry = [[0.4, 0.42], [20, 100], [10, 80], [5, 15], [0.05, 0.2]]
     data = [grid_static["Drought_FOC"].values, grid_static["Drought_number"].values,
             grid_static["DD_mean"].values,
             grid_static["DS_mean"].values, grid_static["index_min_mean"].values]
     sa.mapPlot(det=det, lat=lat, lon=lon, extent=extent, data=data, res_grid=res_grid, res_label=res_label,
-               title=title, cb_label=cb_label, shps=[boundry_shpMap], cmap_name='BrBG')
+               title=title, cb_label=cb_label, shps=[boundry_shpMap], cmap_name='BrBG', map_boundry=map_boundry)
     # map_.addmap(Helong_shpMap)
 
 
@@ -108,10 +120,11 @@ def FDParamsSpatialAnalysis():
     sa = SpatialAnalysis(info="FD Params Spatial Analysis")
     title = ["FD FOC", "FD number", "Mean FD Duration", "Mean FD Severity", "Mean RI_mean", "Mean RI_max"]
     cb_label = ["frequency", "number", "pentad", "pentad*\npercentile", "percentile/\npentad", "percentile/\npentad"]
+    map_boundry = [[0.02, 0.12], [50, 150], [1.5, 3.5], [-0.25, -0.05], [0.05, 0.12], [0.05, 0.12]]
     data = [grid_static["FD_FOC"].values, grid_static["FD_number"].values, grid_static["FDD_mean"].values,
             grid_static["FDS_mean"].values, grid_static["RI_mean_mean"].values, grid_static["RI_max_mean"].values]
     sa.mapPlot(det=det, lat=lat, lon=lon, extent=extent, data=data, res_grid=res_grid, res_label=res_label,
-               title=title, cb_label=cb_label, shps=[boundry_shpMap], cmap_name='BrBG')
+               title=title, cb_label=cb_label, shps=[boundry_shpMap], cmap_name='BrBG', map_boundry=map_boundry)
     # map_.addmap(Helong_shpMap)
 
 
@@ -192,8 +205,6 @@ if __name__ == '__main__':
     slope_ret_drought_number = np.load(slope_ret_drought_number_path)
     slope_ret_FD_number = np.load(slope_ret_FD_number_path)
 
-    # date set
-
     # map set
     lon = coord.loc[:, "lon"].values
     lat = coord.loc[:, "lat"].values
@@ -217,9 +228,9 @@ if __name__ == '__main__':
     plotAverageTimeSm()
     droughtParamsSpatialAnalysis()
     FDParamsSpatialAnalysis()
-    seasonDroughtFDNumberSpatialAnalysis()
-    mkTestDroughtFDYearNumberSpatialAnalysis()
-    mkSlopeDroughtFDYearNumberSpatialAnalysis()
+    # seasonDroughtFDNumberSpatialAnalysis()
+    # mkTestDroughtFDYearNumberSpatialAnalysis()
+    # mkSlopeDroughtFDYearNumberSpatialAnalysis()
 
 #
 # date = pd.date_range('19480101', '20141230', freq='d').strftime("%Y%m%d").to_numpy(dtype="int")
