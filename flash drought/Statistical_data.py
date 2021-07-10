@@ -21,7 +21,7 @@ class StaticalData(Workflow.WorkBase):
         print("cal the sub function!")
         return None
 
-    def gridDroughtFDStatistics(self, drought_index, Num_point, date_pentad, year=np.arange(1948, 2014), save_on=True):
+    def gridDroughtFDStatistics(self, drought_index, Num_point, date_pentad, year=np.arange(1948, 2014), save_on=None):
         ''' calculate the drought and FD statistical params for each grid, namely, one value for one grid
         input:
             drought_index: drought index for FD, m(date) * n(grid)
@@ -31,7 +31,7 @@ class StaticalData(Workflow.WorkBase):
             year: year in MkTest(Drought_number_, x=year) and Drought_year_number = pd.DataFrame(Drought_year_number,
                 index=list(range(Num_point)), columns=year), len(year)=length of the annual data, the range of year
                 should be consistent with date_pentad
-            save_on: bool, whether to save
+            save_on: None, not to save, or it can be save_path(str)
 
         output:
             ret: {"grid_static": grid_static, "season_static": season_static, "Drought_year_number": Drought_year_number,
@@ -182,11 +182,11 @@ class StaticalData(Workflow.WorkBase):
                      "FD_autumn", "FD_winter", "Drought_season_Flag", "FD_season_Flag"))
 
         # save
-        if save_on == True:
-            grid_static.to_excel("grid_static.xlsx")
-            season_static.to_excel("season_static.xlsx")
-            Drought_year_number.to_excel("Drought_year_number.xlsx")
-            FD_year_number.to_excel("FD_year_number.xlsx")
+        if save_on != None:
+            grid_static.to_excel(save_on + "_grid_static.xlsx")
+            season_static.to_excel(save_on + "season_static.xlsx")
+            Drought_year_number.to_excel(save_on + "Drought_year_number.xlsx")
+            FD_year_number.to_excel(save_on + "FD_year_number.xlsx")
 
         # ret
         ret = {"grid_static": grid_static, "season_static": season_static, "Drought_year_number": Drought_year_number,
@@ -194,7 +194,7 @@ class StaticalData(Workflow.WorkBase):
 
         return ret
 
-    def gridMkTest(self, x, vals, save_on=True):
+    def gridMkTest(self, x, vals, save_on=None):
         ''' calculate the mktest statistical params for each grid, namely, one value for one grid
         input:
             x: date for val, len(x) = len(val)
@@ -229,9 +229,9 @@ class StaticalData(Workflow.WorkBase):
             slope_ret.append(slope_ret_)
 
         # save
-        if save_on == True:
-            np.save("mk_ret", mk_ret)
-            np.save("slope_ret", slope_ret)
+        if save_on != None:
+            np.save(save_on + "_mk_ret", mk_ret)
+            np.save(save_on + "_slope_ret", slope_ret)
 
         return mk_ret, slope_ret
 
@@ -266,8 +266,8 @@ if __name__ == '__main__':
     # StaticalData
     std = StaticalData()
     grid_DFD_ret = std.gridDroughtFDStatistics(drought_index=sm_percentile, Num_point=1166, date_pentad=date_pentad,
-                                               year=year, save_on=False)
+                                               year=year, save_on="Drought_FD")
 
     # StaticalData for mktest of Drought_year_number and FD_year_number
-    mk_ret_D_number, slope_ret_D_number = std.gridMkTest(year, [Drought_year_number.values.T], save_on=False)
-    mk_ret_FD_number, slope_ret_FD_number = std.gridMkTest(year, [FD_year_number.values.T], save_on=False)
+    mk_ret_D_number, slope_ret_D_number = std.gridMkTest(year, [Drought_year_number.values.T], save_on="Drought_year_number")
+    mk_ret_FD_number, slope_ret_FD_number = std.gridMkTest(year, [FD_year_number.values.T], save_on="FD_year_number")
