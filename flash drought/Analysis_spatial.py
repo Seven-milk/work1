@@ -190,10 +190,10 @@ if __name__ == '__main__':
     sm_pentad_path = os.path.join(home, "GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad.npy")
     grid_static_path = os.path.join(home, "4.static_params", "grid_static.xlsx")
     season_static_path = os.path.join(home, "4.static_params", "season_static.xlsx")
-    mk_ret_drought_number_path = os.path.join(home, "4.static_params", "mk_ret_drought_number.npy")
-    mk_ret_FD_number_path = os.path.join(home, "4.static_params", "mk_ret_FD_number.npy")
-    slope_ret_drought_number_path = os.path.join(home, "4.static_params", "slope_ret_drought_number.npy")
-    slope_ret_FD_number_path = os.path.join(home, "4.static_params", "slope_ret_FD_number.npy")
+    mk_ret_drought_number_path = os.path.join(home, "4.static_params", "Drought_year_number_mk_ret.npy")
+    mk_ret_FD_number_path = os.path.join(home, "4.static_params", "FD_year_number_mk_ret.npy")
+    slope_ret_drought_number_path = os.path.join(home, "4.static_params", "Drought_year_number_slope_ret.npy")
+    slope_ret_FD_number_path = os.path.join(home, "4.static_params", "FD_year_number_slope_ret.npy")
 
     # read data
     coord = pd.read_csv(coord_path, sep=",")
