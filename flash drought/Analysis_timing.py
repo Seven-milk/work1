@@ -9,7 +9,8 @@ import os
 import draw_plot
 import mannkendall_test
 import variation_detect
-from FlashDrought import FlashDrought_Frozen as FD
+# from FlashDrought import FlashDrought_Frozen as FD
+from FlashDrought import FlashDrought_Liu_Frozen as FD
 import Workflow
 
 
@@ -139,9 +140,10 @@ if __name__ == '__main__':
     home = f"{root}:/research/flash_drough/"
     sm_percentile_region_mean_path =\
         os.path.join(home, "GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis_SmPercentile_RegionMean.npy")
-    drought_year_number_path = os.path.join(home, "4.static_params", "Drought_year_number.xlsx")
-    FD_year_number_path = os.path.join(home, "4.static_params", "FD_year_number.xlsx")
-    season_path = os.path.join(home, "4.static_params/season_static.xlsx")
+    sub_FlashDrought_path = "FlashDrought_Liu"
+    drought_year_number_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "Drought_year_number.xlsx")
+    FD_year_number_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "FD_year_number.xlsx")
+    season_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "season_static.xlsx")
 
     # read data
     sm_percentile_region_mean = np.load(sm_percentile_region_mean_path)

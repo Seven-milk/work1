@@ -102,12 +102,12 @@ def droughtParamsSpatialAnalysis():
     sa = SpatialAnalysis(info="drought Params Spatial Analysis")
     title = ["Drought FOC", "Drought number", "Mean Drought Duration", "Mean Drought Severity", "Mean droughtIndex_min"]
     cb_label = ["frequency", "number", "pentad", "pentad*\npercentile", "percentile"]
-    map_boundry = [[0.4, 0.42], [20, 100], [10, 80], [5, 15], [0.05, 0.2]]
+    # map_boundry = [[0.4, 0.42], [20, 100], [10, 80], [5, 15], [0.05, 0.2]]
     data = [grid_static["Drought_FOC"].values, grid_static["Drought_number"].values,
             grid_static["DD_mean"].values,
             grid_static["DS_mean"].values, grid_static["index_min_mean"].values]
     sa.mapPlot(det=det, lat=lat, lon=lon, extent=extent, data=data, res_grid=res_grid, res_label=res_label,
-               title=title, cb_label=cb_label, shps=[boundry_shpMap], cmap_name='BrBG', map_boundry=map_boundry)
+               title=title, cb_label=cb_label, shps=[boundry_shpMap], cmap_name='BrBG')  # , map_boundry=map_boundry
     # map_.addmap(Helong_shpMap)
 
 
@@ -115,11 +115,11 @@ def FDParamsSpatialAnalysis():
     sa = SpatialAnalysis(info="FD Params Spatial Analysis")
     title = ["FD FOC", "FD number", "Mean FD Duration", "Mean FD Severity", "Mean RI_mean", "Mean RI_max"]
     cb_label = ["frequency", "number", "pentad", "pentad*\npercentile", "percentile/\npentad", "percentile/\npentad"]
-    map_boundry = [[0.02, 0.12], [50, 150], [1.5, 3.5], [-0.25, -0.05], [0.05, 0.12], [0.05, 0.12]]
+    # map_boundry = [[0.02, 0.12], [50, 150], [1.5, 3.5], [-0.25, -0.05], [0.05, 0.12], [0.05, 0.12]]
     data = [grid_static["FD_FOC"].values, grid_static["FD_number"].values, grid_static["FDD_mean"].values,
             grid_static["FDS_mean"].values, grid_static["RI_mean_mean"].values, grid_static["RI_max_mean"].values]
     sa.mapPlot(det=det, lat=lat, lon=lon, extent=extent, data=data, res_grid=res_grid, res_label=res_label,
-               title=title, cb_label=cb_label, shps=[boundry_shpMap], cmap_name='BrBG', map_boundry=map_boundry)
+               title=title, cb_label=cb_label, shps=[boundry_shpMap], cmap_name='BrBG')  # , map_boundry=map_boundry
     # map_.addmap(Helong_shpMap)
 
 
@@ -183,12 +183,13 @@ if __name__ == '__main__':
     home = f"{root}:/research/flash_drough/"
     coord_path = os.path.join(home, "coord.txt")
     sm_pentad_path = os.path.join(home, "GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad.npy")
-    grid_static_path = os.path.join(home, "4.static_params", "grid_static.xlsx")
-    season_static_path = os.path.join(home, "4.static_params", "season_static.xlsx")
-    mk_ret_drought_number_path = os.path.join(home, "4.static_params", "Drought_year_number_mk_ret.npy")
-    mk_ret_FD_number_path = os.path.join(home, "4.static_params", "FD_year_number_mk_ret.npy")
-    slope_ret_drought_number_path = os.path.join(home, "4.static_params", "Drought_year_number_slope_ret.npy")
-    slope_ret_FD_number_path = os.path.join(home, "4.static_params", "FD_year_number_slope_ret.npy")
+    sub_FlashDrought_path = "FlashDrought_Liu"
+    grid_static_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "grid_static.xlsx")
+    season_static_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "season_static.xlsx")
+    mk_ret_drought_number_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "Drought_year_number_mk_ret.npy")
+    mk_ret_FD_number_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "FD_year_number_mk_ret.npy")
+    slope_ret_drought_number_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "Drought_year_number_slope_ret.npy")
+    slope_ret_FD_number_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "FD_year_number_slope_ret.npy")
 
     # read data
     coord = pd.read_csv(coord_path, sep=",")
@@ -223,9 +224,9 @@ if __name__ == '__main__':
     plotAverageTimeSm()
     droughtParamsSpatialAnalysis()
     FDParamsSpatialAnalysis()
-    # seasonDroughtFDNumberSpatialAnalysis()
-    # mkTestDroughtFDYearNumberSpatialAnalysis()
-    # mkSlopeDroughtFDYearNumberSpatialAnalysis()
+    seasonDroughtFDNumberSpatialAnalysis()
+    mkTestDroughtFDYearNumberSpatialAnalysis()
+    mkSlopeDroughtFDYearNumberSpatialAnalysis()
 
 #
 # date = pd.date_range('19480101', '20141230', freq='d').strftime("%Y%m%d").to_numpy(dtype="int")
