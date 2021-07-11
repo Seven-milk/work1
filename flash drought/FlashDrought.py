@@ -437,10 +437,11 @@ class FlashDrought(Drought):
         self.plot()
         self.Drought_character_plot()
         self.FD_character_plot()
-        print("-----------------------------------------------")
-        print("drought index: \n", self.drought_index, "\n")
-        print("-----------------------------------------------")
-        print("RI: \n", self.RI, "\n")
+        plt.show()
+        # print("-----------------------------------------------")
+        # print("drought index: \n", self.drought_index, "\n")
+        # print("-----------------------------------------------")
+        # print("RI: \n", self.RI, "\n")
         print("-----------------------------------------------")
         print("output: \n", self.out_put(), "\n")
         print("-----------------------------------------------")
@@ -461,25 +462,71 @@ class FlashDrought_Frozen(FlashDrought):
                                                   fd_excluding=False, fd_rds=0.41)
 
 
-class FlashDrought_Liu():
-    ''' YiLiu FlashDrought ''' # TODO 复现刘懿代码
+class FlashDrought_Liu(FlashDrought):
+    ''' Reproduce YiLiu FlashDrought
+    reference:
+     Liu, Y., Zhu, Y., Zhang, L., Ren, L., Yuan, F., Yang, X., Jiang, S., 2020. Flash droughts characterization over
+     China: From a perspective of the rapid intensification rate. Sci. Total Environ. 704, 135373.
+     https://doi.org/10.1016/j.scitotenv.2019.135373
+    '''
+
+    def __init__(self, drought_index, Date_tick, threshold=0.4, pooling=False, tc=1, pc=0.2, excluding=False,
+                 rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2, fd_pooling=False, fd_tc=1,
+                 fd_pc=0.2, fd_excluding=False, fd_rds=0.41):
+        super(FlashDrought_Liu, self).__init__(drought_index, Date_tick, threshold, pooling, tc, pc, excluding, rds,
+                                               RI_threshold, eliminating, eliminate_threshold, fd_pooling, fd_tc,
+                                               fd_pc, fd_excluding, fd_rds)
+
+    def develop_period(self) -> (list, list, list):
+        ''' overrides FlashDrought.develop_period '''
+        # the number of drought events
+        n = len(self.dry_flag_start)
+
+        # RI, hypothesize RI in the first position is zero(self.SM_percentile[0]-self.SM_percentile[0])
+        # diff= sm[t]-sm[t-1] < 0: develop: RI > 0 ——> multiply factor: -1
+        RI = self.drought_index - np.append(self.drought_index[0], self.drought_index[:-1])
+        RI *= -1
+
+        # list[array, array, ...] --> list: n(drought) array: m(flash)
+        # each element in the list is a df_flag_start/end/RImean/RImax series of a drought event, namely, it represents
+        # the develop periods(number > 1) of a drought event
+        fd_flag_start, fd_flag_end = [], []
+
+        # extract drought/flash develop period from each drought using RI
+        for i in range(n):
+            # the drought event from start to end
+            start = self.dry_flag_start[i]
+            end = self.dry_flag_end[i]
+            peak = self.index_min_flag[i]
+            RI_ = RI[start: peak + 1]
+            if RI_.mean() > self.RI_threshold:
+                # flag - 1: start from i - 1 means it can represent the rapid change from wet to drought
+                # check the first drought index point (if not, index can be -1)
+                if start != 0:
+                    start -= 1
+                fd_flag_start.append(np.array([start], dtype=int))
+                fd_flag_end.append(np.array([peak], dtype=int))
+            else:
+                fd_flag_start.append(np.array([], dtype=int))
+                fd_flag_end.append(np.array([], dtype=int))
+
+        return fd_flag_start, fd_flag_end, RI
 
 
-if __name__ == "__main__":
-    # test code through using a random series(with a random seed)
-    np.random.seed(15)
-    drought_index = np.random.rand(365 * 3)
-    drought_index = np.convolve(drought_index, np.repeat(1 / 2, 3), mode='full')  # running means
-    tc = 10
-    pc = 0.5
-    rds = 0.41
-    fd_pc = 0.2
-    fd_tc = 2
-    Date_tick = []
+def testFlashDrought():
     FD = FlashDrought(drought_index, Date_tick=Date_tick, tc=tc, pc=pc, rds=rds, eliminating=True, fd_pooling=True,
                       fd_tc=fd_tc, fd_pc=fd_pc, fd_excluding=False)
-    RI, out_put, dp = FD.general_out()
+    RI1, out_put1, dp1 = FD.general_out()
 
+
+def testFlashDrought_Liu():
+    Date_tick = []
+    FD = FlashDrought_Liu(drought_index, Date_tick=Date_tick, pooling=False, excluding=False, tc=tc, pc=pc, rds=rds,
+                          eliminating=True)
+    RI2, out_put2, dp2 = FD.general_out()
+
+
+def compareWithDifferentConfiguration():
     # ----------------------- compare results with different configuration -----------------------
     # FD1
     FD1 = FlashDrought(drought_index, Date_tick=[], tc=tc, pc=pc, rds=rds)
@@ -497,3 +544,25 @@ if __name__ == "__main__":
     FD4 = FlashDrought(drought_index, Date_tick=[], pooling=False, excluding=True, tc=tc, pc=pc, rds=rds)
     FD4.plot()
     out4 = FD4.out_put()
+
+
+if __name__ == "__main__":
+    # test code through using a random series(with a random seed)
+    # ----------------------- General set -----------------------
+    np.random.seed(15)
+    drought_index = np.random.rand(365 * 3)
+    drought_index = np.convolve(drought_index, np.repeat(1 / 2, 3), mode='full')  # running means
+    tc = 10
+    pc = 0.5
+    rds = 0.41
+    fd_pc = 0.2
+    fd_tc = 2
+    Date_tick = []
+    # ----------------------- FlashDrought -----------------------
+    testFlashDrought()
+
+    # ----------------------- FlashDrought_Liu -----------------------
+    # testFlashDrought_Liu()
+
+    # ----------------------- compare results with different configuration -----------------------
+    # compareWithDifferentConfiguration()
