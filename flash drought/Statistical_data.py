@@ -7,7 +7,8 @@ import pandas as pd
 import os
 import mannkendall_test
 import Workflow
-from FlashDrought import FlashDrought_Frozen as FD
+# from FlashDrought import FlashDrought_Frozen as FD
+from FlashDrought import FlashDrought_Liu_Frozen as FD
 from useful_func import mean_list
 
 
@@ -248,8 +249,8 @@ if __name__ == '__main__':
     home = f"{root}:/research/flash_drough/"
     sm_percentile_path =\
         os.path.join(home, "GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis_SmPercentile.npy")
-    Drought_year_number_path = os.path.join(home, "4.static_params", "Drought_year_number.xlsx")
-    FD_year_number_path = os.path.join(home, "4.static_params", "FD_year_number.xlsx")
+    Drought_year_number_path = os.path.join(home, "4.static_params", "FlashDrought_Liu", "Drought_year_number.xlsx")
+    FD_year_number_path = os.path.join(home, "4.static_params", "FlashDrought_Liu", "FD_year_number.xlsx")
     year = np.arange(1948, 2015)
 
     # read data
@@ -269,5 +270,7 @@ if __name__ == '__main__':
                                                year=year, save_on="Drought_FD")
 
     # StaticalData for mktest of Drought_year_number and FD_year_number
-    mk_ret_D_number, slope_ret_D_number = std.gridMkTest(year, [Drought_year_number.values.T], save_on="Drought_year_number")
-    mk_ret_FD_number, slope_ret_FD_number = std.gridMkTest(year, [FD_year_number.values.T], save_on="FD_year_number")
+    if os.path.exists(Drought_year_number_path):
+        mk_ret_D_number, slope_ret_D_number = std.gridMkTest(year, [Drought_year_number.values.T], save_on="Drought_year_number")
+    if os.path.exists(FD_year_number_path):
+        mk_ret_FD_number, slope_ret_FD_number = std.gridMkTest(year, [FD_year_number.values.T], save_on="FD_year_number")
