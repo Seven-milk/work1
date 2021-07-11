@@ -125,7 +125,7 @@ class Drought:
 
         # add self.dry_flag_start to revert flag index to make it based on index of drought index
         index_min_flag = np.array([np.argmin(self.drought_index[self.dry_flag_start[i]: self.dry_flag_end[i] + 1]) +
-                                self.dry_flag_start[i] for i in range(n)], dtype='float')
+                                self.dry_flag_start[i] for i in range(n)], dtype='int')
 
         return DD, DS, index_min, index_min_flag
 
