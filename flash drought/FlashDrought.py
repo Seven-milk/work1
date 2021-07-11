@@ -513,6 +513,21 @@ class FlashDrought_Liu(FlashDrought):
         return fd_flag_start, fd_flag_end, RI
 
 
+class FlashDrought_Liu_Frozen(FlashDrought_Liu):
+    ''' Frozen Params
+    pooling = False
+    excluding = False
+    RI_threshold = 0.05
+    eliminating = True
+    eliminate_threshold = 0.2
+    '''
+    def __init__(self, drought_index, Date_tick):
+        super(FlashDrought_Liu_Frozen, self).__init__(drought_index, Date_tick, threshold=0.4, pooling=False, tc=1,
+                                                      pc=0.2, excluding=False, rds=0.41, RI_threshold=0.05,
+                                                      eliminating=True, eliminate_threshold=0.2, fd_pooling=False,
+                                                      fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+
+
 def testFlashDrought():
     FD = FlashDrought(drought_index, Date_tick=Date_tick, tc=tc, pc=pc, rds=rds, eliminating=True, fd_pooling=True,
                       fd_tc=fd_tc, fd_pc=fd_pc, fd_excluding=False)
