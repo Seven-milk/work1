@@ -446,7 +446,7 @@ class Figure:
     ''' figure set '''
 
     def __init__(self, addnumber: int = 1, dpi: int = 300, figsize=(12, 5), proj: crs.Projection = crs.PlateCarree(),
-                 wspace=None, hspace=None, family="Arial", figRow=1, figCol=1, **kwargs):
+                 wspace=None, hspace=None, family="Arial", figRow=1, figCol=1, axflatten=True, **kwargs):
         ''' init function
         input:
             addnumber: the init add fig number
@@ -460,6 +460,7 @@ class Figure:
             wspace/hspace: the space between subfig
             family: font family
             figRow=1, figCol=1: to set the fig row and col
+            axflatten: whether flatten the ax
             **kwargs: keyword args of subplots, it could contain "sharex" "sharey"
 
         self.figNumber: fig number in the base map, default=1
@@ -481,6 +482,7 @@ class Figure:
         self.fig = plt.figure(dpi=self.dpi, figsize=self.figsize)
         self.proj = proj
         self.add = False
+        self.axflatten = axflatten
         self.wspace = wspace
         self.hspace = hspace
         self.addFig(addnumber, wspace=self.wspace, hspace=self.hspace, **self.kwargs)
@@ -502,7 +504,7 @@ class Figure:
         self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, subplot_kw={"projection": self.proj},
                                     **kwargs)
         self.fig.subplots_adjust(wspace=wspace, hspace=hspace)
-        if isinstance(self.ax, np.ndarray):
+        if isinstance(self.ax, np.ndarray) and self.axflatten:
             self.ax = self.ax.flatten()
 
     def calrowcol(self, rowfirst=True):
