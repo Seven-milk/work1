@@ -574,7 +574,7 @@ class Map:
     ''' Add map(has proj) in one ax(Geoax), this class is used to represent ax and plot map '''
 
     def __init__(self, ax, Fig: Figure, extent=None, proj: crs.Projection = crs.PlateCarree(),
-                 grid=False, res_grid=5, res_label=5, title="map"):
+                 grid=False, res_grid=5, res_label=5, axoff=False, title="map"):
         ''' init function
         input:
             ax: a single ax for this map from Figure.ax[i]
@@ -595,6 +595,8 @@ class Map:
         self.res_label = res_label
         self.title = title
         self.set(self.extent, self.proj, self.grid, self.res_grid, self.res_label, self.title)
+        if axoff == True:
+            self.axoff()
 
     def addmap(self, map: MapBase):
         ''' add map
