@@ -446,7 +446,7 @@ class Figure:
     ''' figure set '''
 
     def __init__(self, addnumber: int = 1, dpi: int = 300, figsize=(12, 5), proj: crs.Projection = crs.PlateCarree(),
-                 wspace=None, hspace=None, family="Arial", **kwargs):
+                 wspace=None, hspace=None, family="Arial", figRow=1, figCol=1, **kwargs):
         ''' init function
         input:
             addnumber: the init add fig number
@@ -459,6 +459,7 @@ class Figure:
                   reference: https://scitools.org.uk/cartopy/docs/latest/crs/projections.html
             wspace/hspace: the space between subfig
             family: font family
+            figRow=1, figCol=1: to set the fig row and col
             **kwargs: keyword args of subplots, it could contain "sharex" "sharey"
 
         self.figNumber: fig number in the base map, default=1
@@ -472,8 +473,8 @@ class Figure:
         3) if figNumber==1, dont use Figure.ax[0], just use Figure.ax
         '''
         self.figNumber = 0
-        self.figRow = 1
-        self.figCol = 1
+        self.figRow = figRow
+        self.figCol = figCol
         self.dpi = dpi
         self.figsize = figsize
         self.kwargs = kwargs
@@ -495,7 +496,7 @@ class Figure:
     def addFig(self, AddNumber=1, wspace=0.2, hspace=0.1, **kwargs):
         ''' add blank figure and return ax '''
         self.figNumber += AddNumber
-        if self.figNumber >= 2:
+        if self.figNumber >= 2 and self.figRow * self.figCol != 1:
             self.calrowcol()
         self.fig.clf()
         self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, subplot_kw={"projection": self.proj},
@@ -660,10 +661,10 @@ if __name__ == "__main__":
     # general set
     root = "H"
     home = f"{root}:/research/flash_drough/"
-    data_path = os.path.join(home, "GLDAS_Catchment/SoilMoist_RZ_tavg.txt")
+    data_path = os.path.join(home, "GLDAS_Catchment/SoilMoist_RZ_tavg_19480101_20141230.npy")
     coord_path = os.path.join(home, "coord.txt")
     coord = pd.read_csv(coord_path, sep=",")
-    sm_rz = np.loadtxt(data_path, dtype="float", delimiter=" ")
+    sm_rz = np.load(data_path)
     date = pd.date_range('19480101', '20141230', freq='d').strftime("%Y%m%d").to_numpy(dtype="int")
 
     # time avg data
@@ -679,15 +680,16 @@ if __name__ == "__main__":
     lat_max = max(lat)
     lon_max = max(lon)
     # extend = [lon_min, lon_max, lat_min, lat_max]
-    f = Figure()
-    m = Map(f.ax, f, grid=True, res_grid=1, res_label=3)
+    f = Figure(figCol=2, figRow=3)
+    m = Map(f.ax[0], f, grid=True, res_grid=1, res_label=3)
     m.addmap(BaseMap())
     r = RasterMap(det, lat, lon, sm_rz_time_avg, expand=5)
     shape_file = [f"{root}:/GIS/Flash_drought/f'r_project.shp"]
-    s = ShpMap(shape_file, facecolor="g", alpha=0.5)
+    s = ShpMap(shape_file, facecolor="w", alpha=0.5)
     t = TextMap("Text", [lon[0], lat[0]], color="r")
-    img = ImgMap(img_file=['D:/NDVI/MODND1F.20000226.CN.NDVI.MAX.V2.TIF'], extent=[73.396, 134.8032, 3.7996, 53.6015])
+    # img = ImgMap(img_file=['D:/NDVI/MODND1F.20000226.CN.NDVI.MAX.V2.TIF'], extent=[73.396, 134.8032, 3.7996, 53.6015])
     m.addmap(r)
     m.addmap(s)
     m.addmap(t)
-    m.addmap(img)
+    # m.addmap(img)
+    f.show()
