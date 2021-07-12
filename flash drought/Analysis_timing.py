@@ -156,9 +156,9 @@ if __name__ == '__main__':
                 season_static["FD_autumn"].values, season_static["FD_winter"].values]
 
     # date set
-    date_d = pd.date_range('19480101', '20141231', freq='d').strftime("%Y%m%d").to_numpy(dtype="int")
+    date_d = pd.date_range('19480103', '20141231', freq='d').strftime("%Y%m%d").to_numpy(dtype="int")
     date_pentad = pd.date_range('19480103', '20141231', freq='5d').strftime("%Y").to_numpy(dtype="int")  # %m%d
-    date_year = pd.date_range('19480101', '20141231', freq='Y').strftime("%Y").to_numpy(dtype="int")
+    date_year = pd.date_range('19480103', '20141231', freq='Y').strftime("%Y").to_numpy(dtype="int")
 
     # timing analyze
     drought_year_number_ret = DroughtYearNumberTimingAnalysis()
