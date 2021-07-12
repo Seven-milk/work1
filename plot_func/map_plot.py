@@ -213,6 +213,7 @@ class RasterMap_segmented_cb(RasterMap):
             cbticks: list, contains colorbar ticks
             cbticks_position: list, the ticks position, need to adjust by your self, default = middle numbers in
                               colorlevel
+            cb_label=string, the label of colorbar, if none, do not plot cb
 
             i.e.
             colorlevel: [0, 1.5, 2.5, 3.5, 4.5]
@@ -253,19 +254,20 @@ class RasterMap_segmented_cb(RasterMap):
                                vmin=self.map_boundry[0], vmax=self.map_boundry[1], norm=norm)
 
         # cb
-        extend = "neither"
+        if self.cb_label != None:
+            extend = "neither"
 
-        cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', pad=0.01, extend=extend)
-        cb.ax.yaxis.set_major_locator(plt.NullLocator())
+            cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', pad=0.01, extend=extend)
+            cb.ax.yaxis.set_major_locator(plt.NullLocator())
 
-        cb2_ax = cb.ax.secondary_yaxis('right')
-        cb2_ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
-        cb2_ax.set_yticks(ticks_position)
-        cb2_ax.set_yticklabels(ticks)
-        cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
+            cb2_ax = cb.ax.secondary_yaxis('right')
+            cb2_ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
+            cb2_ax.set_yticks(ticks_position)
+            cb2_ax.set_yticklabels(ticks)
+            cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
 
-        for l in cb2_ax.yaxis.get_ticklabels():
-            l.set_family('Arial')
+            for l in cb2_ax.yaxis.get_ticklabels():
+                l.set_family('Arial')
 
 
 class RasterMap_cb2(RasterMap):
