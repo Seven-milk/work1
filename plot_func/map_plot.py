@@ -496,7 +496,7 @@ class Figure:
     def addFig(self, AddNumber=1, wspace=0.2, hspace=0.1, **kwargs):
         ''' add blank figure and return ax '''
         self.figNumber += AddNumber
-        if self.figNumber >= 2 and self.figRow * self.figCol != 1:
+        if self.figNumber >= 2:
             self.calrowcol()
         self.fig.clf()
         self.ax = self.fig.subplots(nrows=self.figRow, ncols=self.figCol, subplot_kw={"projection": self.proj},
@@ -680,8 +680,8 @@ if __name__ == "__main__":
     lat_max = max(lat)
     lon_max = max(lon)
     # extend = [lon_min, lon_max, lat_min, lat_max]
-    f = Figure(figCol=2, figRow=3)
-    m = Map(f.ax[0], f, grid=True, res_grid=1, res_label=3)
+    f = Figure()
+    m = Map(f.ax, f, grid=True, res_grid=1, res_label=3)
     m.addmap(BaseMap())
     r = RasterMap(det, lat, lon, sm_rz_time_avg, expand=5)
     shape_file = [f"{root}:/GIS/Flash_drought/f'r_project.shp"]

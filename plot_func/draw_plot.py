@@ -25,7 +25,7 @@ class Figure:
     ''' figure set '''
 
     def __init__(self, addnumber: int = 1, dpi: int = 300, figsize=(12, 5), wspace=None, hspace=None, family="Arial",
-                 **kwargs):
+                 figRow=1, figCol=1, **kwargs):
         ''' init function
         input:
             addnumber: the init add fig number
@@ -33,6 +33,7 @@ class Figure:
             figsize: figure size, default=(12, 5)
             wspace/hspace: the space between subfig
             family: font family
+            figRow=1, figCol=1: to set the fig row and col
             **kwargs: keyword args of subplots, it could contain "sharex" "sharey"
 
         self.figNumber: fig number in the base map, default=1
@@ -47,8 +48,8 @@ class Figure:
         3) if figNumber==1, dont use Figure.ax[0], just use Figure.ax
         '''
         self.figNumber = 0
-        self.figRow = 1
-        self.figCol = 1
+        self.figRow = figRow
+        self.figCol = figCol
         self.dpi = dpi
         self.kwargs = kwargs
         self.figsize = figsize
@@ -543,7 +544,7 @@ class Draw:
 
 if __name__ == "__main__":
     # np.random.seed(15)
-    f = Figure(10, hspace=0.5, wspace=0.5)
+    f = Figure(figRow=2, figCol=5, hspace=0.5, wspace=0.5)
     facecolors = ["lightgrey", 'lightgreen', 'lightblue']  # pink
     x = np.random.rand(500, 3)
     # d0: box and text
