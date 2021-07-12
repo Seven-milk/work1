@@ -22,11 +22,10 @@ class StaticalData(Workflow.WorkBase):
         print("cal the sub function!")
         return None
 
-    def gridDroughtFDStatistics(self, drought_index, Num_point, date_pentad, year=np.arange(1948, 2014), save_on=None):
+    def gridDroughtFDStatistics(self, drought_index, date_pentad, year=np.arange(1948, 2014), save_on=None):
         ''' calculate the drought and FD statistical params for each grid, namely, one value for one grid
         input:
             drought_index: drought index for FD, m(date) * n(grid)
-            Num_point: grid number
             date_pentad: pd.DateTime, date_pentad in date_pentad[FD_.dry_flag_start[j]].month to count
                         Drought/FD_month/year for year number and season static
             year: year in MkTest(Drought_number_, x=year) and Drought_year_number = pd.DataFrame(Drought_year_number,
@@ -47,7 +46,7 @@ class StaticalData(Workflow.WorkBase):
                     FD_year_number
         '''
         # general set
-        Num_point = Num_point
+        Num_point = drought_index.shape[1]
         drought_index = drought_index
         Date_tick = []
         year = year
@@ -236,11 +235,91 @@ class StaticalData(Workflow.WorkBase):
 
         return mk_ret, slope_ret
 
+    def gridTimeSeriesStatistics(self, drought_index, date_pentad, save_on=None):
+        ''' calculate the drought and FD statistical params for each grid and each time, namely, one value for one grid
+        and one time
+        input:
+            drought_index: drought index for FD, m(date) * n(grid)
+            date_pentad: pd.DateTime, len = len(drought_index), to set index in ret
+
+        output:
+            ret = {"Drought_True_grid_time_static": Drought_True_grid_time_static,
+               "FD_True_grid_time_static": FD_True_grid_time_static,
+               "RI_grid_time_static": RI_grid_time_static}
+        '''
+        # general set
+        Num_point = drought_index.shape[1]
+        Num_time = drought_index.shape[0]
+        drought_index = drought_index
+        Date_tick = []
+        date_pentad = date_pentad
+        save_on = save_on
+
+        # define variables
+        Drought_True = np.zeros((Num_time, Num_point), dtype=int)
+        FD_True = np.zeros((Num_time, Num_point), dtype=int)
+
+        RI = np.zeros((Num_time, Num_point), dtype=float)
+
+        # loop for calculating the statistical Drought and FD params of all grids and all times
+        print(f"there are {Num_point} grids")
+        for i in range(Num_point):
+            # FD for this grid
+            FD_ = FD(drought_index[:, i], Date_tick)
+
+            # cal grid and time static for this grid
+            RI[:, i] = FD_.RI
+
+            for j in range(len(FD_.dry_flag_start)):
+                Drought_True[FD_.dry_flag_start[j]: FD_.dry_flag_end[j], i] = 1
+                for k in range(len(FD_.fd_flag_start[j])):
+                    FD_True[FD_.fd_flag_start[j][k], i] = 1
+
+            print(f"grid{i} complete")
+
+        # init dataframe to save grid time static
+        Drought_True_grid_time_static = pd.DataFrame(Drought_True, index=date_pentad)
+        FD_True_grid_time_static = pd.DataFrame(FD_True, index=date_pentad)
+        RI_grid_time_static = pd.DataFrame(RI, index=date_pentad)
+
+        # save
+        if save_on != None:
+            Drought_True_grid_time_static.to_csv("Drought_True_grid_time_static.csv")
+            FD_True_grid_time_static.to_csv("FD_True_grid_time_static.csv")
+            RI_grid_time_static.to_csv("RI_grid_time_static.csv")
+
+        # ret
+        ret = {"Drought_True_grid_time_static": Drought_True_grid_time_static,
+               "FD_True_grid_time_static": FD_True_grid_time_static,
+               "RI_grid_time_static": RI_grid_time_static}
+
+        return ret
+
     def __repr__(self):
         return f"This is StaticalData, cal statical data from original data, info: {self._info}"
 
     def __str__(self):
         return f"This is StaticalData, cal statical data from original data, info: {self._info}"
+
+
+def gridDroughtFDStatistics():
+    std = StaticalData()
+    grid_DFD_ret = std.gridDroughtFDStatistics(drought_index=sm_percentile, date_pentad=date_pentad,
+                                               year=year, save_on="Drought_FD")
+
+
+def gridMkTest():
+    std = StaticalData()
+    # StaticalData for mktest of Drought_year_number and FD_year_number
+    if os.path.exists(Drought_year_number_path):
+        mk_ret_D_number, slope_ret_D_number = std.gridMkTest(year, [Drought_year_number.values.T], save_on="Drought_year_number")
+    if os.path.exists(FD_year_number_path):
+        mk_ret_FD_number, slope_ret_FD_number = std.gridMkTest(year, [FD_year_number.values.T], save_on="FD_year_number")
+
+
+def gridTimeSeriesStatistics():
+    std = StaticalData()
+    gtss_ret = std.gridTimeSeriesStatistics(drought_index=sm_percentile, date_pentad=date_pentad, save_on="Drought_FD")
 
 
 if __name__ == '__main__':
@@ -249,8 +328,9 @@ if __name__ == '__main__':
     home = f"{root}:/research/flash_drough/"
     sm_percentile_path =\
         os.path.join(home, "GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis_SmPercentile.npy")
-    Drought_year_number_path = os.path.join(home, "4.static_params", "FlashDrought_Liu", "Drought_year_number.xlsx")
-    FD_year_number_path = os.path.join(home, "4.static_params", "FlashDrought_Liu", "FD_year_number.xlsx")
+    sub_FlashDrought_path = "FlashDrought_Liu"
+    Drought_year_number_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "Drought_year_number.xlsx")
+    FD_year_number_path = os.path.join(home, "4.static_params", sub_FlashDrought_path, "FD_year_number.xlsx")
     year = np.arange(1948, 2015)
 
     # read data
@@ -265,12 +345,6 @@ if __name__ == '__main__':
     sm_percentile = sm_percentile[:, 1:]
 
     # StaticalData
-    std = StaticalData()
-    grid_DFD_ret = std.gridDroughtFDStatistics(drought_index=sm_percentile, Num_point=1166, date_pentad=date_pentad,
-                                               year=year, save_on="Drought_FD")
-
-    # StaticalData for mktest of Drought_year_number and FD_year_number
-    if os.path.exists(Drought_year_number_path):
-        mk_ret_D_number, slope_ret_D_number = std.gridMkTest(year, [Drought_year_number.values.T], save_on="Drought_year_number")
-    if os.path.exists(FD_year_number_path):
-        mk_ret_FD_number, slope_ret_FD_number = std.gridMkTest(year, [FD_year_number.values.T], save_on="FD_year_number")
+    # gridDroughtFDStatistics()
+    # gridMkTest()
+    gridTimeSeriesStatistics()
