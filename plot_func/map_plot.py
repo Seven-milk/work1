@@ -164,7 +164,7 @@ class RasterMap(MeshgridArray, MapBase):
             expand: how many pixels used for expanding the array(for better plotting)
             cmap_name: cmap name, BrBG, RdBu, seismic, bwr, coolwarm, afmhot, twilight_shifted; suffix _r is inversion
             map_boundry: none or list, if list, this param sets the map/colorbar boundry - [vmin, vmax]
-            cb_label=string, the label of colorbar
+            cb_label=string, the label of colorbar, if none, do not plot cb
         '''
         MeshgridArray.__init__(self, det, data_lat, data_lon, data, maskvalue, expand)
         self.cmap_name = cmap_name
@@ -185,16 +185,18 @@ class RasterMap(MeshgridArray, MapBase):
             pc = ax.pcolormesh(self.array_data_lon, self.array_data_lat, self.array_data.T, cmap=cMap,
                                vmin=self.map_boundry[0], vmax=self.map_boundry[1], norm=mcolors.Normalize(clip=True))
 
-        shrinkrate = 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
-        extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
-        cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', shrink=shrinkrate, pad=0.01, extend=extend)
-        cb.ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
-        if isinstance(Fig.ax, np.ndarray):
-            cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
-        else:
-            cb.set_label(self.cb_label, fontdict=Fig.font_label)
-        for l in cb.ax.yaxis.get_ticklabels():
-            l.set_family('Arial')
+        # cb
+        if self.cb_label != None:
+            shrinkrate = 0.7 if isinstance(Fig.ax, np.ndarray) else 0.9
+            extend = 'neither' if isinstance(Fig.ax, np.ndarray) else 'both'
+            cb = Fig.fig.colorbar(pc, ax=ax, orientation='vertical', shrink=shrinkrate, pad=0.01, extend=extend)
+            cb.ax.tick_params(labelsize=Fig.font_label["size"], direction='in')
+            if isinstance(Fig.ax, np.ndarray):
+                cb.ax.set_title(label=self.cb_label, fontdict=Fig.font_label)
+            else:
+                cb.set_label(self.cb_label, fontdict=Fig.font_label)
+            for l in cb.ax.yaxis.get_ticklabels():
+                l.set_family('Arial')
 
 
 class RasterMap_segmented_cb(RasterMap):
@@ -658,6 +660,10 @@ class Map:
         # title
         self.ax.set_title(title, fontdict=self.Fig.font_title)
 
+    def axoff(self):
+        ''' off the axis '''
+        self.ax.axis("off")
+
 
 if __name__ == "__main__":
     # general set
@@ -694,4 +700,5 @@ if __name__ == "__main__":
     m.addmap(s)
     m.addmap(t)
     # m.addmap(img)
+    m.axoff()
     f.show()
