@@ -20,7 +20,8 @@ class FlashDrought(Drought):
         Identify flash drought based on rule: extract from a drought event(start-1 : end)
         (ps: start/i - 1 means it can represent the rapid change from wet to drought)
 
-        flash intensification : instantaneous RI[i] > RI_threshold -> fd_flag_start = i - 1, fd_flag_end
+        flash intensification : instantaneous RI[i]=drought_index[i] - drought_index[i-1] > RI_threshold ->
+                                fd_flag_start, fd_flag_end
 
         note: this identification regard flash drought as a flash develop period of a normal drought event, and a normal
         drought can contain more than one flash drought
@@ -98,7 +99,8 @@ class FlashDrought(Drought):
         """ flash drought identification
 
             method : extract from a drought event(start-1 : end)
-            flash intensification : instantaneous RI[i] > RI_threshold -> fd_flag_start = i - 1, fd_flag_end
+            flash intensification : instantaneous RI[i] = drought_index[i] - drought_index[i-1]
+                                    > RI_threshold -> fd_flag_start, fd_flag_end
             (note: start/i - 1 means it can represent the rapid change from wet to drought)
 
             unit = 1/time interval of input SM
@@ -116,7 +118,7 @@ class FlashDrought(Drought):
 
             note: distinguish the drought start flag, flash drought start flag, RI start flag
                 flash drought start flag: compute from -1, it means the develop period from no-drought to drought
-                    R[0] > RI_threshold -> R[0] = drought_index[0] - drought_index[-1], flag_start = -1
+                    R[0] > RI_threshold -> R[0] = drought_index[0] - drought_index[-1], flag_start = 0
                 RI start flag: the compute flag to evaluate RI condition, RI[i] = drought_index[i] - drought[i-1], means
                     change from the last point to this point
                 drought start flag: it means the point has been achieved the threshold condition (match the shrinkable
@@ -125,12 +127,11 @@ class FlashDrought(Drought):
                 overall,
                     drought start flag = RI start flag(compute flag) = flash drought start flag + 1
                     drought start flag: satisfy drought condition
-                    RI start flag(compute flag): drought start flag, RI[i] = drought_index[i] - drought[i-1], means
-                        change from the last point to this point
-                    flash drought start flag: RI start flag - 1, the last point in RI change calculation
-
-                    flash end flag = RI end flag: satisfy RI[end] > RI_threshold = drought_index[i] - drought_index[i-1]
                     drought end flag: satisfy drought_index[end] < threshold
+                    RI start flag(compute flag): RI[i] = drought_index[i] - drought[i-1], means change from the last
+                                                point to this point
+                    flash drought start flag: RI satisfy FD condition, it means change from flag - 1 point
+                    flash end flag = RI end flag: satisfy RI[end] > RI_threshold = drought_index[i] - drought_index[i-1]
 
         """
         # the number of drought events
@@ -139,7 +140,7 @@ class FlashDrought(Drought):
         # RI, hypothesize RI in the first position is zero(self.SM_percentile[0]-self.SM_percentile[0])
         # diff= sm[t]-sm[t-1] < 0: develop: RI > 0 ——> multiply factor: -1
         RI = self.drought_index - np.append(self.drought_index[0], self.drought_index[:-1])
-        RI *= -1
+        RI *= -1  # positive RI means drought_index decrease
 
         # list[array, array, ...] --> list: n(drought) array: m(flash)
         # each element in the list is a df_flag_start/end/RImean/RImax series of a drought event, namely, it represents
@@ -157,15 +158,6 @@ class FlashDrought(Drought):
             fd_flag_start_, fd_flag_end_ = self.fd_run_threshold(RI_, self.RI_threshold)
             # revert flag to make it based on drought_index index
             fd_flag_start_, fd_flag_end_ = fd_flag_start_ + start, fd_flag_end_ + start
-
-            # flag - 1: start from i - 1 means it can represent the rapid change from wet to drought
-            # check the first drought index point (if not, index can be -1)
-            if len(fd_flag_start_) > 0:
-                if fd_flag_start_[0] == 0:
-                    fd_flag_start_ -= 1
-                    fd_flag_start_[0] = 0
-                else:
-                    fd_flag_start_ -= 1
 
             # append flash drought into drought list
             fd_flag_start.append(fd_flag_start_)  # list[array]
@@ -185,9 +177,12 @@ class FlashDrought(Drought):
             j = 0
             # Loop for pooling
             while j < size - 1:
-                tj = self.fd_flag_start[i][j + 1] - self.fd_flag_end[i][j]
-                vj = self.drought_index[self.fd_flag_start[i][j + 1]] - self.drought_index[self.fd_flag_end[i][j]]
-                sj = -(self.drought_index[self.fd_flag_end[i][j]] - self.drought_index[self.fd_flag_start[i][j]])
+                start0 = self.fd_flag_start[i][j]
+                end0 = self.fd_flag_end[i][j]
+                start1 = self.fd_flag_start[i][j + 1]
+                tj = start1 - end0
+                vj = self.drought_index[start1] - self.drought_index[end0]
+                sj = -(self.drought_index[end0] - self.drought_index[start0 - 1])  # start0 != 0, cause RI[0] = 0
                 if (tj <= self.fd_tc) and ((vj / sj) <= self.fd_pc):
                     self.fd_flag_end[i][j] = self.fd_flag_end[i][j + 1]
                     self.fd_flag_start[i] = np.delete(self.fd_flag_start[i], j + 1)
@@ -244,16 +239,13 @@ class FlashDrought(Drought):
                 start = self.fd_flag_start[i][j]
                 end = self.fd_flag_end[i][j]
                 FDD_.append(end - start + 1)
-                # end + 1 to contain the end point
-                FDS_.append(min(self.drought_index[start: end + 1]) - self.drought_index[start])
+                # end + 1 to contain the end point, start - 1 to present the pre point
+                FDS_.append(min(self.drought_index[start: end + 1]) - self.drought_index[start - 1])
 
-                # RI flag = start + 1, start = flash drought flag
-                # RI calculate from start + 1 (because flag start from -1, flag start -> RI[start + 1] =
-                # drought_index[start + 1] - drought_index[start])
                 # end + 1: RI[end] = drought_index[end] - drought_index[end-1] > RI_threshold, to contain the end point,
                 # use [: end + 1]
-                RImean_.append(self.RI[start + 1: end + 1].mean())
-                RImax_.append(self.RI[start + 1: end + 1].max())
+                RImean_.append(self.RI[start: end + 1].mean())
+                RImax_.append(self.RI[start: end + 1].max())
 
             # append to result
             FDD.append(FDD_)  # list[array]
@@ -393,7 +385,7 @@ class FlashDrought(Drought):
         # plot flash drought, flash drought events (from flash drought flag, -1: means change from no-drought)
         for i in range(len(self.fd_flag_start)):
             for j in range(len(self.fd_flag_start[i])):
-                start = self.fd_flag_start[i][j]
+                start = self.fd_flag_start[i][j] - 1  # RI = drought[i] - drought[i-1], -1 is used to present change
                 end = self.fd_flag_end[i][j]
                 fig.ax.plot(self.Date[start:end + 1], self.drought_index[start:end + 1], color="purple", linestyle='--',
                             linewidth=0.5, marker=7, markersize=2, zorder=30)
@@ -500,10 +492,6 @@ class FlashDrought_Liu(FlashDrought):
             peak = self.index_min_flag[i]
             RI_ = RI[start: peak + 1]
             if RI_.mean() > self.RI_threshold:
-                # flag - 1: start from i - 1 means it can represent the rapid change from wet to drought
-                # check the first drought index point (if not, index can be -1)
-                if start != 0:
-                    start -= 1
                 fd_flag_start.append(np.array([start], dtype=int))
                 fd_flag_end.append(np.array([peak], dtype=int))
             else:
@@ -564,7 +552,7 @@ def compareWithDifferentConfiguration():
 if __name__ == "__main__":
     # test code through using a random series(with a random seed)
     # ----------------------- General set -----------------------
-    np.random.seed(15)
+    # np.random.seed(15)
     drought_index = np.random.rand(365 * 3)
     drought_index = np.convolve(drought_index, np.repeat(1 / 2, 3), mode='full')  # running means
     tc = 10
@@ -577,7 +565,7 @@ if __name__ == "__main__":
     testFlashDrought()
 
     # ----------------------- FlashDrought_Liu -----------------------
-    # testFlashDrought_Liu()
+    testFlashDrought_Liu()
 
     # ----------------------- compare results with different configuration -----------------------
     # compareWithDifferentConfiguration()
