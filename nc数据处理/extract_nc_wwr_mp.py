@@ -104,7 +104,7 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
             target.append(target_)
 
         ret_po = [po.apply_async(self.read_write, (i, result[section_index[i]: section_index[i + 1]], coord, lat_index,
-                                                lon_index, r)) for i in range(self.num_cpu)]
+                                                lon_index, self.r)) for i in range(self.num_cpu)]
 
         po.close()
         po.join()
@@ -216,13 +216,20 @@ class ExtractNcWwrBinMp(extract_nc_wwr.ExtractNcWwrBin):
                f" into .npy file by multiprocessing"
 
 
-if __name__ == "__main__":
-    path = "D:/GLDAS_NOAH"
+def extractGLDASNOAH():
+    path = "E:/GLDAS_NOAH"
     coord_path = "H:/GIS/Flash_drought/coord.txt"
     r = re.compile(r"\d{8}\.\d{4}")
     # r = re.compile(r'\d{8}')
-    encmp = ExtractNcWwrBinMp(path, coord_path, "RootMoist_inst", start="", end="", r=r,
-                              precision=3, num_cpu=8)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
+    encmp = ExtractNcWwrBinMp(path, coord_path,
+                              "CanopInt_inst",
+                              # Tair_f_inst Rainf_f_tavg  ESoil_tavg PotEvap_tavg Wind_f_inst AvgSurfT_inst CanopInt_inst ECanop_tavg
+                              start="", end="",
+                              r=r, precision=3, num_cpu=8)  # 19480101.0000 19801231.2100 19810101.0000 20141231.2100
     # encmp.overview()
     print(encmp)
     encmp()
+
+
+if __name__ == "__main__":
+    extractGLDASNOAH()
