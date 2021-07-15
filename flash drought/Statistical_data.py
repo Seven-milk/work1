@@ -345,6 +345,6 @@ if __name__ == '__main__':
     sm_percentile = sm_percentile[:, 1:]
 
     # StaticalData
-    # gridDroughtFDStatistics()
-    # gridMkTest()
+    gridDroughtFDStatistics()
+    gridMkTest()
     gridTimeSeriesStatistics()
