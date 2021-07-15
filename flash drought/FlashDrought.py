@@ -75,8 +75,10 @@ class FlashDrought(Drought):
 
         # character
         self.dp, self.FDD, self.FDS, self.RImean, self.RImax = self.fd_character()
-        self.FDD_mean = np.array([i for j in self.FDD for i in j]).mean()
-        self.FDS_mean = np.array([i for j in self.FDS for i in j]).mean()
+        FDD_mean_ = np.array([i for j in self.FDD for i in j])
+        FDS_mean_ = np.array([i for j in self.FDS for i in j])
+        self.FDD_mean = FDD_mean_.mean() if len(FDD_mean_) > 0 else 0
+        self.FDS_mean = FDS_mean_.mean() if len(FDS_mean_) > 0 else 0
 
         # excluding, should be after character
         if self.fd_excluding:
@@ -511,10 +513,10 @@ class FlashDrought_Liu_Frozen(FlashDrought_Liu):
     eliminate_threshold = 0.2
     '''
     def __init__(self, drought_index, Date_tick):
-        super(FlashDrought_Liu_Frozen, self).__init__(drought_index, Date_tick, threshold=0.4, pooling=False, tc=1,
-                                                      pc=0.2, excluding=False, rds=0.41, RI_threshold=0.05,
+        super(FlashDrought_Liu_Frozen, self).__init__(drought_index, Date_tick, threshold=0.4, pooling=False, tc=6,
+                                                      pc=0.5, excluding=False, rds=0.2, RI_threshold=0.05,
                                                       eliminating=True, eliminate_threshold=0.2, fd_pooling=False,
-                                                      fd_tc=1, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+                                                      fd_tc=2, fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
 
 
 def testFlashDrought():
