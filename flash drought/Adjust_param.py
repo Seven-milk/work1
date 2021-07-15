@@ -274,9 +274,7 @@ class SensitivityFlashDrought(Workflow.WorkBase):
         ''' plot '''
         # general set
         f = draw_plot.FigureVert(3, hspace=0.3)  # , sharex=True, sharey=True
-        FDD_ratio = np.flip(FDD_ratio, axis=0)  # flip to plot
-        FDS_ratio = np.flip(FDS_ratio, axis=0)
-        FD_number_ratio = np.flip(FD_number_ratio, axis=0)
+        # 1D do not need to flip
         linewidths = 0.5
         color = "r"
 
@@ -295,7 +293,7 @@ class SensitivityFlashDrought(Workflow.WorkBase):
         plot_FD_number = draw_plot.PlotDraw(self._fd_pc, FD_number_ratio, linewidth=linewidths, color=color)
         draw_FD_number.adddraw(plot_FD_number)
 
-        # f.show()
+        f.show()
 
         # save
         # if self._save_on != False:
@@ -314,7 +312,7 @@ def droughtSensitivityAnalysis(Sm_percentile):
     pc = np.arange(0, 1.01, 0.01)
     rds = np.arange(0, 1.01, 0.01)
     for tc in range(1, 7):
-        sd = SensitivityDrought(Sm_percentile, pc, rds, tc=tc, save_on=tc)  # f"{tc}"
+        sd = SensitivityDrought(Sm_percentile, pc, rds, tc=tc, save_on=False)  # f"{tc}"
         DD_ratio_pd, DS_ratio_pd, D_number_ratio = sd()
 
 
@@ -324,7 +322,7 @@ def fdSensitivityAnalysis(Sm_percentile):
     rds = 0.2
     fd_pc = np.arange(0, 1.01, 0.01)
     for fd_tc in range(1, 4):
-        sfd = SensitivityFlashDrought(Sm_percentile, tc, pc, rds, fd_tc, fd_pc, drought_threshold=0.4, save_on=fd_tc, info="")
+        sfd = SensitivityFlashDrought(Sm_percentile, tc, pc, rds, fd_tc, fd_pc, drought_threshold=0.4, save_on=False, info="")
         FDD_ratio_pd, FDS_ratio_pd, FD_number_ratio_pd = sfd()
 
 
