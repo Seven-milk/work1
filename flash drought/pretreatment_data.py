@@ -553,6 +553,43 @@ def smpercentile_Noah_0_100cm_multiple_distribution_Region_mean():
                                              save_path="SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis_SmPercentile_RegionMean")
     cspmd()
 
+
+def Upscale_Noah_mutileVariables_Pentad():
+    # Upscale Noah from 3H to Pentad
+    original_series = ['H:/research/flash_drough/GLDAS_Noah/CanopInt_inst_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/AvgSurfT_inst_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/Wind_f_inst_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/ECanop_tavg_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/PotEvap_tavg_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/ESoil_tavg_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/Rainf_f_tavg_19480101.0300_20141231.2100.npy',
+                       'H:/research/flash_drough/GLDAS_Noah/Tair_f_inst_19480101.0300_20141231.2100.npy']
+    save_path = ['H:/research/flash_drough/GLDAS_Noah/CanopInt_inst_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/AvgSurfT_inst_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/Wind_f_inst_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/ECanop_tavg_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/PotEvap_tavg_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/ESoil_tavg_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/Rainf_f_tavg_19480101_20141231_Pentad',
+                 'H:/research/flash_drough/GLDAS_Noah/Tair_f_inst_19480101_20141231_Pentad']
+
+    for i in range(len(original_series)):
+        original_series_ = np.load(original_series[i], mmap_mode='r')
+        original_series_post = original_series_[:39, :]  # start from 0300, the first day contains 39 3Hours rather than 40 3Hours
+        original_series_after = original_series_[39:, :]
+
+        # up_method: all average()
+        D_post = UpscaleTime(original_series=original_series_post[:, 1:], multiple=39,
+                                original_date=original_series_post[:, 0], save_path=None,
+                                combine=True, info=save_path[i][save_path[i].rfind("/") + 1:])()
+        D_after = UpscaleTime(original_series=original_series_after[:, 1:], multiple=40,
+                                original_date=original_series_after[:, 0], save_path=None,
+                                combine=True, info=save_path[i][save_path[i].rfind("/") + 1:])()
+
+        D_ = np.vstack((D_post, D_after))
+        np.save(save_path[i], D_)
+
+
 if __name__ == '__main__':
     # # combine Noah SM between different layers
     # combine_Noah_SM()
@@ -571,4 +608,6 @@ if __name__ == '__main__':
 
     # cal sm percentile RegionMean
     # smpercentile_Noah_0_100cm_multiple_distribution_Region_mean()
-    pass
+
+    # upscale noah multiple variables
+    Upscale_Noah_mutileVariables_Pentad()
