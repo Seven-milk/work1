@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from Drought import Drought
 import draw_plot
 import useful_func
+import os
 
 
 class FlashDrought(Drought):
@@ -314,8 +315,8 @@ class FlashDrought(Drought):
         Drought_character["FDS"] = self.FDS
 
         # save
-        if xlsx_on == True:
-            Drought_character.to_excel("Drought_character.xlsx", index=False)
+        if xlsx_on:
+            Drought_character.to_excel(f"Drought_FD_character_{xlsx_on}.xlsx", index=False)
 
         return Drought_character
 
@@ -445,12 +446,12 @@ class FlashDrought(Drought):
 class FlashDrought_Frozen(FlashDrought):
     ''' Frozen Params
     tc = 6, pc = 0.5, rds = 0.2
-    fd_tc = 1, fd_pc = 0.4
+    fd_tc = 2, fd_pc = 0.2
     '''
     def __init__(self, drought_index, Date_tick):
         super(FlashDrought_Frozen, self).__init__(drought_index, Date_tick, threshold=0.4, pooling=True, tc=6, pc=0.5,
                                                   excluding=True, rds=0.2, RI_threshold=0.05, eliminating=True,
-                                                  eliminate_threshold=0.2, fd_pooling=True, fd_tc=1, fd_pc=0.4,
+                                                  eliminate_threshold=0.2, fd_pooling=True, fd_tc=2, fd_pc=0.2,
                                                   fd_excluding=False, fd_rds=0.41)
 
 
@@ -531,22 +532,51 @@ def testFlashDrought_Liu():
 
 def compareWithDifferentConfiguration():
     # ----------------------- compare results with different configuration -----------------------
-    # FD1
-    FD1 = FlashDrought(drought_index, Date_tick=[], tc=tc, pc=pc, rds=rds)
-    FD1.plot()
-    out1 = FD1.out_put()
-    # FD2
-    FD2 = FlashDrought(drought_index, Date_tick=[], pooling=False, excluding=False, tc=tc, pc=pc, rds=rds)
-    FD2.plot()
-    out2 = FD2.out_put()
-    # FD3
-    FD3 = FlashDrought(drought_index, Date_tick=[], pooling=True, excluding=False, tc=tc, pc=pc, rds=rds)
-    FD3.plot()
-    out3 = FD3.out_put()
-    # FD4
-    FD4 = FlashDrought(drought_index, Date_tick=[], pooling=False, excluding=True, tc=tc, pc=pc, rds=rds)
-    FD4.plot()
-    out4 = FD4.out_put()
+    # # FD1
+    # FD1 = FlashDrought(drought_index, Date_tick=[], tc=tc, pc=pc, rds=rds)
+    # FD1.plot()
+    # out1 = FD1.out_put()
+    # # FD2
+    # FD2 = FlashDrought(drought_index, Date_tick=[], pooling=False, excluding=False, tc=tc, pc=pc, rds=rds)
+    # FD2.plot()
+    # out2 = FD2.out_put()
+    # # FD3
+    # FD3 = FlashDrought(drought_index, Date_tick=[], pooling=True, excluding=False, tc=tc, pc=pc, rds=rds)
+    # FD3.plot()
+    # out3 = FD3.out_put()
+    # # FD4
+    # FD4 = FlashDrought(drought_index, Date_tick=[], pooling=False, excluding=True, tc=tc, pc=pc, rds=rds)
+    # FD4.plot()
+    # out4 = FD4.out_put()
+    # ----------------------- compare results with pooling and excluding before and after -----------------------
+    # path
+    root = "H"
+    home = f"{root}:/research/flash_drough/"
+    sm_percentile_region_mean_path =\
+        os.path.join(home, "GLDAS_Noah/SoilMoi0_100cm_inst_19480101_20141231_Pentad_muldis_SmPercentile_RegionMean.npy")
+
+    # read data
+    sm_percentile_region_mean = np.load(sm_percentile_region_mean_path)
+    drought_index = sm_percentile_region_mean[:, 1]
+
+    # date
+    date_pentad = pd.date_range('19480103', '20141231', freq='5d').strftime("%Y").to_numpy(dtype="int")
+
+    # before
+    fd_before = FlashDrought(drought_index, date_pentad, threshold=0.4, pooling=False, tc=1, pc=0.2, excluding=False,
+                 rds=0.41, RI_threshold=0.05, eliminating=True, eliminate_threshold=0.2, fd_pooling=False, fd_tc=1,
+                 fd_pc=0.2, fd_excluding=False, fd_rds=0.41)
+
+    # after
+    fd_after = FlashDrought_Frozen(drought_index, Date_tick=date_pentad)
+
+    # out
+    fd_before.general_out()
+    fd_after.general_out()
+
+    # save
+    fd_before.out_put(xlsx_on="before")
+    fd_after.out_put(xlsx_on="after")
 
 
 if __name__ == "__main__":
@@ -562,10 +592,10 @@ if __name__ == "__main__":
     fd_tc = 2
     Date_tick = []
     # ----------------------- FlashDrought -----------------------
-    testFlashDrought()
+    # testFlashDrought()
 
     # ----------------------- FlashDrought_Liu -----------------------
-    testFlashDrought_Liu()
+    # testFlashDrought_Liu()
 
     # ----------------------- compare results with different configuration -----------------------
-    # compareWithDifferentConfiguration()
+    compareWithDifferentConfiguration()
