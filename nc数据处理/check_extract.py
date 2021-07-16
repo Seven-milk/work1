@@ -177,10 +177,10 @@ class CheckExtract(Workflow.WorkBase):
 
 
 if __name__ == '__main__':
-    extract_data_path = 'H:/research/flash_drough/GLDAS_Noah/CanopInt_inst_19480101.0300_20141231.2100.npy'
+    extract_data_path = 'H:/research/flash_drough/GLDAS_Noah/Evap_tavg_19480101.0300_20141231.2100.npy'
     source_data_path = 'E:/GLDAS_NOAH'
     coord_path = "H:/GIS/Flash_drought/coord.txt"
-    variable_name = 'CanopInt_inst'
+    variable_name = 'Evap_tavg'
     r = re.compile(r"\d{8}\.\d{4}")
     # r = re.compile(r'\d{8}')
     ce = CheckExtract(extract_data_path=extract_data_path, source_data_path=source_data_path, coord_path=coord_path,
