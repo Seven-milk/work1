@@ -16,8 +16,7 @@ import numpy as np
 import os
 import pandas as pd
 import abc
-from rasterio.plot import show
-import rasterio
+
 
 ''' usage 
 
@@ -426,28 +425,6 @@ class ImgMap(MapBase):
             )
 
 
-class TiffMap(MapBase):
-    ''' Tiff Map '''
-    def __init__(self, tif_file: list = None, **kwargs):
-        ''' init function
-        input:
-            tif_file: list of str, which save the tif_file path（.tiff） to plot in the map
-            proj: crs.Projection, projection
-            *kwargs: keyword args, it could contain "with_bounds", "contour", "contour_label_kws", "title", "transform",
-                    "adjust", see rasterio.plot.show()
-        '''
-        self._tif_file = tif_file
-        self.kwargs = kwargs
-
-    def plot(self, ax, Fig):
-        ''' Implement the MapBase.plot function '''
-        # add tiff file of users'
-        for tif_path in self._tif_file:
-            rf = rasterio.open(tif_path, mode="r")
-            show(rf, ax=ax, **self.kwargs)
-        ax.set_extent([rf.bounds.left, rf.bounds.right, rf.bounds.bottom, rf.bounds.top])
-
-
 class TextMap(MapBase):
     ''' Text Map '''
 
@@ -729,8 +706,6 @@ def test():
     m.addmap(t)
     # m.addmap(img)
     # m.axoff()
-    tif = TiffMap([f"F:/data/NDVI/MODND1F.20000306.CN.NDVI.MAX.V2.TIF"])
-    m.addmap(tif)
     f.show()
 
 
@@ -738,7 +713,5 @@ if __name__ == "__main__":
     f = Figure()
     m = Map(f.ax, f, grid=True, res_grid=1, res_label=3)
     # m.addmap(BaseMap())
-    tif = TiffMap([f"F:/data/NDVI/MODND1F.20000306.CN.NDVI.MAX.V2.TIF"])
-    m.addmap(tif)
     f.show()
 
