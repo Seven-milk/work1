@@ -246,7 +246,7 @@ class CheckCrawler(Workflow.WorkBase):
 
 if __name__ == '__main__':
     # general set
-    home = "D:/GLDAS_NOAH"
+    home = "E:/GLDAS_NOAH"
     URL = os.path.join(home, "subset_GLDAS_NOAH025_3H_2.0_20210328_114227.txt")
     # r = re.compile(r"LABEL.*\d\.nc4")
     r = re.compile(r"\d{8}\.\d{4}")
